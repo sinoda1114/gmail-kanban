@@ -9,6 +9,7 @@ import {
   interviewQuestions,
   interviewAnswers,
   interviewReverseQuestions,
+  interviewNotes,
 } from "@/db/schema";
 import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { AppShell, Container } from "@mantine/core";
@@ -35,7 +36,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   });
   if (!project) notFound();
 
-  const [history, prep] = await Promise.all([
+  const [history, prep, note] = await Promise.all([
     db
       .select()
       .from(projectStatusHistory)
@@ -46,6 +47,12 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       where: and(
         eq(interviewPreparations.projectId, id),
         eq(interviewPreparations.userId, user.id)
+      ),
+    }),
+    db.query.interviewNotes.findFirst({
+      where: and(
+        eq(interviewNotes.projectId, id),
+        eq(interviewNotes.userId, user.id)
       ),
     }),
   ]);
@@ -105,6 +112,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             interviewPrep={prep ?? null}
             interviewQuestions={questionsWithAnswers}
             reverseQuestions={reverseQs}
+            interviewNote={note ?? null}
           />
         </Container>
       </AppShell.Main>
