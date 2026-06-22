@@ -15,6 +15,14 @@ export type CreateProjectInput = {
   agentCompany?: string;
   agentPerson?: string;
   nextAction?: string;
+  summary?: string;
+  price?: string;
+  workRate?: string;
+  location?: string;
+  remoteType?: string;
+  techStack?: string[];
+  startDateText?: string;
+  contractPeriod?: string;
 };
 
 export type UpdateProjectBasicInfoInput = {
@@ -66,6 +74,14 @@ export async function createProject(
     agentCompany: input.agentCompany,
     agentPerson: input.agentPerson,
     nextAction: input.nextAction,
+    summary: input.summary,
+    price: input.price,
+    workRate: input.workRate,
+    location: input.location,
+    remoteType: input.remoteType,
+    techStack: input.techStack,
+    startDateText: input.startDateText,
+    contractPeriod: input.contractPeriod,
     createdAt: now,
     updatedAt: now,
   });
