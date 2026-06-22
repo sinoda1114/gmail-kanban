@@ -4,3 +4,8 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   "@libsql/client": true
+
+overrides:
+  postcss: ">=8.5.10"
+  esbuild: ">=0.25.0"
+  "@ai-sdk/provider-utils": ">=3.0.98"
