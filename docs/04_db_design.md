@@ -105,7 +105,7 @@
 | preparation_id | string   | 面談準備ID              |
 | project_id     | string   | 案件ID                |
 | question       | text     | 想定質問                |
-| category       | string   | 技術 / PM / 条件 / 経歴   |
+| category       | string   | technical / pm / condition / experience |
 | priority       | string   | high / medium / low |
 | memo           | text     | メモ                  |
 | sort_order     | integer  | 並び順                 |
@@ -130,7 +130,7 @@
 | preparation_id | string   | 面談準備ID            |
 | project_id     | string   | 案件ID              |
 | question       | text     | 自分から聞く質問          |
-| category       | string   | 役割 / 技術 / 体制 / 契約 |
+| category       | string   | role / team / tech / work_style / contract / selection_flow |
 | checked        | boolean  | 面談で確認済みか          |
 | memo           | text     | メモ                |
 | sort_order     | integer  | 並び順               |
@@ -138,17 +138,20 @@
 
 ## 4.10 interview_notes
 
-| カラム         | 型        | 内容     |
-| ----------- | -------- | ------ |
-| id          | string   | 面談メモID |
-| project_id  | string   | 案件ID   |
-| user_id     | string   | ユーザーID |
-| during_note | text     | 面談中メモ  |
-| after_note  | text     | 面談後メモ  |
-| impression  | text     | 印象     |
-| next_action | text     | 次アクション |
-| created_at  | datetime | 作成日時   |
-| updated_at  | datetime | 更新日時   |
+| カラム             | 型        | 内容              |
+| --------------- | -------- | --------------- |
+| id              | string   | 面談メモID          |
+| project_id      | string   | 案件ID            |
+| user_id         | string   | ユーザーID          |
+| during_note     | text     | 面談中メモ           |
+| after_note      | text     | 面談後メモ           |
+| impression      | text     | 先方の印象           |
+| own_temperature | text     | 自分の温度感          |
+| concern         | text     | 懸念点             |
+| next_action     | text     | 次アクション          |
+| result_status   | string   | 結果ステータス（案件statusと同じ値集合） |
+| created_at      | datetime | 作成日時            |
+| updated_at      | datetime | 更新日時            |
 
 ## 4.11 reminders
 
@@ -157,7 +160,7 @@
 | id            | string   | リマインドID                                |
 | project_id    | string   | 案件ID                                   |
 | user_id       | string   | ユーザーID                                 |
-| reminder_type | string   | reply / follow_up / interview / result |
+| reminder_type | string   | reply / follow_up / interview / result / on_hold_recheck |
 | remind_at     | datetime | リマインド日時                                |
 | message       | text     | 表示メッセージ                                |
 | done          | boolean  | 完了済み                                   |
