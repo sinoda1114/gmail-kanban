@@ -1,22 +1,40 @@
 "use client";
 
 import { Tabs, Stack, Group, Badge, Text } from "@mantine/core";
-import type { Project, ProjectStatusHistory } from "@/db/schema";
+import type {
+  Project,
+  ProjectStatusHistory,
+  InterviewPreparation,
+  InterviewQuestion,
+  InterviewAnswer,
+  InterviewReverseQuestion,
+} from "@/db/schema";
 import {
   STATUS_LABELS,
   STATUS_COLORS,
   type ProjectStatus,
 } from "@/types/project";
 import { BasicInfoTab } from "./BasicInfoTab";
+import { InterviewPrepTab } from "./InterviewPrepTab";
+
+type QuestionWithAnswer = InterviewQuestion & {
+  answer: InterviewAnswer | null;
+};
 
 interface ProjectDetailViewProps {
   project: Project;
   statusHistory: ProjectStatusHistory[];
+  interviewPrep: InterviewPreparation | null;
+  interviewQuestions: QuestionWithAnswer[];
+  reverseQuestions: InterviewReverseQuestion[];
 }
 
 export function ProjectDetailView({
   project,
   statusHistory,
+  interviewPrep,
+  interviewQuestions,
+  reverseQuestions,
 }: ProjectDetailViewProps) {
   return (
     <Tabs defaultValue="basic">
@@ -32,9 +50,12 @@ export function ProjectDetailView({
       </Tabs.Panel>
 
       <Tabs.Panel value="interview_prep">
-        <Text c="dimmed" p="md">
-          面談準備機能はPhase 4で実装予定です。
-        </Text>
+        <InterviewPrepTab
+          project={project}
+          prep={interviewPrep}
+          questions={interviewQuestions}
+          reverseQuestions={reverseQuestions}
+        />
       </Tabs.Panel>
 
       <Tabs.Panel value="interview_note">
