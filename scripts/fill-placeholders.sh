@@ -10,14 +10,14 @@
 set -euo pipefail
 
 # ====== ここを編集 ======
-PROJECT_NAME="My Project"
-REPO_SLUG="my-project"
-GH_OWNER_REPO="owner/my-project"
+PROJECT_NAME="Gmail Kanban"
+REPO_SLUG="gmail-kanban"
+GH_OWNER_REPO="sinoda1114/gmail-kanban"
 DEPLOY_PLATFORM="Vercel"
-PROD_URL="https://my-project.vercel.app"
-DOMAIN="example.com"
+PROD_URL="https://gmail-kanban.vercel.app"
+DOMAIN="gmail-kanban.vercel.app"
 SITE_URL_ENV="NEXT_PUBLIC_SITE_URL"
-PROJECT_BOARD="My Project Tasks"
+PROJECT_BOARD="Gmail Kanban Tasks"
 # ========================
 
 targets=(AGENTS.md CLAUDE.md README.md notes/dev-workflow-multiagent.md notes/task-management-issue-workflow.md)
