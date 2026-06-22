@@ -53,14 +53,14 @@ scripts/
 
 | プレースホルダ | 意味 | 例 |
 |---|---|---|
-| `{{PROJECT_NAME}}` | プロジェクト/ブランド名 | MatchFav |
-| `{{REPO_SLUG}}` | repo ディレクトリ名 | wc-tournament-tracker |
-| `{{GH_OWNER_REPO}}` | GitHub の owner/repo | sinoda1114/wc-tournament-tracker |
-| `{{DEPLOY_PLATFORM}}` | デプロイ基盤 | Vercel |
-| `{{PROD_URL}}` | 本番 URL | https://example.vercel.app |
-| `{{DOMAIN}}` | 独自ドメイン | example.com |
-| `{{SITE_URL_ENV}}` | 絶対 URL を持つ env 名 | NEXT_PUBLIC_SITE_URL |
-| `{{PROJECT_BOARD}}` | Project 名（番号は GitHub で確定） | {{PROJECT_NAME}} Tasks |
+| `Gmail Kanban` | プロジェクト/ブランド名 | MatchFav |
+| `gmail-kanban` | repo ディレクトリ名 | wc-tournament-tracker |
+| `sinoda1114/gmail-kanban` | GitHub の owner/repo | sinoda1114/wc-tournament-tracker |
+| `Vercel` | デプロイ基盤 | Vercel |
+| `https://gmail-kanban.vercel.app` | 本番 URL | https://example.vercel.app |
+| `gmail-kanban.vercel.app` | 独自ドメイン | example.com |
+| `NEXT_PUBLIC_SITE_URL` | 絶対 URL を持つ env 名 | NEXT_PUBLIC_SITE_URL |
+| `Gmail Kanban Tasks` | Project 名（番号は GitHub で確定） | Gmail Kanban Tasks |
 
 ### GitHub セットアップ（初回のみ）
 
@@ -73,7 +73,7 @@ for t in bug feature content i18n legal billing data mobile ops; do \
   gh label create "type:$t" --color ededed 2>/dev/null || true; done
 
 # 3) GitHub Project（Board）を作成し、カラムを Inbox/Ready/Waiting/Doing/PR/Prod Check/Done に
-#    （gh project create か Web UI。番号を AGENTS.md の {{PROJECT_BOARD}} 近くに反映）
+#    （gh project create か Web UI。番号を AGENTS.md の Gmail Kanban Tasks 近くに反映）
 
 # 4) デプロイ基盤の Git 連携（Vercel 等）: Production Branch = main、PR ごとに Preview 発行を有効化
 ```
