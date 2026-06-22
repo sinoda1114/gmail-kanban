@@ -4,6 +4,7 @@ node_modules/
 dist/
 build/
 coverage/
+*.tsbuildinfo
 
 # 環境変数（リポに出さない。lockfile は除外しない＝コミット対象）
 .env

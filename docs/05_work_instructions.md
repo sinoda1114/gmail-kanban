@@ -5,19 +5,23 @@
 Gmail案件タスク管理アプリのMVPを実装する。
 まずは自分用に利用し、将来的な公開・課金にも耐えられる構成にする。
 
-## 5.2 技術スタック案
+## 5.2 技術スタック
 
-| 領域    | 技術                            |
-| ----- | ----------------------------- |
-| フロント  | Next.js                       |
-| UI    | Tailwind CSS / shadcn/ui      |
-| 認証    | Clerk                         |
-| DB    | Turso / Supabase / Neon のいずれか |
-| ORM   | Drizzle ORM                   |
-| AI    | OpenAI / Claude / Gemini      |
-| カレンダー | Google Calendar API           |
-| 課金    | Stripe                        |
-| デプロイ  | Vercel                        |
+技術スタックは [06_tech_stack.md](06_tech_stack.md) を正とする（確定版）。要点のみ再掲。
+
+| 領域    | 技術（確定）             |
+| ----- | ------------------ |
+| フロント  | Next.js App Router |
+| UI    | Mantine            |
+| D&D   | dnd-kit            |
+| 認証    | Clerk              |
+| DB    | Turso (libSQL)     |
+| ORM   | Drizzle ORM        |
+| AI    | Vercel AI SDK      |
+| バリデーション | Zod              |
+| カレンダー | Google Calendar API |
+| 課金    | Stripe             |
+| デプロイ  | Vercel             |
 
 ## 5.3 実装フェーズ
 

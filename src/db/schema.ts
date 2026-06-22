@@ -114,7 +114,10 @@ export const interviewNotes = sqliteTable("interview_notes", {
   duringNote: text("during_note"),
   afterNote: text("after_note"),
   impression: text("impression"),
+  ownTemperature: text("own_temperature"),
+  concern: text("concern"),
   nextAction: text("next_action"),
+  resultStatus: text("result_status"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });

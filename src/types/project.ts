@@ -32,3 +32,31 @@ export const STATUS_COLORS: Record<ProjectStatus, string> = {
   on_hold: "gray",
   closed: "dark",
 };
+
+export const CLOSE_REASONS = [
+  "declined",
+  "rejected",
+  "condition_mismatch",
+  "no_response",
+  "other",
+] as const;
+
+export type CloseReason = (typeof CLOSE_REASONS)[number];
+
+export const CLOSE_REASON_LABELS: Record<CloseReason, string> = {
+  declined: "辞退",
+  rejected: "見送り",
+  condition_mismatch: "条件不一致",
+  no_response: "音信不通",
+  other: "その他",
+};
+
+export const REMINDER_TYPES = [
+  "reply",
+  "follow_up",
+  "interview",
+  "result",
+  "on_hold_recheck",
+] as const;
+
+export type ReminderType = (typeof REMINDER_TYPES)[number];
