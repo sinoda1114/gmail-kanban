@@ -1,8 +1,16 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import { db } from "@/db/client";
-import { projects, projectStatusHistory, users } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import {
+  projects,
+  projectStatusHistory,
+  users,
+  interviewPreparations,
+  interviewQuestions,
+  interviewAnswers,
+  interviewReverseQuestions,
+} from "@/db/schema";
+import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { AppShell, Container } from "@mantine/core";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { ProjectDetailView } from "@/components/projects/ProjectDetailView";
@@ -27,12 +35,62 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   });
   if (!project) notFound();
 
-  const history = await db
-    .select()
-    .from(projectStatusHistory)
-    .where(eq(projectStatusHistory.projectId, id))
-    .orderBy(desc(projectStatusHistory.changedAt))
-    .limit(20);
+  const [history, prep] = await Promise.all([
+    db
+      .select()
+      .from(projectStatusHistory)
+      .where(eq(projectStatusHistory.projectId, id))
+      .orderBy(desc(projectStatusHistory.changedAt))
+      .limit(20),
+    db.query.interviewPreparations.findFirst({
+      where: and(
+        eq(interviewPreparations.projectId, id),
+        eq(interviewPreparations.userId, user.id)
+      ),
+    }),
+  ]);
+
+  let questionsWithAnswers: {
+    id: string;
+    preparationId: string | null;
+    projectId: string;
+    question: string;
+    category: string | null;
+    priority: string | null;
+    memo: string | null;
+    sortOrder: number;
+    createdAt: string;
+    answer: { id: string; questionId: string; aiAnswer: string | null; userAnswer: string | null; createdAt: string; updatedAt: string } | null;
+  }[] = [];
+  let reverseQs: typeof interviewReverseQuestions.$inferSelect[] = [];
+
+  if (prep) {
+    const qs = await db
+      .select()
+      .from(interviewQuestions)
+      .where(eq(interviewQuestions.preparationId, prep.id))
+      .orderBy(asc(interviewQuestions.sortOrder));
+
+    const answers =
+      qs.length > 0
+        ? await db
+            .select()
+            .from(interviewAnswers)
+            .where(inArray(interviewAnswers.questionId, qs.map((q) => q.id)))
+        : [];
+
+    const answerMap = new Map(answers.map((a) => [a.questionId, a]));
+    questionsWithAnswers = qs.map((q) => ({
+      ...q,
+      answer: answerMap.get(q.id) ?? null,
+    }));
+
+    reverseQs = await db
+      .select()
+      .from(interviewReverseQuestions)
+      .where(eq(interviewReverseQuestions.preparationId, prep.id))
+      .orderBy(asc(interviewReverseQuestions.sortOrder));
+  }
 
   return (
     <AppShell header={{ height: 60 }}>
@@ -41,7 +99,13 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       </AppShell.Header>
       <AppShell.Main>
         <Container size="lg" py="md">
-          <ProjectDetailView project={project} statusHistory={history} />
+          <ProjectDetailView
+            project={project}
+            statusHistory={history}
+            interviewPrep={prep ?? null}
+            interviewQuestions={questionsWithAnswers}
+            reverseQuestions={reverseQs}
+          />
         </Container>
       </AppShell.Main>
     </AppShell>
