@@ -23,7 +23,8 @@ export type SaveInterviewNoteInput = {
 async function getAuthedUser() {
   const { userId: clerkUserId } = await auth();
   if (!clerkUserId) return null;
-  return db.query.users.findFirst({ where: eq(users.clerkUserId, clerkUserId) }) ?? null;
+  const user = await db.query.users.findFirst({ where: eq(users.clerkUserId, clerkUserId) });
+  return user ?? null;
 }
 
 export async function saveInterviewNote(

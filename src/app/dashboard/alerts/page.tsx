@@ -49,10 +49,17 @@ function daysSince(dateStr: string | null | undefined): number {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
+function toJSTDate(date: Date): Date {
+  return new Date(date.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+}
+
 function tomorrowDateStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  const now = toJSTDate(new Date());
+  now.setDate(now.getDate() + 1);
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export default async function AlertsPage() {
