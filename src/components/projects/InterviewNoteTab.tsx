@@ -93,6 +93,12 @@ export function InterviewNoteTab({ project, note }: InterviewNoteTabProps) {
         </Title>
         <Stack gap="sm">
           <Textarea
+            placeholder="面談後の総合的なメモ..."
+            rows={4}
+            value={form.afterNote}
+            onChange={(e) => update("afterNote", e.target.value)}
+          />
+          <Textarea
             label="先方の印象"
             placeholder="担当者の雰囲気、チームの様子など..."
             rows={3}
