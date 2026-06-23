@@ -8,6 +8,7 @@ import type {
   InterviewQuestion,
   InterviewAnswer,
   InterviewReverseQuestion,
+  InterviewNote,
 } from "@/db/schema";
 import {
   STATUS_LABELS,
@@ -16,6 +17,7 @@ import {
 } from "@/types/project";
 import { BasicInfoTab } from "./BasicInfoTab";
 import { InterviewPrepTab } from "./InterviewPrepTab";
+import { InterviewNoteTab } from "./InterviewNoteTab";
 
 type QuestionWithAnswer = InterviewQuestion & {
   answer: InterviewAnswer | null;
@@ -27,6 +29,7 @@ interface ProjectDetailViewProps {
   interviewPrep: InterviewPreparation | null;
   interviewQuestions: QuestionWithAnswer[];
   reverseQuestions: InterviewReverseQuestion[];
+  interviewNote: InterviewNote | null;
 }
 
 export function ProjectDetailView({
@@ -35,6 +38,7 @@ export function ProjectDetailView({
   interviewPrep,
   interviewQuestions,
   reverseQuestions,
+  interviewNote,
 }: ProjectDetailViewProps) {
   return (
     <Tabs defaultValue="basic">
@@ -59,9 +63,7 @@ export function ProjectDetailView({
       </Tabs.Panel>
 
       <Tabs.Panel value="interview_note">
-        <Text c="dimmed" p="md">
-          面談メモ機能はPhase 5で実装予定です。
-        </Text>
+        <InterviewNoteTab project={project} note={interviewNote} />
       </Tabs.Panel>
 
       <Tabs.Panel value="history">
