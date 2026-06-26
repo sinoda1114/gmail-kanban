@@ -9,6 +9,7 @@ import type {
   InterviewAnswer,
   InterviewReverseQuestion,
   InterviewNote,
+  CalendarEvent,
 } from "@/db/schema";
 import {
   STATUS_LABELS,
@@ -30,6 +31,7 @@ interface ProjectDetailViewProps {
   interviewQuestions: QuestionWithAnswer[];
   reverseQuestions: InterviewReverseQuestion[];
   interviewNote: InterviewNote | null;
+  calendarEvent: CalendarEvent | null;
 }
 
 export function ProjectDetailView({
@@ -39,6 +41,7 @@ export function ProjectDetailView({
   interviewQuestions,
   reverseQuestions,
   interviewNote,
+  calendarEvent,
 }: ProjectDetailViewProps) {
   return (
     <Tabs defaultValue="basic">
@@ -59,6 +62,7 @@ export function ProjectDetailView({
           prep={interviewPrep}
           questions={interviewQuestions}
           reverseQuestions={reverseQuestions}
+          calendarUrl={calendarEvent?.calendarUrl ?? null}
         />
       </Tabs.Panel>
 

@@ -17,9 +17,10 @@ import {
   Alert,
   Divider,
   Title,
+  Anchor,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconSparkles } from "@tabler/icons-react";
+import { IconSparkles, IconCalendar } from "@tabler/icons-react";
 import type {
   Project,
   InterviewPreparation,
@@ -43,6 +44,7 @@ import {
   updateInterviewAnswer,
   toggleReverseQuestionChecked,
 } from "@/app/dashboard/projects/interview-prep-action";
+import { createCalendarEvent } from "@/app/dashboard/projects/calendar-action";
 
 interface QuestionWithAnswer extends InterviewQuestion {
   answer: InterviewAnswer | null;
@@ -53,6 +55,7 @@ interface InterviewPrepTabProps {
   prep: InterviewPreparation | null;
   questions: QuestionWithAnswer[];
   reverseQuestions: InterviewReverseQuestion[];
+  calendarUrl: string | null;
 }
 
 type InfoForm = {
@@ -67,8 +70,10 @@ export function InterviewPrepTab({
   prep,
   questions: initialQuestions,
   reverseQuestions: initialReverseQs,
+  calendarUrl,
 }: InterviewPrepTabProps) {
   const router = useRouter();
+  const [addingCalendar, setAddingCalendar] = useState(false);
   const [infoForm, setInfoForm] = useState<InfoForm>({
     interviewAt: prep?.interviewAt ?? "",
     interviewUrl: prep?.interviewUrl ?? "",
@@ -101,6 +106,18 @@ export function InterviewPrepTab({
         color: "red",
         message: result.error ?? "保存に失敗しました",
       });
+    }
+  }
+
+  async function handleAddToCalendar() {
+    setAddingCalendar(true);
+    const result = await createCalendarEvent(project.id);
+    setAddingCalendar(false);
+    if (result.success) {
+      notifications.show({ color: "green", message: "カレンダーに追加しました" });
+      router.refresh();
+    } else {
+      notifications.show({ color: "red", message: result.error ?? "カレンダー登録に失敗しました" });
     }
   }
 
@@ -224,6 +241,22 @@ export function InterviewPrepTab({
             >
               保存
             </Button>
+          </Group>
+          <Group>
+            <Button
+              variant="light"
+              leftSection={<IconCalendar size={16} />}
+              loading={addingCalendar}
+              onClick={handleAddToCalendar}
+              disabled={!prep?.interviewAt}
+            >
+              {calendarUrl ? "カレンダー再登録" : "カレンダーに追加"}
+            </Button>
+            {calendarUrl && (
+              <Anchor href={calendarUrl} target="_blank" size="sm">
+                Google カレンダーで確認
+              </Anchor>
+            )}
           </Group>
         </Stack>
       </Paper>

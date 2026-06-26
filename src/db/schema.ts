@@ -179,3 +179,4 @@ export type InterviewAnswer = typeof interviewAnswers.$inferSelect;
 export type InterviewReverseQuestion = typeof interviewReverseQuestions.$inferSelect;
 export type InterviewNote = typeof interviewNotes.$inferSelect;
 export type Reminder = typeof reminders.$inferSelect;
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
