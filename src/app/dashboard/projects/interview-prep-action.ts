@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { db } from "@/db/client";
 import {
   users,
@@ -124,7 +124,7 @@ export async function generateInterviewPrep(
     });
   }
 
-  const modelId = "gpt-4o-mini";
+  const modelId = "gemini-3.1-flash-lite";
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
     : "";
@@ -151,7 +151,7 @@ ${project.sourceText || "（なし）"}
 
   try {
     const { object } = await generateObject({
-      model: openai(modelId),
+      model: google(modelId),
       schema: InterviewPrepAISchema,
       prompt,
     });
