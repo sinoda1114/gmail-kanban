@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { db } from "@/db/client";
 import { users, aiExtractionLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -24,11 +24,11 @@ export async function extractProjectFromText(
     return { success: false, error: "テキストを入力してください" };
   }
 
-  const modelId = "gpt-4o-mini";
+  const modelId = "gemini-3.1-flash-lite";
 
   try {
     const { object } = await generateObject({
-      model: openai(modelId),
+      model: google(modelId),
       schema: ProjectExtractionSchema,
       prompt: `
 フリーランスエージェントからのメール本文を読み、案件情報を構造化して抽出してください。
