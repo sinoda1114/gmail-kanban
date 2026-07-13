@@ -10,6 +10,7 @@ import {
   interviewAnswers,
   interviewReverseQuestions,
   interviewNotes,
+  calendarEvents,
 } from "@/db/schema";
 import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { AppShell, Container } from "@mantine/core";
@@ -36,7 +37,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   });
   if (!project) notFound();
 
-  const [history, prep, note] = await Promise.all([
+  const [history, prep, note, calendarEvent] = await Promise.all([
     db
       .select()
       .from(projectStatusHistory)
@@ -54,6 +55,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         eq(interviewNotes.projectId, id),
         eq(interviewNotes.userId, user.id)
       ),
+    }),
+    db.query.calendarEvents.findFirst({
+      where: and(eq(calendarEvents.projectId, id), eq(calendarEvents.userId, user.id)),
     }),
   ]);
 
@@ -113,6 +117,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             interviewQuestions={questionsWithAnswers}
             reverseQuestions={reverseQs}
             interviewNote={note ?? null}
+            calendarEvent={calendarEvent ?? null}
           />
         </Container>
       </AppShell.Main>
