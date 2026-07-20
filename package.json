@@ -23,7 +23,7 @@
     "@libsql/client": "0.17.4",
     "@mantine/core": "9.4.0",
     "@mantine/dates": "9.4.0",
-    "@mantine/hooks": "9.4.0",
+    "@mantine/hooks": "9.4.1",
     "@mantine/notifications": "9.4.0",
     "@tabler/icons-react": "3.44.0",
     "@ai-sdk/google": "4.0.12",
