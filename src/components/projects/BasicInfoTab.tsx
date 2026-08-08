@@ -17,11 +17,7 @@ import {
   TagsInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import {
-  IconPencil,
-  IconTrash,
-  IconExternalLink,
-} from "@tabler/icons-react";
+import { IconPencil, IconTrash, IconExternalLink } from "@tabler/icons-react";
 import type { Project } from "@/db/schema";
 import {
   PROJECT_STATUSES,
