@@ -1,7 +1,8 @@
 "use server";
 
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { parseGmailUrlId } from "@/lib/gmail-url";
+import { getGoogleAccessTokenForGmail } from "@/lib/google-access-token";
 import {
   extractTextFromGmailMessage,
   formatFetchedMail,
@@ -16,30 +17,6 @@ type GmailThreadResource = {
   id?: string;
   messages?: GmailMessageResource[];
 };
-
-async function getGoogleAccessToken(
-  clerkUserId: string
-): Promise<{ token?: string; error?: string }> {
-  try {
-    const client = await clerkClient();
-    const tokenResponse = await client.users.getUserOauthAccessToken(
-      clerkUserId,
-      "oauth_google"
-    );
-    const token = tokenResponse.data[0]?.token;
-    if (!token) {
-      return {
-        error:
-          "Google アカウントが連携されていません。Clerk で Google ログインし直してください",
-      };
-    }
-    return { token };
-  } catch {
-    return {
-      error: "Google アカウント連携の確認中にエラーが発生しました",
-    };
-  }
-}
 
 async function gmailGetJson<T>(
   accessToken: string,
@@ -108,7 +85,7 @@ async function resolveMessage(
     return {
       success: false,
       error:
-        "Gmail 読み取り権限がありません。Clerk の Google 連携に gmail.readonly スコープを追加し、再連携してください",
+        "Gmail 読み取り権限がありません。GOOGLE_REFRESH_TOKEN に gmail.readonly 付きのトークンを設定してください",
     };
   }
 
@@ -134,7 +111,8 @@ export async function fetchGmailBodyFromUrl(
     };
   }
 
-  const { token, error: tokenError } = await getGoogleAccessToken(clerkUserId);
+  const { token, error: tokenError } =
+    await getGoogleAccessTokenForGmail(clerkUserId);
   if (!token) {
     return { success: false, error: tokenError ?? "Google 連携が必要です" };
   }
