@@ -36,8 +36,6 @@ import {
   deleteProject,
 } from "@/app/dashboard/projects/actions";
 import type { UpdateProjectBasicInfoInput } from "@/app/dashboard/projects/actions";
-import { fetchGmailBodyFromUrl } from "@/app/dashboard/projects/gmail-action";
-import { GmailFetchFields } from "@/components/projects/GmailFetchFields";
 
 interface BasicInfoTabProps {
   project: Project;
@@ -59,7 +57,6 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [gmailLoading, setGmailLoading] = useState(false);
   const [formData, setFormData] = useState<UpdateProjectBasicInfoInput>({
     title: project.title,
     agentCompany: project.agentCompany ?? "",
@@ -80,28 +77,6 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
     summary: project.summary ?? "",
     sourceText: project.sourceText ?? "",
   });
-
-  const handleFetchGmail = async () => {
-    if (!formData.gmailUrl?.trim()) {
-      notifications.show({
-        message: "Gmail URL を入力してから取得してください",
-        color: "red",
-      });
-      return;
-    }
-    setGmailLoading(true);
-    const result = await fetchGmailBodyFromUrl(formData.gmailUrl);
-    setGmailLoading(false);
-    if (!result.success) {
-      notifications.show({ message: result.error, color: "red" });
-      return;
-    }
-    setFormData((f) => ({ ...f, sourceText: result.text }));
-    notifications.show({
-      message: "Gmail から本文を取得しました",
-      color: "green",
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,6 +184,13 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
             }
           />
           <TextInput
+            label="Gmail URL"
+            value={formData.gmailUrl ?? ""}
+            onChange={(e) =>
+              setFormData((f) => ({ ...f, gmailUrl: e.target.value }))
+            }
+          />
+          <TextInput
             label="単価"
             value={formData.price ?? ""}
             onChange={(e) =>
@@ -287,18 +269,13 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
               setFormData((f) => ({ ...f, summary: e.target.value }))
             }
           />
-          <GmailFetchFields
-            gmailUrl={formData.gmailUrl ?? ""}
-            sourceText={formData.sourceText ?? ""}
-            onGmailUrlChange={(v) =>
-              setFormData((f) => ({ ...f, gmailUrl: v }))
+          <Textarea
+            label="メール本文"
+            rows={5}
+            value={formData.sourceText ?? ""}
+            onChange={(e) =>
+              setFormData((f) => ({ ...f, sourceText: e.target.value }))
             }
-            onSourceTextChange={(v) =>
-              setFormData((f) => ({ ...f, sourceText: v }))
-            }
-            onFetchGmail={handleFetchGmail}
-            gmailLoading={gmailLoading}
-            sourceRows={5}
           />
           <Group>
             <Button type="submit" loading={loading}>
