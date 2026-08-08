@@ -17,3 +17,4 @@ permissions:
 jobs:
   ci:
     uses: sinoda1114/ci-standard/.github/workflows/node-ci.yml@main
+# re-run: 標準CI(Node22/pnpm対応)取り込み
