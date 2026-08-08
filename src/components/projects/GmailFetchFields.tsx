@@ -17,7 +17,7 @@ type Props = {
 };
 
 /**
- * Gmail URL → 本文取得 →（任意）AI整理 の一連導線。
+ * メールURL → 本文取得 →（任意）AI整理 の一連導線。
  */
 export function GmailFetchFields({
   gmailUrl,
@@ -31,38 +31,47 @@ export function GmailFetchFields({
   sourceRows = 8,
 }: Props) {
   return (
-    <Stack gap="sm">
-      <Text size="xs" c="dimmed">
-        ① Gmail URL を貼る → ② 本文取得 → ③ AIで整理（または手入力）
-      </Text>
+    <Stack gap="md">
+      <Stack gap={4}>
+        <Text size="sm" fw={600}>
+          メールから取り込む
+        </Text>
+        <Text size="sm" c="dimmed" style={{ lineHeight: 1.6 }}>
+          ① メールのURLを貼る
+          <br />
+          ②「本文を取得」を押す
+          <br />
+          ③「AIで整理する」か、手入力で進める
+        </Text>
+      </Stack>
 
-      <Group align="flex-end" gap="sm" wrap="nowrap">
+      <div>
         <TextInput
-          style={{ flex: 1, minWidth: 0 }}
-          label="Gmail URL"
-          description="mail.google.com のメール個別URL"
-          placeholder="https://mail.google.com/mail/u/0/#starred/..."
+          label="メールのURL"
+          description="ジーメールで開いたメールのアドレスをそのまま貼り付け"
+          placeholder="mail.google.com で始まるメールのURL"
           value={gmailUrl}
           onChange={(e) => onGmailUrlChange(e.currentTarget.value)}
         />
-        <Button
-          variant="light"
-          leftSection={<IconMail size={16} />}
-          loading={gmailLoading}
-          onClick={onFetchGmail}
-          type="button"
-          disabled={!gmailUrl.trim()}
-          style={{ flexShrink: 0 }}
-        >
-          本文取得
-        </Button>
-      </Group>
+        <Group mt="xs" justify="flex-end">
+          <Button
+            variant="light"
+            leftSection={<IconMail size={16} />}
+            loading={gmailLoading}
+            onClick={onFetchGmail}
+            type="button"
+            disabled={!gmailUrl.trim()}
+          >
+            本文を取得
+          </Button>
+        </Group>
+      </div>
 
       <div>
         <Textarea
           label="メール本文"
           rows={sourceRows}
-          placeholder="上の「本文取得」で反映。または募集要項を直接ペースト"
+          placeholder="上の「本文を取得」で反映。または募集要項を直接貼り付け"
           value={sourceText}
           onChange={(e) => onSourceTextChange(e.currentTarget.value)}
         />
