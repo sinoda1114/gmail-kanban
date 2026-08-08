@@ -13,8 +13,8 @@ import {
   calendarEvents,
 } from "@/db/schema";
 import { eq, and, desc, asc, inArray } from "drizzle-orm";
-import { AppShell, Container } from "@mantine/core";
-import { AppHeader } from "@/components/layout/AppHeader";
+import { Container } from "@mantine/core";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ProjectDetailView } from "@/components/projects/ProjectDetailView";
 
 interface PageProps {
@@ -104,23 +104,18 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   }
 
   return (
-    <AppShell header={{ height: 60 }}>
-      <AppShell.Header>
-        <AppHeader />
-      </AppShell.Header>
-      <AppShell.Main>
-        <Container size="lg" py="md">
-          <ProjectDetailView
-            project={project}
-            statusHistory={history}
-            interviewPrep={prep ?? null}
-            interviewQuestions={questionsWithAnswers}
-            reverseQuestions={reverseQs}
-            interviewNote={note ?? null}
-            calendarEvent={calendarEvent ?? null}
-          />
-        </Container>
-      </AppShell.Main>
-    </AppShell>
+    <DashboardShell>
+      <Container size="lg" py="md">
+        <ProjectDetailView
+          project={project}
+          statusHistory={history}
+          interviewPrep={prep ?? null}
+          interviewQuestions={questionsWithAnswers}
+          reverseQuestions={reverseQs}
+          interviewNote={note ?? null}
+          calendarEvent={calendarEvent ?? null}
+        />
+      </Container>
+    </DashboardShell>
   );
 }
