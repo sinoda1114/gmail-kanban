@@ -15,9 +15,10 @@ import {
   TagsInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconSparkles } from "@tabler/icons-react";
+import { IconMail, IconSparkles } from "@tabler/icons-react";
 import { createProject } from "@/app/dashboard/projects/actions";
 import { extractProjectFromText } from "@/app/dashboard/projects/extract-action";
+import { fetchGmailBodyFromUrl } from "@/app/dashboard/projects/gmail-action";
 import type { ProjectExtraction } from "@/types/ai";
 
 type FormState = {
@@ -58,12 +59,39 @@ export function NewProjectForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [gmailLoading, setGmailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<ProjectExtraction | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
 
   function set<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  async function handleFetchGmail() {
+    if (!form.gmailUrl.trim()) {
+      setError("Gmail URL を入力してから取得してください");
+      return;
+    }
+    setGmailLoading(true);
+    setError(null);
+    try {
+      const result = await fetchGmailBodyFromUrl(form.gmailUrl);
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+      set("sourceText", result.text);
+      notifications.show({
+        color: "teal",
+        title: "Gmail から取得しました",
+        message: "メール本文欄に反映しました。「AIで整理する」を実行できます。",
+      });
+    } catch {
+      setError("Gmail 取得中にエラーが発生しました");
+    } finally {
+      setGmailLoading(false);
+    }
   }
 
   async function handleAiExtract() {
@@ -203,18 +231,32 @@ export function NewProjectForm() {
           onChange={(e) => set("agentPerson", e.target.value)}
         />
 
-        <TextInput
-          label="Gmail URL"
-          placeholder="https://mail.google.com/mail/..."
-          value={form.gmailUrl}
-          onChange={(e) => set("gmailUrl", e.target.value)}
-        />
+        <div>
+          <TextInput
+            label="Gmail URL"
+            placeholder="https://mail.google.com/mail/u/0/#starred/..."
+            value={form.gmailUrl}
+            onChange={(e) => set("gmailUrl", e.target.value)}
+          />
+          <Group mt="xs" justify="flex-end">
+            <Button
+              variant="light"
+              leftSection={<IconMail size={16} />}
+              loading={gmailLoading}
+              onClick={handleFetchGmail}
+              type="button"
+              disabled={!form.gmailUrl.trim()}
+            >
+              Gmailから本文取得
+            </Button>
+          </Group>
+        </div>
 
         <div>
           <Textarea
             label="メール本文"
             rows={8}
-            placeholder="募集要項やメール本文をペーストして「AIで整理する」を押すと各フィールドに自動入力されます"
+            placeholder="Gmail URL から取得、または募集要項をペーストして「AIで整理する」"
             value={form.sourceText}
             onChange={(e) => set("sourceText", e.target.value)}
           />

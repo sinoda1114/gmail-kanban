@@ -17,7 +17,12 @@ import {
   TagsInput,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconPencil, IconTrash, IconExternalLink } from "@tabler/icons-react";
+import {
+  IconPencil,
+  IconTrash,
+  IconExternalLink,
+  IconMail,
+} from "@tabler/icons-react";
 import type { Project } from "@/db/schema";
 import {
   PROJECT_STATUSES,
@@ -32,6 +37,7 @@ import {
   deleteProject,
 } from "@/app/dashboard/projects/actions";
 import type { UpdateProjectBasicInfoInput } from "@/app/dashboard/projects/actions";
+import { fetchGmailBodyFromUrl } from "@/app/dashboard/projects/gmail-action";
 
 interface BasicInfoTabProps {
   project: Project;
@@ -53,6 +59,7 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [gmailLoading, setGmailLoading] = useState(false);
   const [formData, setFormData] = useState<UpdateProjectBasicInfoInput>({
     title: project.title,
     agentCompany: project.agentCompany ?? "",
@@ -73,6 +80,28 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
     summary: project.summary ?? "",
     sourceText: project.sourceText ?? "",
   });
+
+  const handleFetchGmail = async () => {
+    if (!formData.gmailUrl?.trim()) {
+      notifications.show({
+        message: "Gmail URL を入力してから取得してください",
+        color: "red",
+      });
+      return;
+    }
+    setGmailLoading(true);
+    const result = await fetchGmailBodyFromUrl(formData.gmailUrl);
+    setGmailLoading(false);
+    if (!result.success) {
+      notifications.show({ message: result.error, color: "red" });
+      return;
+    }
+    setFormData((f) => ({ ...f, sourceText: result.text }));
+    notifications.show({
+      message: "Gmail から本文を取得しました",
+      color: "green",
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,6 +215,18 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
               setFormData((f) => ({ ...f, gmailUrl: e.target.value }))
             }
           />
+          <Group justify="flex-end">
+            <Button
+              type="button"
+              variant="light"
+              leftSection={<IconMail size={16} />}
+              loading={gmailLoading}
+              disabled={!formData.gmailUrl?.trim()}
+              onClick={handleFetchGmail}
+            >
+              Gmailから本文取得
+            </Button>
+          </Group>
           <TextInput
             label="単価"
             value={formData.price ?? ""}
