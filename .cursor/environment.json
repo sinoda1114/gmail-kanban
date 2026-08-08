@@ -1,0 +1,4 @@
+{
+  "install": "pnpm install --frozen-lockfile",
+  "start": "pnpm dev"
+}
