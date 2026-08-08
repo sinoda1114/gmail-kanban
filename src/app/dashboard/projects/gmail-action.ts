@@ -27,17 +27,10 @@ async function gmailGetJson<T>(
     cache: "no-store",
   });
   if (!res.ok) {
-    let detail = "";
-    try {
-      const body = (await res.json()) as { error?: { message?: string } };
-      detail = body.error?.message ?? "";
-    } catch {
-      detail = "";
-    }
     return {
       ok: false,
       status: res.status,
-      error: detail || `Gmail API error (${res.status})`,
+      error: `メール取得に失敗しました（状態コード ${res.status}）`,
     };
   }
   return { ok: true, data: (await res.json()) as T };
@@ -77,7 +70,7 @@ async function resolveMessage(
     return {
       success: false,
       error:
-        "Google 認証が無効です。サインアウトして Google で再ログインしてください",
+        "Google認証が無効です。Gmail用の認証情報を入れ直すか、Googleで再ログインしてください",
     };
   }
 
@@ -85,7 +78,7 @@ async function resolveMessage(
     return {
       success: false,
       error:
-        "Gmail 読み取り権限がありません。GOOGLE_REFRESH_TOKEN に gmail.readonly 付きのトークンを設定してください",
+        "Gmailの読み取り権限がありません。読み取り権限付きのリフレッシュトークンを設定してください",
     };
   }
 
@@ -100,7 +93,7 @@ export async function fetchGmailBodyFromUrl(
   gmailUrl: string
 ): Promise<FetchGmailResult> {
   const { userId: clerkUserId } = await auth();
-  if (!clerkUserId) return { success: false, error: "Unauthorized" };
+  if (!clerkUserId) return { success: false, error: "ログインが必要です" };
 
   const id = parseGmailUrlId(gmailUrl);
   if (!id) {
@@ -114,7 +107,7 @@ export async function fetchGmailBodyFromUrl(
   const { token, error: tokenError } =
     await getGoogleAccessTokenForGmail(clerkUserId);
   if (!token) {
-    return { success: false, error: tokenError ?? "Google 連携が必要です" };
+    return { success: false, error: tokenError ?? "Gmail連携が必要です" };
   }
 
   const resolved = await resolveMessage(token, id);

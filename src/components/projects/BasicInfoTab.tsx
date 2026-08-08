@@ -21,7 +21,6 @@ import {
   IconPencil,
   IconTrash,
   IconExternalLink,
-  IconMail,
 } from "@tabler/icons-react";
 import type { Project } from "@/db/schema";
 import {
@@ -38,6 +37,7 @@ import {
 } from "@/app/dashboard/projects/actions";
 import type { UpdateProjectBasicInfoInput } from "@/app/dashboard/projects/actions";
 import { fetchGmailBodyFromUrl } from "@/app/dashboard/projects/gmail-action";
+import { GmailFetchFields } from "@/components/projects/GmailFetchFields";
 
 interface BasicInfoTabProps {
   project: Project;
@@ -209,25 +209,6 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
             }
           />
           <TextInput
-            label="Gmail URL"
-            value={formData.gmailUrl ?? ""}
-            onChange={(e) =>
-              setFormData((f) => ({ ...f, gmailUrl: e.target.value }))
-            }
-          />
-          <Group justify="flex-end">
-            <Button
-              type="button"
-              variant="light"
-              leftSection={<IconMail size={16} />}
-              loading={gmailLoading}
-              disabled={!formData.gmailUrl?.trim()}
-              onClick={handleFetchGmail}
-            >
-              Gmailから本文取得
-            </Button>
-          </Group>
-          <TextInput
             label="単価"
             value={formData.price ?? ""}
             onChange={(e) =>
@@ -306,13 +287,18 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
               setFormData((f) => ({ ...f, summary: e.target.value }))
             }
           />
-          <Textarea
-            label="メール本文"
-            rows={5}
-            value={formData.sourceText ?? ""}
-            onChange={(e) =>
-              setFormData((f) => ({ ...f, sourceText: e.target.value }))
+          <GmailFetchFields
+            gmailUrl={formData.gmailUrl ?? ""}
+            sourceText={formData.sourceText ?? ""}
+            onGmailUrlChange={(v) =>
+              setFormData((f) => ({ ...f, gmailUrl: v }))
             }
+            onSourceTextChange={(v) =>
+              setFormData((f) => ({ ...f, sourceText: v }))
+            }
+            onFetchGmail={handleFetchGmail}
+            gmailLoading={gmailLoading}
+            sourceRows={5}
           />
           <Group>
             <Button type="submit" loading={loading}>

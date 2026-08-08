@@ -31,13 +31,13 @@ async function tokenFromRefreshEnv(): Promise<TokenResult | null> {
   if (!res.ok) {
     return {
       error:
-        "GOOGLE_REFRESH_TOKEN の更新に失敗しました。Client ID/Secret/Refresh token を確認してください",
+        "Gmail用のリフレッシュトークン更新に失敗しました。クライアントID・シークレット・リフレッシュトークンを確認してください",
     };
   }
 
   const json = (await res.json()) as { access_token?: string };
   if (!json.access_token) {
-    return { error: "Google access token が取得できませんでした" };
+    return { error: "Googleのアクセストークンを取得できませんでした" };
   }
   return { token: json.access_token };
 }
@@ -54,13 +54,13 @@ async function tokenFromClerk(clerkUserId: string): Promise<TokenResult> {
     if (!token) {
       return {
         error:
-          "Google 資格情報がありません。GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REFRESH_TOKEN を設定するか、Google ログインしてください",
+          "Gmail用の認証情報がありません。クライアントID・シークレット・リフレッシュトークンを設定するか、Googleでログインしてください",
       };
     }
     return { token };
   } catch {
     return {
-      error: "Google アカウント連携の確認中にエラーが発生しました",
+      error: "Googleアカウント連携の確認中にエラーが発生しました",
     };
   }
 }

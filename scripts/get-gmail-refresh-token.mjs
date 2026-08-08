@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Gmail API 用 refresh token を CLI で取得する（Dashboard 操作不要）。
+ * Gmail API 用リフレッシュトークンを CLI で取得する（管理画面操作不要）。
  *
- * 前提: OAuth クライアント（Desktop または TV/Limited Input）の
+ * 前提: OAuth クライアント（デスクトップアプリ、またはテレビ／入力制限デバイス）の
  *       GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET が環境にあること。
- * 必要スコープ: https://www.googleapis.com/auth/gmail.readonly
+ * 必要権限: Gmail読み取り（gmail.readonly）
  *
  * 使い方:
  *   export GOOGLE_CLIENT_ID=...
@@ -18,7 +18,7 @@ const SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error(
-    "GOOGLE_CLIENT_ID と GOOGLE_CLIENT_SECRET を export してから実行してください"
+    "GOOGLE_CLIENT_ID と GOOGLE_CLIENT_SECRET を環境変数に設定してから実行してください"
   );
   process.exit(1);
 }
@@ -34,9 +34,9 @@ async function main() {
   });
   if (!deviceRes.ok) {
     const text = await deviceRes.text();
-    console.error("device code 取得失敗:", deviceRes.status, text);
+    console.error("端末認証コードの取得に失敗しました:", deviceRes.status, text);
     console.error(
-      "ヒント: OAuth クライアント種別が Desktop / TV and Limited Input である必要があります"
+      "ヒント: OAuthクライアント種別は「デスクトップアプリ」または「テレビ／入力制限デバイス」である必要があります"
     );
     process.exit(1);
   }
@@ -88,18 +88,18 @@ async function main() {
       continue;
     }
     if (json.error) {
-      console.error("トークン取得失敗:", json.error);
+      console.error("トークン取得に失敗しました:", json.error);
       process.exit(1);
     }
     if (!json.refresh_token) {
       console.error(
-        "refresh_token が返りませんでした。初回同意・prompt=consent 相当が必要です"
+        "リフレッシュトークンが返りませんでした。初回の同意が必要です。再度お試しください"
       );
       process.exit(1);
     }
 
     console.log("");
-    console.log("成功。次を secrets / .env.gmail に設定してください:");
+    console.log("成功しました。次をシークレットまたは .env.gmail に設定してください:");
     console.log("GOOGLE_CLIENT_ID=<既存の値>");
     console.log("GOOGLE_CLIENT_SECRET=<既存の値>");
     console.log(`GOOGLE_REFRESH_TOKEN=${json.refresh_token}`);

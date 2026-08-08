@@ -49,7 +49,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - `.env.local` は触らない（AGENTS.md 既存規律）。Cloud Agent ではシークレットを `/home/ubuntu/.config/gmail-kanban-secrets/` に置き、`source .../load.sh`（`~/.bashrc` からも自動読み込み）で注入する。
   - Clerk: `.env.clerk`（`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）
   - Gemini: `.env.gemini`（`GOOGLE_GENERATIVE_AI_API_KEY`）。アプリモデルは `gemini-3.1-flash-lite`。
-  - Gmail URL 本文取得: `.env.gmail`（`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN`）。Clerk Dashboard の Google SSO 設定は不要。refresh token 取得は `node scripts/get-gmail-refresh-token.mjs`。
+  - Gmail URL 本文取得: `.env.gmail`（`GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REFRESH_TOKEN`）。Clerk 管理画面の Google SSO 設定は不要。リフレッシュトークン取得は `node scripts/get-gmail-refresh-token.mjs`。ユーザー向け UI・エラー文言は日本語のみ。
 - Turso クラウド鍵が無い場合は `TURSO_DATABASE_URL=file:/workspace/local.db` + `pnpm exec drizzle-kit push` でローカル DB を使える。
 - Vercel の Sensitive env は CLI/API から読み戻せない。Dashboard から値をコピーして上記 secrets パスへ置く。
 - ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
