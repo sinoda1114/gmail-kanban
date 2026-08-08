@@ -1,19 +1,82 @@
-# 標準CI呼び出し（実体: https://github.com/sinoda1114/ci-standard）
+# CI パイプライン
+#
+# 目的: main への push / PR で「型・lint・テスト・ビルド・脆弱性監査」を一気通貫で検証する。
+# 方針（リポジトリのサプライチェーン規律に従う）:
+#   - パッケージマネージャは pnpm。依存解決は必ず `pnpm install --frozen-lockfile`（lockfile 厳守）。
+#   - `.npmrc` の ignore-scripts=true により postinstall は走らない。
+#     ビルドが必要なネイティブ依存は pnpm-workspace.yaml の allowBuilds で個別許可済み。
+#   - audit は high 閾値。moderate 以下は CI を落とさない（しきい値どおりで意図的に許容）。
+#
+# 注: 本番 env（DB / シークレット等）が build/test に不要になるよう、env 検証は遅延化し、
+#     DB を読むページは force-dynamic（リクエスト時評価）にしておくと CI が env 無しで通る。
 name: CI
 
 on:
-  pull_request:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
-  ci:
-    uses: sinoda1114/ci-standard/.github/workflows/node-ci.yml@main
-    secrets: inherit
+  build:
+    name: typecheck / lint / test / build / audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect Node project
+        id: detect
+        run: |
+          if [ -f package.json ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::package.json が無いため Node ステップをスキップ（テンプレ/初期 repo）"
+          fi
+
+      - name: Setup pnpm
+        if: steps.detect.outputs.run == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        if: steps.detect.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # lockfile 厳守でクリーンインストール（postinstall は .npmrc で無効）。
+      - name: Install dependencies
+        if: steps.detect.outputs.run == 'true'
+        run: pnpm install --frozen-lockfile
+
+      # 型チェック（tsconfig は noEmit 前提）。
+      - name: Type check
+        if: steps.detect.outputs.run == 'true'
+        run: pnpm typecheck
+
+      # ESLint。
+      - name: Lint
+        if: steps.detect.outputs.run == 'true'
+        run: pnpm lint
+
+      # 単体・結合テスト（DB 等はテスト内でモック）。
+      - name: Test
+        if: steps.detect.outputs.run == 'true'
+        run: pnpm test
+
+      # 本番ビルド（env 不要にしておくこと。上記の注を参照）。
+      - name: Build
+        if: steps.detect.outputs.run == 'true'
+        run: pnpm build
+
+      # 依存の脆弱性監査。high 以上で失敗。moderate 以下は許容。
+      - name: Audit dependencies
+        if: steps.detect.outputs.run == 'true'
+        run: pnpm audit --audit-level=high
