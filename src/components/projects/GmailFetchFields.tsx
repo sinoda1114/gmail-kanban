@@ -48,8 +48,8 @@ export function GmailFetchFields({
       <div>
         <TextInput
           label="メールのURL"
-          description="ジーメールで開いたメールのアドレスをそのまま貼り付け"
-          placeholder="mail.google.com で始まるメールのURL"
+          description="mail.google.com のメールURL（英数字ID）。FMfcgz形式は取得不可のため本文を直接貼ってください"
+          placeholder="https://mail.google.com/mail/u/0/#inbox/18c2f3a1b2d4e5f6"
           value={gmailUrl}
           onChange={(e) => onGmailUrlChange(e.currentTarget.value)}
         />

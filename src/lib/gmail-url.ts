@@ -43,9 +43,14 @@ export function parseGmailUrlId(rawUrl: string): string | null {
 
 function isGmailUiId(value: string): boolean {
   // Web UI: FMfcgz... / classic hex message ids / thread-f:...
-  if (/^FMfcgz[A-Za-z0-9]+$/.test(value)) return true;
+  if (/^FMfcgz[A-Za-z0-9]+$/i.test(value)) return true;
   if (/^[0-9a-f]{10,}$/i.test(value)) return true;
   if (/^thread-f:\d+$/i.test(value)) return true;
   if (/^[A-Za-z0-9_-]{10,}$/.test(value)) return true;
   return false;
+}
+
+/** 新しいGmail Webの同期ID。Gmail API の message/thread ID には使えない。 */
+export function isGmailWebSyncId(id: string): boolean {
+  return /^FMfcgz[A-Za-z0-9]+$/i.test(id.trim());
 }

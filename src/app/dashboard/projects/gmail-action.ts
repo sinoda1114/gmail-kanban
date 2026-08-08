@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { parseGmailUrlId } from "@/lib/gmail-url";
+import { isGmailWebSyncId, parseGmailUrlId } from "@/lib/gmail-url";
 import { getGoogleAccessTokenForGmail } from "@/lib/google-access-token";
 import {
   extractTextFromGmailMessage,
@@ -100,7 +100,16 @@ export async function fetchGmailBodyFromUrl(
     return {
       success: false,
       error:
-        "Gmail URL を認識できません。mail.google.com のメール個別URLを貼ってください",
+        "メールのURLを認識できません。mail.google.com のメール個別URLを貼ってください",
+    };
+  }
+
+  // FMfcgz... は Web 同期IDで、Gmail API では Invalid id になる（変換不可）
+  if (isGmailWebSyncId(id)) {
+    return {
+      success: false,
+      error:
+        "このURL形式（FMfcgzで始まるID）はGmail APIで開けません。メール本文を直接貼るか、英数字の古い形式のURLを使ってください",
     };
   }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseGmailUrlId } from "../gmail-url";
+import { isGmailWebSyncId, parseGmailUrlId } from "../gmail-url";
 import {
   extractTextFromGmailMessage,
   formatFetchedMail,
@@ -33,6 +33,11 @@ describe("parseGmailUrlId", () => {
 
   it("rejects empty", () => {
     expect(parseGmailUrlId("")).toBeNull();
+  });
+
+  it("detects web sync ids", () => {
+    expect(isGmailWebSyncId("FMfcgzQhVNQgLwpqNCTfGCjmQgqBCMxB")).toBe(true);
+    expect(isGmailWebSyncId("18c2f3a1b2d4e5f6")).toBe(false);
   });
 });
 
