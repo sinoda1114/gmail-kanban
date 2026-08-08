@@ -1,7 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import {
-  AppShell,
   Container,
   Title,
   Stack,
@@ -11,7 +10,7 @@ import {
   Paper,
   Anchor,
 } from "@mantine/core";
-import { AppHeader } from "@/components/layout/AppHeader";
+import { DashboardShell } from "@/components/layout/DashboardShell";
 import { db } from "@/db/client";
 import { projects, users, interviewPreparations } from "@/db/schema";
 import { eq, and, notInArray } from "drizzle-orm";
@@ -161,76 +160,71 @@ export default async function AlertsPage() {
   reminders.sort((a, b) => ORDER[a.reminderType] - ORDER[b.reminderType]);
 
   return (
-    <AppShell header={{ height: 60 }}>
-      <AppShell.Header>
-        <AppHeader />
-      </AppShell.Header>
-      <AppShell.Main>
-        <Container size="lg" py="md">
-          <Title order={2} mb="lg">
-            要対応一覧
-          </Title>
+    <DashboardShell>
+      <Container size="lg" py="md">
+        <Title order={2} mb="lg">
+          要対応一覧
+        </Title>
 
-          {reminders.length === 0 ? (
-            <Text c="dimmed" ta="center" py="xl">
-              現在、対応が必要な案件はありません。
-            </Text>
-          ) : (
-            <Stack gap="sm">
-              {reminders.map((r) => (
-                <Paper
-                  key={r.projectId + r.reminderType}
-                  withBorder
-                  p="md"
-                  radius="md"
-                >
-                  <Group justify="space-between" wrap="nowrap">
-                    <Stack gap={4}>
-                      <Anchor
-                        href={`/dashboard/projects/${r.projectId}`}
-                        fw={600}
-                        size="sm"
-                      >
-                        {r.projectTitle}
-                      </Anchor>
-                      <Group gap="xs">
-                        <Badge
-                          size="xs"
-                          variant="light"
-                          color={
-                            STATUS_COLORS[r.projectStatus as ProjectStatus] ?? "gray"
-                          }
-                        >
-                          {STATUS_LABELS[r.projectStatus as ProjectStatus] ??
-                            r.projectStatus}
-                        </Badge>
-                        {r.reminderType !== "interview" && (
-                          <Text size="xs" c="dimmed">
-                            {r.daysElapsed}日経過
-                          </Text>
-                        )}
-                        {r.reminderType === "interview" && (
-                          <Text size="xs" c="dimmed">
-                            明日面談
-                          </Text>
-                        )}
-                      </Group>
-                    </Stack>
-                    <Badge
+        {reminders.length === 0 ? (
+          <Text c="dimmed" ta="center" py="xl">
+            現在、対応が必要な案件はありません。
+          </Text>
+        ) : (
+          <Stack gap="sm">
+            {reminders.map((r) => (
+              <Paper
+                key={r.projectId + r.reminderType}
+                withBorder
+                p="md"
+                radius="md"
+              >
+                <Group justify="space-between" wrap="nowrap">
+                  <Stack gap={4}>
+                    <Anchor
+                      href={`/dashboard/projects/${r.projectId}`}
+                      fw={600}
                       size="sm"
-                      variant="filled"
-                      color={r.badgeColor}
-                      style={{ whiteSpace: "nowrap" }}
                     >
-                      {r.label}
-                    </Badge>
-                  </Group>
-                </Paper>
-              ))}
-            </Stack>
-          )}
-        </Container>
-      </AppShell.Main>
-    </AppShell>
+                      {r.projectTitle}
+                    </Anchor>
+                    <Group gap="xs">
+                      <Badge
+                        size="xs"
+                        variant="light"
+                        color={
+                          STATUS_COLORS[r.projectStatus as ProjectStatus] ?? "gray"
+                        }
+                      >
+                        {STATUS_LABELS[r.projectStatus as ProjectStatus] ??
+                          r.projectStatus}
+                      </Badge>
+                      {r.reminderType !== "interview" && (
+                        <Text size="xs" c="dimmed">
+                          {r.daysElapsed}日経過
+                        </Text>
+                      )}
+                      {r.reminderType === "interview" && (
+                        <Text size="xs" c="dimmed">
+                          明日面談
+                        </Text>
+                      )}
+                    </Group>
+                  </Stack>
+                  <Badge
+                    size="sm"
+                    variant="filled"
+                    color={r.badgeColor}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    {r.label}
+                  </Badge>
+                </Group>
+              </Paper>
+            ))}
+          </Stack>
+        )}
+      </Container>
+    </DashboardShell>
   );
 }

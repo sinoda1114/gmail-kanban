@@ -1,4 +1,5 @@
 # 標準CI呼び出し（実体: https://github.com/sinoda1114/ci-standard）
+# パッケージマネージャ（pnpm等）は標準CIが lockfile から自動判定する。
 name: CI
 
 on:
@@ -16,4 +17,4 @@ permissions:
 jobs:
   ci:
     uses: sinoda1114/ci-standard/.github/workflows/node-ci.yml@main
-    secrets: inherit
+# re-run: 標準CI(Node22/pnpm対応)取り込み

@@ -41,3 +41,12 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - AI 検証は `tsc` / `eslint` / `test` で行う（手動確認をユーザーに丸投げしない）。
 - `.env.local` は触らない・中身を出力しない（本番 env は Vercel ダッシュボードが正本）。
 - シークレット（API キー・トークン）はログ / 出力に出さない。必要なら redact する。
+
+## Cursor Cloud specific instructions
+
+- パッケージ管理は `pnpm`（`packageManager: pnpm@11.5.0`）。依存更新は `pnpm install --frozen-lockfile`。
+- 検証コマンドは `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm build`（CI と同じ）。dev は `pnpm dev`（port 3000）。dev 起動中に本番ビルドや `.next` 削除をしない。
+- `.env.local` は触らない（AGENTS.md 既存規律）。Cloud Agent では Clerk 等を `/home/ubuntu/.config/gmail-kanban-secrets/.env.clerk` に置き、`source .../load.sh`（`~/.bashrc` からも自動読み込み）で注入する。
+- Turso クラウド鍵が無い場合は `TURSO_DATABASE_URL=file:/workspace/local.db` + `pnpm exec drizzle-kit push` でローカル DB を使える。
+- Vercel の Sensitive env は CLI/API から読み戻せない。Gemini キーが要るときは Secrets か AI Studio から別途用意する。
+- ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
