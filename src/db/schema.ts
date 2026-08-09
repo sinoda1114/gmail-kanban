@@ -4,6 +4,7 @@ import {
   integer,
   sqliteTable,
 } from "drizzle-orm/sqlite-core";
+import type { InterviewRetrospective } from "@/types/retrospective";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -157,6 +158,7 @@ export const interviewNotes = sqliteTable("interview_notes", {
   concern: text("concern"),
   nextAction: text("next_action"),
   resultStatus: text("result_status"),
+  retrospective: text("retrospective", { mode: "json" }).$type<InterviewRetrospective>(),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });

@@ -19,6 +19,7 @@ import {
   type ProjectStatus,
 } from "@/types/project";
 import { saveInterviewNote } from "@/app/dashboard/projects/interview-notes-action";
+import { RetrospectiveSection } from "./RetrospectiveSection";
 
 interface InterviewNoteTabProps {
   project: Project;
@@ -155,6 +156,8 @@ export function InterviewNoteTab({ project, note }: InterviewNoteTabProps) {
           保存
         </Button>
       </Group>
+
+      <RetrospectiveSection project={project} note={note} currentNotes={form} />
     </Stack>
   );
 }

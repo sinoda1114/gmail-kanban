@@ -35,6 +35,7 @@ import {
 import type { UpdateProjectBasicInfoInput } from "@/app/dashboard/projects/actions";
 import { RePasteUpdateSection } from "./RePasteUpdateSection";
 import { ReplyDraftSection } from "./ReplyDraftSection";
+import { NegotiationSection } from "./NegotiationSection";
 
 interface BasicInfoTabProps {
   project: Project;
@@ -390,6 +391,7 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
 
       <RePasteUpdateSection project={project} />
       <ReplyDraftSection project={project} />
+      <NegotiationSection project={project} />
     </Stack>
   );
 }
