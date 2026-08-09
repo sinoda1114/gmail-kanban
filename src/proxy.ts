@@ -15,8 +15,8 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // api/health は E2E レディネス用に Clerk ミドルウェア対象外
-    "/((?!_next|api/health|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api(?!/health)|trpc)(.*)",
+    // /api/health のみ Clerk 対象外（healthcare 等は除外しない）
+    "/((?!_next|api/health(?:/.*)?$|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api(?!/health(?:/|$))|trpc)(.*)",
   ],
 };
