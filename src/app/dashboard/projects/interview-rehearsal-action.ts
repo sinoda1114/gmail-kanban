@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import {
   RehearsalFeedbackSchema,
   type RehearsalFeedback,
@@ -61,7 +62,7 @@ export async function getRehearsalFeedback(
     where: eq(interviewAnswers.questionId, questionId),
   });
 
-  const modelId = "gemini-3.1-flash-lite";
+  const modelId = GEMINI_MODEL_ID;
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
     : "";
