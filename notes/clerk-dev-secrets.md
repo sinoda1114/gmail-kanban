@@ -7,13 +7,20 @@
 
 ## 同期コマンド
 
-番人マシン（リポ root、`clerk auth login` + `clerk link` 済み）:
+番人マシン（`clerk auth login` 済み。`/tmp` からでも可）:
 
 ```bash
+# リポ内
 ./scripts/sync-clerk-dev-secrets.sh
+
+# または main から直接
+curl -fsSL https://raw.githubusercontent.com/sinoda1114/gmail-kanban/main/scripts/sync-clerk-dev-secrets.sh -o /tmp/sync-clerk-dev-secrets.sh
+chmod +x /tmp/sync-clerk-dev-secrets.sh
+# ~/dev/gmail-kanban にいること（.env.local 更新先）
+cd ~/dev/gmail-kanban && /tmp/sync-clerk-dev-secrets.sh
 ```
 
-毎回 `clerk env pull --instance dev` してから、次へ**上書き**する（値が同じならローカルはスキップ、GitHub Actions は読めないので毎回 set）。
+毎回 `clerk env pull --app <gmail-kanban> --instance dev` してから、次へ**上書き**する（値が同じならローカルはスキップ、GitHub Actions は読めないので毎回 set）。
 
 | ターゲット | パス / 場所 |
 |---|---|

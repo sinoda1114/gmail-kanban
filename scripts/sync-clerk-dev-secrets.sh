@@ -15,11 +15,34 @@ set -euo pipefail
 
 REPO="${REPO:-sinoda1114/gmail-kanban}"
 INSTANCE="${INSTANCE:-dev}"
+# linked 済みなら不要。/tmp 実行や未 link ディレクトリ向けの明示指定
+CLERK_APP="${CLERK_APP:-app_3HcCjWlFNG5hXBCkT7Xmv9Mp77Y}"
 SECRETS_DIR="${SECRETS_DIR:-$HOME/.config/gmail-kanban-secrets}"
 SKIP_GITHUB="${SKIP_GITHUB:-0}"
 SKIP_SECRETS_DIR="${SKIP_SECRETS_DIR:-0}"
 SKIP_DOTENV_LOCAL="${SKIP_DOTENV_LOCAL:-0}"
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# /tmp から curl 実行してもリポ root を正しく取る
+resolve_root() {
+  local script_dir candidate
+  script_dir="$(cd "$(dirname "$0")" && pwd)"
+  if [[ -f "${script_dir}/../package.json" && -d "${script_dir}/../scripts" ]]; then
+    cd "${script_dir}/.." && pwd
+    return
+  fi
+  if candidate="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)" \
+    && [[ -f "${candidate}/package.json" ]]; then
+    printf '%s\n' "$candidate"
+    return
+  fi
+  if [[ -f "${PWD}/package.json" && -d "${PWD}/scripts" ]]; then
+    printf '%s\n' "$PWD"
+    return
+  fi
+  echo "リポ root を特定できません。~/dev/gmail-kanban で実行するか、git checkout 済みのリポ内で走らせてください。" >&2
+  exit 1
+}
+ROOT="$(resolve_root)"
 
 sha256_16() {
   if command -v sha256sum >/dev/null 2>&1; then
@@ -88,10 +111,11 @@ fi
 TMP="$(mktemp -t clerk-dev-sync.XXXXXX)"
 trap 'rm -f "$TMP"' EXIT
 
-echo "==> Pulling Clerk keys (instance=${INSTANCE}) — this is the only source of truth"
-# 壊れたローカル env を正本にしない
+echo "==> Pulling Clerk keys (instance=${INSTANCE}, app=${CLERK_APP}) — this is the only source of truth"
+echo "Repo root: ${ROOT}"
+# 壊れたローカル env を正本にしない。--app で link 状態に依存しない
 env -u CLERK_SECRET_KEY -u NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
-  clerk env pull --instance "$INSTANCE" --file "$TMP" --mode agent
+  clerk env pull --app "$CLERK_APP" --instance "$INSTANCE" --file "$TMP" --mode agent
 
 PK="$(read_env_key "$TMP" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)"
 SK="$(read_env_key "$TMP" CLERK_SECRET_KEY)"
@@ -153,26 +177,34 @@ if [[ "$SKIP_SECRETS_DIR" != "1" ]]; then
   fi
 fi
 
-# --- 2) repo .env.local via clerk (merge) ---
+# --- 2) repo .env.local（取得済みキーを upsert。link / 2回目 pull 不要） ---
+upsert_env_keys() {
+  local file="$1" pk="$2" sk="$3" tmp
+  umask 077
+  tmp="$(mktemp "${file}.XXXXXX")"
+  if [[ -f "$file" ]]; then
+    # 対象キー行以外を残す
+    grep -Ev '^[[:space:]]*(NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY|CLERK_SECRET_KEY)=' "$file" >"$tmp" || true
+  else
+    : >"$tmp"
+  fi
+  {
+    printf 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=%s\n' "$pk"
+    printf 'CLERK_SECRET_KEY=%s\n' "$sk"
+  } >>"$tmp"
+  mv "$tmp" "$file"
+  chmod 600 "$file"
+}
+
 if [[ "$SKIP_DOTENV_LOCAL" != "1" ]]; then
   LOCAL_ENV="${ROOT}/.env.local"
   OLD_PK="$(read_env_key "$LOCAL_ENV" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)"
   OLD_SK="$(read_env_key "$LOCAL_ENV" CLERK_SECRET_KEY)"
   if [[ -n "$OLD_PK" && -n "$OLD_SK" && "$(fingerprint "$OLD_PK" "$OLD_SK")" == "$FP" ]]; then
-    echo ".env.local: unchanged"
+    echo ".env.local: unchanged (${LOCAL_ENV})"
   else
-    (
-      cd "$ROOT"
-      env -u CLERK_SECRET_KEY -u NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
-        clerk env pull --instance "$INSTANCE" --file .env.local --mode agent
-    )
-    NEW_PK="$(read_env_key "$LOCAL_ENV" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)"
-    NEW_SK="$(read_env_key "$LOCAL_ENV" CLERK_SECRET_KEY)"
-    if [[ "$(fingerprint "$NEW_PK" "$NEW_SK")" != "$FP" ]]; then
-      echo ".env.local: pull 後も fingerprint が一致しません" >&2
-      exit 1
-    fi
-    echo ".env.local: updated"
+    upsert_env_keys "$LOCAL_ENV" "$PK" "$SK"
+    echo ".env.local: updated (${LOCAL_ENV})"
     CHANGED=1
   fi
 fi
@@ -197,7 +229,5 @@ if [[ "$SKIP_GITHUB" != "1" ]]; then
 fi
 
 echo "==> Done (fingerprint=${FP})"
-if [[ "$CHANGED" -eq 0 ]]; then
-  echo "All local targets already matched Clerk. GitHub was skipped or unchanged path."
-fi
+echo "Targets: secrets_dir=$([ "$SKIP_SECRETS_DIR" = "1" ] && echo skip || echo on) dotenv_local=$([ "$SKIP_DOTENV_LOCAL" = "1" ] && echo skip || echo on) github=$([ "$SKIP_GITHUB" = "1" ] && echo skip || echo on) local_writes_changed=${CHANGED}"
 echo "Rule: never treat a stale .env file as source of truth. Re-run this script after any Clerk key rotation."
