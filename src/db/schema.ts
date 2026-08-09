@@ -70,6 +70,7 @@ export const interviewPreparations = sqliteTable("interview_preparations", {
   strategy: text("strategy"),
   concerns: text("concerns", { mode: "json" }).$type<string[]>(),
   checklist: text("checklist", { mode: "json" }).$type<string[]>(),
+  careerMemo: text("career_memo"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });

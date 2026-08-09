@@ -45,6 +45,8 @@ import {
   toggleReverseQuestionChecked,
 } from "@/app/dashboard/projects/interview-prep-action";
 import { createCalendarEvent } from "@/app/dashboard/projects/calendar-action";
+import { InterviewCareerMemoSection } from "./InterviewCareerMemoSection";
+import { InterviewRehearsalSection } from "./InterviewRehearsalSection";
 
 interface QuestionWithAnswer extends InterviewQuestion {
   answer: InterviewAnswer | null;
@@ -444,6 +446,17 @@ export function InterviewPrepTab({
               </Paper>
             </div>
           )}
+
+          <Divider />
+
+          <InterviewCareerMemoSection
+            projectId={project.id}
+            initialCareerMemo={prep?.careerMemo ?? null}
+            questions={initialQuestions}
+            userAnswers={userAnswers}
+          />
+
+          <InterviewRehearsalSection questions={initialQuestions} />
         </>
       )}
     </Stack>
