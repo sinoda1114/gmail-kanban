@@ -7,13 +7,23 @@ import { SortableProjectCard } from "./SortableProjectCard";
 import type { Project } from "@/db/schema";
 import { STATUS_COLORS, type ProjectStatus } from "@/types/project";
 
+export type KanbanColumnProject = Project & {
+  interviewAt?: string | null;
+};
+
 interface KanbanColumnProps {
   status: ProjectStatus;
   label: string;
-  projects: Project[];
+  projects: KanbanColumnProject[];
+  onStatusChange?: (projectId: string, newStatus: ProjectStatus) => void;
 }
 
-export function KanbanColumn({ status, label, projects }: KanbanColumnProps) {
+export function KanbanColumn({
+  status,
+  label,
+  projects,
+  onStatusChange,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
@@ -33,12 +43,7 @@ export function KanbanColumn({ status, label, projects }: KanbanColumnProps) {
         <Text fw={600} size="sm">
           {label}
         </Text>
-        <Badge
-          color={STATUS_COLORS[status]}
-          size="sm"
-          variant="filled"
-          circle
-        >
+        <Badge color={STATUS_COLORS[status]} size="sm" variant="filled" circle>
           {projects.length}
         </Badge>
       </Group>
@@ -50,7 +55,12 @@ export function KanbanColumn({ status, label, projects }: KanbanColumnProps) {
         >
           <Stack gap="sm">
             {projects.map((project) => (
-              <SortableProjectCard key={project.id} project={project} />
+              <SortableProjectCard
+                key={project.id}
+                project={project}
+                interviewAt={project.interviewAt}
+                onStatusChange={onStatusChange}
+              />
             ))}
           </Stack>
         </SortableContext>

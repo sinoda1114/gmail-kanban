@@ -19,9 +19,10 @@ import { ProjectDetailView } from "@/components/projects/ProjectDetailView";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
-export default async function ProjectDetailPage({ params }: PageProps) {
+export default async function ProjectDetailPage({ params, searchParams }: PageProps) {
   const { userId: clerkUserId } = await auth();
   if (!clerkUserId) redirect("/sign-in");
 
@@ -31,6 +32,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   if (!user) redirect("/onboarding");
 
   const { id } = await params;
+  const { tab } = await searchParams;
 
   const project = await db.query.projects.findFirst({
     where: and(eq(projects.id, id), eq(projects.userId, user.id)),
@@ -114,6 +116,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
           reverseQuestions={reverseQs}
           interviewNote={note ?? null}
           calendarEvent={calendarEvent ?? null}
+          initialTab={tab}
         />
       </Container>
     </DashboardShell>

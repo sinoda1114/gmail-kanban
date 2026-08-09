@@ -6,7 +6,15 @@ import {
   CLOSE_REASONS,
   CLOSE_REASON_LABELS,
   REMINDER_TYPES,
+  isProjectStatus,
 } from "../project";
+
+describe("isProjectStatus", () => {
+  it("validates project statuses", () => {
+    expect(isProjectStatus("reply_required")).toBe(true);
+    expect(isProjectStatus("invalid")).toBe(false);
+  });
+});
 
 describe("project status definitions", () => {
   it("仕様書の8ステータスをすべて持つ", () => {
