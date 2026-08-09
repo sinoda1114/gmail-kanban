@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Stack,
@@ -181,6 +181,29 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
     return buildProposedChanges(project, extraction, newSourceText);
   }, [project, extraction, newSourceText]);
 
+  // Drop acceptance flags for rows no longer in the visible diff table
+  // (e.g. sourceText disappears when pasted text matches stored body).
+  useEffect(() => {
+    const visibleKeys = new Set(proposedChanges.map((c) => c.key));
+    setAccepted((prev) => {
+      const next: AcceptedProjectUpdateFields = {};
+      for (const key of Object.keys(prev) as FieldKey[]) {
+        if (visibleKeys.has(key) && prev[key]) {
+          next[key] = true;
+        }
+      }
+      const prevKeys = Object.keys(prev).filter((k) => prev[k as FieldKey]);
+      const nextKeys = Object.keys(next);
+      if (
+        prevKeys.length === nextKeys.length &&
+        prevKeys.every((k) => next[k as FieldKey])
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [proposedChanges]);
+
   async function handleExtract() {
     if (!newSourceText.trim()) {
       setError("新しいメール本文を貼り付けてください");
@@ -248,11 +271,16 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
 
     setApplyError(null);
     setApplying(true);
+    const visibleAccepted = Object.fromEntries(
+      proposedChanges
+        .filter((c) => accepted[c.key])
+        .map((c) => [c.key, true])
+    ) as AcceptedProjectUpdateFields;
     const result = await applyAcceptedProjectUpdates(
       project.id,
       newSourceText,
       extraction,
-      accepted
+      visibleAccepted
     );
     setApplying(false);
 
