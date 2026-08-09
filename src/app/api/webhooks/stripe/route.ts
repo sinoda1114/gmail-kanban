@@ -111,6 +111,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       .set({
         stripeCustomerId,
         stripeSubscriptionId: getSubscriptionId(session.subscription) ?? existing.stripeSubscriptionId,
+        plan: "pro",
         updatedAt: now,
       })
       .where(eq(billingSubscriptions.id, existing.id));
@@ -122,7 +123,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     userId,
     stripeCustomerId,
     stripeSubscriptionId: getSubscriptionId(session.subscription),
-    plan: "free",
+    plan: "pro",
     status: "active",
     currentPeriodEnd: null,
     createdAt: now,
