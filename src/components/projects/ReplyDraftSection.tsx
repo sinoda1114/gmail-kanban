@@ -32,8 +32,15 @@ export function ReplyDraftSection({ project }: ReplyDraftSectionProps) {
     const result = await generateReplyDraft(project.id);
     setAiLoading(false);
 
-    if (!result.success || !result.draft) {
+    if (!result.success) {
       setError(result.error ?? "AI処理に失敗しました");
+      return;
+    }
+
+    if (!result.draft?.trim()) {
+      setError(
+        "返信ドラフトが生成されませんでした。もう一度お試しください。"
+      );
       return;
     }
 

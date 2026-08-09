@@ -39,6 +39,7 @@ export async function generateReplyDraft(
   const project = await getOwnedProject(projectId, user.id);
   if (!project) return { success: false, error: "Project not found" };
 
+  // Project-standard model id (see AGENTS.md); keep in sync with other AI actions.
   const modelId = "gemini-3.1-flash-lite";
   const agentLabel = [project.agentCompany, project.agentPerson]
     .filter(Boolean)
@@ -82,8 +83,21 @@ ${truncateText(project.sourceText, 2000)}
       createdAt: new Date().toISOString(),
     });
 
-    return { success: true, draft: object.body };
-  } catch {
+    const draft = object.body.trim();
+    if (!draft) {
+      return {
+        success: false,
+        error: "返信ドラフトが生成されませんでした。もう一度お試しください。",
+      };
+    }
+
+    return { success: true, draft };
+  } catch (error) {
+    console.error("reply_draft generation failed", {
+      projectId,
+      taskType: "reply_draft",
+      message: error instanceof Error ? error.message : "unknown error",
+    });
     return { success: false, error: "AI処理に失敗しました" };
   }
 }

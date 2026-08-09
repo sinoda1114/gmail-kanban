@@ -44,6 +44,7 @@ export async function extractProjectUpdateFromText(
     return { success: false, error: "テキストを入力してください" };
   }
 
+  // Project-standard model id (see AGENTS.md); keep in sync with other AI actions.
   const modelId = "gemini-3.1-flash-lite";
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
@@ -184,6 +185,13 @@ export async function applyAcceptedProjectUpdates(
   }
   if (accepted.sourceText && newSourceText.trim()) {
     input.sourceText = newSourceText.trim();
+  }
+
+  if (Object.keys(input).length === 0) {
+    return {
+      success: false,
+      error: "選択した項目に適用できる値がありません",
+    };
   }
 
   const result = await updateProjectBasicInfo(projectId, input);

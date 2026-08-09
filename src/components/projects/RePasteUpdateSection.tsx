@@ -174,6 +174,7 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
   const [concerns, setConcerns] = useState<string[]>([]);
   const [accepted, setAccepted] = useState<AcceptedProjectUpdateFields>({});
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   const proposedChanges = useMemo(() => {
     if (!extraction) return [];
@@ -245,6 +246,7 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
       return;
     }
 
+    setApplyError(null);
     setApplying(true);
     const result = await applyAcceptedProjectUpdates(
       project.id,
@@ -253,9 +255,9 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
       accepted
     );
     setApplying(false);
-    setConfirmOpen(false);
 
     if (result.success) {
+      setConfirmOpen(false);
       notifications.show({
         color: "green",
         message: `${selectedCount}件の項目を更新しました`,
@@ -264,9 +266,10 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
       setExtraction(null);
       setConcerns([]);
       setAccepted({});
+      setApplyError(null);
       router.refresh();
     } else {
-      setError(result.error ?? "更新に失敗しました");
+      setApplyError(result.error ?? "更新に失敗しました");
     }
   }
 
@@ -401,7 +404,10 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
               <Button
                 color="teal"
                 disabled={selectedCount === 0}
-                onClick={() => setConfirmOpen(true)}
+                onClick={() => {
+                  setApplyError(null);
+                  setConfirmOpen(true);
+                }}
               >
                 選択した項目を適用
               </Button>
@@ -412,10 +418,18 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
 
       <Modal
         opened={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
+        onClose={() => {
+          setConfirmOpen(false);
+          setApplyError(null);
+        }}
         title="更新内容の確認"
       >
         <Stack gap="sm">
+          {applyError && (
+            <Alert color="red" title="エラー">
+              {applyError}
+            </Alert>
+          )}
           <Text size="sm">
             選択した {selectedCount} 件の項目を案件情報に反映します。よろしいですか？
           </Text>
@@ -423,7 +437,13 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
             この操作は取り消せません。適用後も編集画面から個別に修正できます。
           </Text>
           <Group justify="flex-end">
-            <Button variant="default" onClick={() => setConfirmOpen(false)}>
+            <Button
+              variant="default"
+              onClick={() => {
+                setConfirmOpen(false);
+                setApplyError(null);
+              }}
+            >
               キャンセル
             </Button>
             <Button color="teal" loading={applying} onClick={handleApply}>
