@@ -6,9 +6,24 @@ import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/dates/styles.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
 export const metadata: Metadata = {
+  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
   title: "Gmail Kanban",
-  description: "Gmail案件タスク管理アプリ",
+  description: "Gmailの案件をカンバンで管理するタスク管理アプリ",
+  openGraph: {
+    title: "Gmail Kanban",
+    description: "Gmailの案件をカンバンで管理するタスク管理アプリ",
+    type: "website",
+    locale: "ja_JP",
+    siteName: "Gmail Kanban",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Gmail Kanban",
+    description: "Gmailの案件をカンバンで管理するタスク管理アプリ",
+  },
 };
 
 export default function RootLayout({
