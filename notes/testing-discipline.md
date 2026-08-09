@@ -1,0 +1,80 @@
+# テスト規律（Vitest / 選択的 TDD / Playwright E2E）
+
+> 正本。エージェント・人間ともここに従う。  
+> 目的: 看板のコア（ステータス・AI JSON・ユーザー分離・主要画面）を壊さないこと。  
+> 全面 TDD は求めない。効くところにテストを先置きする。
+
+## 1. レイヤとやり方
+
+| レイヤ | ツール | 規律 |
+|---|---|---|
+| 純ロジック（`src/lib/*`、Zod スキーマ、ステータス判定、fingerprint 等） | Vitest | **テスト先行（選択的 TDD）**。実装前か同時に failing/passing テストを書く |
+| Server Action / UI の薄い配線 | Vitest（切り出せるなら） | ロジックを `lib` に寄せてからテスト。コンポーネント全部の RTL は必須にしない |
+| ユーザーが踏む主要経路 | Playwright | **E2E スモーク＋クリティカルパス**。機能追加で経路が変わるなら更新 |
+
+## 2. 選択的 TDD（いつ先にテストを書くか）
+
+**必ずテストを先（または実装と同コミットで必ず）書くもの**
+
+- ステータス遷移・ボール判定・経過日数
+- リマインド fingerprint / 再掲ルール
+- AI 出力の Zod スキーマ（不正 JSON を落とす）
+- Gmail URL パース、課金上限判定など境界ロジック
+
+**テスト後追いでよいもの**
+
+- 見た目・レイアウトだけの変更
+- 一度きりのコピー調整
+- 外部 API の薄いラッパ（モックコストが高い場合は E2E か手動 Preview で補う）
+
+流れ（純ロジック）:
+
+1. 振る舞いをテストで書く（Red）
+2. 最小実装（Green）
+3. 整理（Refactor）。テストは緑のまま
+
+## 3. E2E（Playwright）
+
+- コマンド: `pnpm test:e2e`（内部で `build` → Playwright。標準 CI も同じスクリプト）
+- 置き場: `e2e/**/*.spec.ts`
+- `@clerk/testing` + Testing Token を使う（development instance の `dev-browser-missing` 回避）
+- ホストは **`localhost`**（`127.0.0.1` だと Clerk rewrite が 500 になりやすい）
+- 最初の必須スモーク: 未ログインで `/sign-in` に到達／保護ルートが sign-in へ誘導
+- 認証後フロー（カンバン DnD・案件作成など）は Clerk テストユーザー／Secrets が揃ってから追加する
+
+### CI での扱い
+
+- 標準 CI（`ci-standard`）: `playwright.config.*` があれば `ci / e2e` が走る
+- Clerk 用の GitHub Actions Secrets が未整備の間は `.github/ci-skip-e2e` でジョブをスキップしてよい
+- Secrets を入れたら **`ci-skip-e2e` を削除**して CI 上でも E2E を必須化する
+- ローカル / Cursor Cloud では secrets を読んで `pnpm test:e2e` を回す（エージェント検証に含める）
+
+## 4. エージェントの検証ゲート（更新）
+
+機能 PR を出す前に、変更に応じて次を通す:
+
+1. `pnpm typecheck`
+2. `pnpm lint`
+3. `pnpm test`（Vitest。新規純ロジックにはテスト追加が原則）
+4. `pnpm test:e2e`（E2E 対象を触った、またはスモークが壊れる可能性があるとき。Cloud/ローカルで実行）
+5. 必要なら `pnpm build`（dev サーバ非起動時）
+
+ユーザーに手動回帰を丸投げしない。Preview URL 確認は番人・人間の最終確認用。
+
+## 5. Issue / Done 条件
+
+タスク Issue の Done に次を含める（テンプレ準拠）:
+
+- [ ] 純ロジックを触った場合: Vitest を追加または更新した
+- [ ] 主要 UI 経路を触った場合: 関連 E2E を追加または更新した（未整備なら理由を PR に書く）
+- [ ] `tsc` / `lint` / `test`（＋該当時 `test:e2e`）が通る
+
+## 6. 優先して守る回帰対象（この PJ）
+
+docs の初期方針どおり、特に次を落とさない:
+
+- AI 出力 JSON（Zod）
+- ステータス変更・履歴
+- ユーザーごとのデータ分離
+- 要対応／リマインド再掲
+- 認証ゲート（未ログイン → sign-in）

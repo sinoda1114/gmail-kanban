@@ -4,6 +4,7 @@ import {
   integer,
   sqliteTable,
 } from "drizzle-orm/sqlite-core";
+import type { InterviewRetrospective } from "@/types/retrospective";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -70,6 +71,46 @@ export const interviewPreparations = sqliteTable("interview_preparations", {
   strategy: text("strategy"),
   concerns: text("concerns", { mode: "json" }).$type<string[]>(),
   checklist: text("checklist", { mode: "json" }).$type<string[]>(),
+  careerMemo: text("career_memo"),
+  companyBrief: text("company_brief", { mode: "json" }).$type<{
+    domain: string;
+    hypotheses: Array<{
+      text: string;
+      basis: "evidence" | "speculation";
+      sourceHint?: string;
+    }>;
+    talkingPoints: string[];
+    topicsToAvoid: string[];
+  } | null>(),
+  techDeepDive: text("tech_deep_dive", { mode: "json" }).$type<
+    Array<{
+      tech: string;
+      deepDiveTopics: string[];
+      experienceConnection: string;
+      phrasesToAvoid: string[];
+    }> | null
+  >(),
+  redFlags: text("red_flags", { mode: "json" }).$type<
+    Array<{
+      flag: string;
+      severity: "high" | "medium" | "low";
+      confirmationQuestion: string;
+      category:
+        | "rate"
+        | "work_style"
+        | "onsite"
+        | "period"
+        | "vague_requirements"
+        | "other";
+    }> | null
+  >(),
+  cheatSheet: text("cheat_sheet", { mode: "json" }).$type<{
+    keyExperiences: string[];
+    numbers?: string[];
+    topReverseQuestions: string[];
+    dontTouchPoints: string[];
+    summary: string;
+  } | null>(),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
@@ -118,6 +159,7 @@ export const interviewNotes = sqliteTable("interview_notes", {
   concern: text("concern"),
   nextAction: text("next_action"),
   resultStatus: text("result_status"),
+  retrospective: text("retrospective", { mode: "json" }).$type<InterviewRetrospective>(),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });

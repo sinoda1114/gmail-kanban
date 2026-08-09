@@ -19,6 +19,7 @@ import {
 import { BasicInfoTab } from "./BasicInfoTab";
 import { InterviewPrepTab } from "./InterviewPrepTab";
 import { InterviewNoteTab } from "./InterviewNoteTab";
+import { resolveProjectDetailTab } from "@/lib/project-detail";
 
 type QuestionWithAnswer = InterviewQuestion & {
   answer: InterviewAnswer | null;
@@ -32,6 +33,7 @@ interface ProjectDetailViewProps {
   reverseQuestions: InterviewReverseQuestion[];
   interviewNote: InterviewNote | null;
   calendarEvent: CalendarEvent | null;
+  initialTab?: string;
 }
 
 export function ProjectDetailView({
@@ -42,9 +44,12 @@ export function ProjectDetailView({
   reverseQuestions,
   interviewNote,
   calendarEvent,
+  initialTab,
 }: ProjectDetailViewProps) {
+  const tab = resolveProjectDetailTab(initialTab);
+
   return (
-    <Tabs defaultValue="basic">
+    <Tabs defaultValue={tab} key={tab}>
       <Tabs.List>
         <Tabs.Tab value="basic">基本情報</Tabs.Tab>
         <Tabs.Tab value="interview_prep">面談準備</Tabs.Tab>

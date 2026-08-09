@@ -70,7 +70,9 @@
 ## Done 条件
 - [ ] 期待する表示/挙動になっている
 - [ ] 対象外画面へ波及していない
-- [ ] tsc / lint / 関連テストが通る
+- [ ] 純ロジックを触った場合: Vitest を追加または更新した（`notes/testing-discipline.md`）
+- [ ] 主要 UI 経路を触った場合: 関連 E2E を追加または更新した（未整備なら PR に理由）
+- [ ] tsc / lint / test（＋該当時 test:e2e）が通る
 - [ ] PR を作成して Issue と紐付ける（Refs/Closes #N）
 - [ ] Production 反映後に確認する
 

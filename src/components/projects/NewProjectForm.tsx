@@ -4,21 +4,28 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   TextInput,
-  Textarea,
   Button,
   Stack,
   Alert,
   Group,
   Text,
-  Badge,
   Paper,
   TagsInput,
+  Select,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconSparkles } from "@tabler/icons-react";
 import { createProject } from "@/app/dashboard/projects/actions";
 import { extractProjectFromText } from "@/app/dashboard/projects/extract-action";
+import { fetchGmailThread } from "@/app/dashboard/projects/gmail-action";
+import { GmailFetchFields } from "@/components/projects/GmailFetchFields";
+import { parseGmailInput } from "@/lib/gmail-url";
 import type { ProjectExtraction } from "@/types/ai";
+import {
+  PROJECT_STATUSES,
+  STATUS_LABELS,
+  isProjectStatus,
+  type ProjectStatus,
+} from "@/types/project";
 
 type FormState = {
   title: string;
@@ -35,6 +42,7 @@ type FormState = {
   techStack: string[];
   startDateText: string;
   contractPeriod: string;
+  status: ProjectStatus;
 };
 
 const initialForm: FormState = {
@@ -52,18 +60,87 @@ const initialForm: FormState = {
   techStack: [],
   startDateText: "",
   contractPeriod: "",
+  status: "reply_required",
 };
+
+const MAX_GMAIL_INPUT_LENGTH = 500;
 
 export function NewProjectForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [gmailLoading, setGmailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<ProjectExtraction | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
 
   function set<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  async function handleFetchGmail() {
+    const input = form.gmailUrl.trim();
+    if (!input) {
+      const message = "Gmail URL またはスレッド ID を入力してください";
+      setError(message);
+      return;
+    }
+    if (input.length > MAX_GMAIL_INPUT_LENGTH) {
+      const message = `入力が長すぎます（${MAX_GMAIL_INPUT_LENGTH}文字以内）`;
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
+      return;
+    }
+    if (!parseGmailInput(input)) {
+      const message =
+        "Gmail の URL またはスレッド ID の形式が正しくありません";
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
+      return;
+    }
+    setGmailLoading(true);
+    setError(null);
+    try {
+      const result = await fetchGmailThread(input);
+      if (!result.success) {
+        setError(result.error);
+        notifications.show({
+          color: "red",
+          title: "Gmail取得エラー",
+          message: result.error,
+        });
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        gmailUrl: result.gmailUrl,
+        sourceText: result.text,
+      }));
+      notifications.show({
+        color: "teal",
+        title: "Gmail取得完了",
+        message: "スレッド本文をメール本文欄に反映しました",
+      });
+    } catch {
+      const message =
+        "Gmail 取得中にエラーが発生しました。しばらく待ってから再試行してください";
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
+    } finally {
+      setGmailLoading(false);
+    }
   }
 
   async function handleAiExtract() {
@@ -81,6 +158,10 @@ export function NewProjectForm() {
       }
       const d = result.data;
       setAiResult(d);
+      const suggestedStatus =
+        d.suggestedStatus && isProjectStatus(d.suggestedStatus)
+          ? d.suggestedStatus
+          : undefined;
       setForm((f) => ({
         ...f,
         title: d.title || f.title,
@@ -95,6 +176,7 @@ export function NewProjectForm() {
         techStack: d.techStack && d.techStack.length > 0 ? d.techStack : f.techStack,
         startDateText: d.startDateText || f.startDateText,
         contractPeriod: d.contractPeriod || f.contractPeriod,
+        status: suggestedStatus ?? f.status,
       }));
       notifications.show({
         color: "teal",
@@ -132,6 +214,7 @@ export function NewProjectForm() {
         techStack: form.techStack.length > 0 ? form.techStack : undefined,
         startDateText: form.startDateText || undefined,
         contractPeriod: form.contractPeriod || undefined,
+        status: form.status,
       });
       if (!result.success) {
         setError(result.error ?? "登録に失敗しました");
@@ -203,34 +286,16 @@ export function NewProjectForm() {
           onChange={(e) => set("agentPerson", e.target.value)}
         />
 
-        <TextInput
-          label="Gmail URL"
-          placeholder="https://mail.google.com/mail/..."
-          value={form.gmailUrl}
-          onChange={(e) => set("gmailUrl", e.target.value)}
+        <GmailFetchFields
+          gmailInput={form.gmailUrl}
+          sourceText={form.sourceText}
+          onGmailInputChange={(value) => set("gmailUrl", value)}
+          onSourceTextChange={(value) => set("sourceText", value)}
+          onFetchGmail={handleFetchGmail}
+          gmailLoading={gmailLoading}
+          onAiExtract={handleAiExtract}
+          aiLoading={aiLoading}
         />
-
-        <div>
-          <Textarea
-            label="メール本文"
-            rows={8}
-            placeholder="募集要項やメール本文をペーストして「AIで整理する」を押すと各フィールドに自動入力されます"
-            value={form.sourceText}
-            onChange={(e) => set("sourceText", e.target.value)}
-          />
-          <Group mt="xs" justify="flex-end">
-            <Button
-              variant="light"
-              color="violet"
-              leftSection={<IconSparkles size={16} />}
-              loading={aiLoading}
-              onClick={handleAiExtract}
-              type="button"
-            >
-              AIで整理する
-            </Button>
-          </Group>
-        </div>
 
         {aiResult && (
           <>
@@ -281,19 +346,24 @@ export function NewProjectForm() {
               value={form.techStack}
               onChange={(v) => set("techStack", v)}
             />
-            {aiResult.suggestedStatus && (
-              <Group gap="xs" align="center">
-                <Text size="sm" c="dimmed">
-                  AI 推奨ステータス:
-                </Text>
-                <Badge variant="light" color="violet">
-                  {aiResult.suggestedStatus}
-                </Badge>
-                <Text size="xs" c="dimmed">
-                  （登録後に詳細画面から変更できます）
-                </Text>
-              </Group>
-            )}
+            <Select
+              label="ステータス"
+              description={
+                aiResult.suggestedStatus
+                  ? `AI推奨: ${STATUS_LABELS[aiResult.suggestedStatus]}`
+                  : undefined
+              }
+              data={PROJECT_STATUSES.map((s) => ({
+                value: s,
+                label: STATUS_LABELS[s],
+              }))}
+              value={form.status}
+              onChange={(v) => {
+                if (v !== null && isProjectStatus(v)) {
+                  set("status", v);
+                }
+              }}
+            />
           </>
         )}
 

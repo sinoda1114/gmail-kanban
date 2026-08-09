@@ -18,9 +18,10 @@ import {
   Divider,
   Title,
   Anchor,
+  List,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconSparkles, IconCalendar } from "@tabler/icons-react";
+import { IconSparkles, IconCalendar, IconCopy } from "@tabler/icons-react";
 import type {
   Project,
   InterviewPreparation,
@@ -34,9 +35,18 @@ import {
   PRIORITY_LABELS,
   PRIORITY_COLORS,
   REVERSE_CATEGORY_LABELS,
+  INTERVIEW_PARTNER_LABELS,
+  EVIDENCE_BASIS_LABELS,
+  RED_FLAG_SEVERITY_LABELS,
+  RED_FLAG_SEVERITY_COLORS,
+  RED_FLAG_CATEGORY_LABELS,
   type QuestionCategory,
   type Priority,
   type ReverseQuestionCategory,
+  type InterviewPartnerValue,
+  type EvidenceBasis,
+  type RedFlagSeverity,
+  type RedFlagCategory,
 } from "@/types/interview-prep";
 import {
   saveInterviewInfo,
@@ -45,6 +55,13 @@ import {
   toggleReverseQuestionChecked,
 } from "@/app/dashboard/projects/interview-prep-action";
 import { createCalendarEvent } from "@/app/dashboard/projects/calendar-action";
+import {
+  resolveInterviewPartner,
+  serializeInterviewPartner,
+} from "@/lib/interview-prep-prompt";
+import { formatCheatSheetForCopy } from "@/lib/interview-prep-format";
+import { InterviewCareerMemoSection } from "./InterviewCareerMemoSection";
+import { InterviewRehearsalSection } from "./InterviewRehearsalSection";
 
 interface QuestionWithAnswer extends InterviewQuestion {
   answer: InterviewAnswer | null;
@@ -62,8 +79,13 @@ type InfoForm = {
   interviewAt: string;
   interviewUrl: string;
   interviewType: string;
-  interviewPartner: string;
+  partnerValue: InterviewPartnerValue;
+  partnerCustom: string;
 };
+
+const PARTNER_SELECT_DATA = Object.entries(INTERVIEW_PARTNER_LABELS).map(
+  ([value, label]) => ({ value, label })
+);
 
 export function InterviewPrepTab({
   project,
@@ -73,12 +95,14 @@ export function InterviewPrepTab({
   calendarUrl,
 }: InterviewPrepTabProps) {
   const router = useRouter();
+  const initialPartner = resolveInterviewPartner(prep?.interviewPartner);
   const [addingCalendar, setAddingCalendar] = useState(false);
   const [infoForm, setInfoForm] = useState<InfoForm>({
     interviewAt: prep?.interviewAt ?? "",
     interviewUrl: prep?.interviewUrl ?? "",
     interviewType: prep?.interviewType ?? "online",
-    interviewPartner: prep?.interviewPartner ?? "",
+    partnerValue: initialPartner.value,
+    partnerCustom: initialPartner.customLabel,
   });
   const [infoSaving, setInfoSaving] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -94,10 +118,27 @@ export function InterviewPrepTab({
   );
 
   const hasGenerated = initialQuestions.length > 0;
+  const techStack = Array.isArray(project.techStack) ? project.techStack : [];
+  const companyBrief = prep?.companyBrief;
+  const techDeepDive = prep?.techDeepDive ?? [];
+  const redFlags = prep?.redFlags ?? [];
+  const cheatSheet = prep?.cheatSheet;
+
+  function buildSaveInput() {
+    return {
+      interviewAt: infoForm.interviewAt,
+      interviewUrl: infoForm.interviewUrl,
+      interviewType: infoForm.interviewType,
+      interviewPartner: serializeInterviewPartner(
+        infoForm.partnerValue,
+        infoForm.partnerCustom
+      ),
+    };
+  }
 
   async function handleSaveInfo() {
     setInfoSaving(true);
-    const result = await saveInterviewInfo(project.id, infoForm);
+    const result = await saveInterviewInfo(project.id, buildSaveInput());
     setInfoSaving(false);
     if (result.success) {
       notifications.show({ color: "green", message: "面談情報を保存しました" });
@@ -124,7 +165,7 @@ export function InterviewPrepTab({
   async function handleGenerate() {
     setAiLoading(true);
     setError(null);
-    const saveResult = await saveInterviewInfo(project.id, infoForm);
+    const saveResult = await saveInterviewInfo(project.id, buildSaveInput());
     if (!saveResult.success) {
       setError(saveResult.error ?? "面談情報の保存に失敗しました");
       setAiLoading(false);
@@ -137,10 +178,21 @@ export function InterviewPrepTab({
       notifications.show({
         color: "teal",
         title: "AI面談準備完了",
-        message: "想定質問・逆質問・面談戦略を生成しました。",
+        message:
+          "想定質問・逆質問・企業ブリーフ・技術深掘り・レッドフラグ・チートシートを生成しました。",
       });
     } else {
       setError(result.error ?? "AI処理に失敗しました");
+    }
+  }
+
+  async function handleCopyCheatSheet() {
+    if (!cheatSheet) return;
+    try {
+      await navigator.clipboard.writeText(formatCheatSheetForCopy(cheatSheet));
+      notifications.show({ color: "green", message: "チートシートをコピーしました" });
+    } catch {
+      notifications.show({ color: "red", message: "コピーに失敗しました" });
     }
   }
 
@@ -224,14 +276,28 @@ export function InterviewPrepTab({
               setInfoForm((f) => ({ ...f, interviewType: v ?? "online" }))
             }
           />
-          <TextInput
+          <Select
             label="面談相手"
-            placeholder="例: エージェント担当者 / 企業人事"
-            value={infoForm.interviewPartner}
-            onChange={(e) =>
-              setInfoForm((f) => ({ ...f, interviewPartner: e.target.value }))
+            description="AI生成の比重に影響します（未設定時はバランス重視）"
+            data={PARTNER_SELECT_DATA}
+            value={infoForm.partnerValue}
+            onChange={(v) =>
+              setInfoForm((f) => ({
+                ...f,
+                partnerValue: (v as InterviewPartnerValue) ?? "general",
+              }))
             }
           />
+          {infoForm.partnerValue === "custom" && (
+            <TextInput
+              label="面談相手（自由入力）"
+              placeholder="例: 事業部マネージャー"
+              value={infoForm.partnerCustom}
+              onChange={(e) =>
+                setInfoForm((f) => ({ ...f, partnerCustom: e.target.value }))
+              }
+            />
+          )}
           <Group justify="flex-end">
             <Button
               variant="default"
@@ -270,12 +336,153 @@ export function InterviewPrepTab({
         onClick={handleGenerate}
         fullWidth
       >
-        {hasGenerated ? "AIで面談準備を再生成" : "AIで面談準備を一括作成"}
+        {hasGenerated
+          ? "AIで面談準備を再生成（拡張含む）"
+          : "AIで面談準備を一括作成"}
       </Button>
 
       {hasGenerated && (
         <>
           <Divider />
+
+          {cheatSheet && (
+            <div>
+              <Group justify="space-between" mb="sm">
+                <Title order={5}>面談当日チートシート</Title>
+                <Button size="xs" variant="light" leftSection={<IconCopy size={14} />} onClick={handleCopyCheatSheet}>
+                  コピー
+                </Button>
+              </Group>
+              <Paper withBorder p="md" radius="md" style={{ borderColor: "var(--mantine-color-teal-4)" }}>
+                <Text size="sm" fw={600} mb="xs">{cheatSheet.summary}</Text>
+                {cheatSheet.keyExperiences.length > 0 && (
+                  <Stack gap={4} mb="sm">
+                    <Text size="xs" fw={600} c="dimmed">強調する経験</Text>
+                    {cheatSheet.keyExperiences.map((item, i) => <Text key={i} size="sm">・{item}</Text>)}
+                  </Stack>
+                )}
+                {cheatSheet.numbers && cheatSheet.numbers.length > 0 && (
+                  <Stack gap={4} mb="sm">
+                    <Text size="xs" fw={600} c="dimmed">覚える数字</Text>
+                    {cheatSheet.numbers.map((item, i) => <Text key={i} size="sm">・{item}</Text>)}
+                  </Stack>
+                )}
+                {cheatSheet.topReverseQuestions.length > 0 && (
+                  <Stack gap={4} mb="sm">
+                    <Text size="xs" fw={600} c="dimmed">優先逆質問</Text>
+                    {cheatSheet.topReverseQuestions.map((item, i) => <Text key={i} size="sm">・{item}</Text>)}
+                  </Stack>
+                )}
+                {cheatSheet.dontTouchPoints.length > 0 && (
+                  <Stack gap={4}>
+                    <Text size="xs" fw={600} c="dimmed">触れないポイント</Text>
+                    {cheatSheet.dontTouchPoints.map((item, i) => <Text key={i} size="sm">・{item}</Text>)}
+                  </Stack>
+                )}
+              </Paper>
+            </div>
+          )}
+
+          {companyBrief && (
+            <div>
+              <Title order={5} mb="sm">企業・クライアントブリーフ</Title>
+              <Paper withBorder p="md" radius="md">
+                <Text size="xs" fw={600} c="dimmed" mb={4}>想定ドメイン</Text>
+                <Text size="sm" mb="md">{companyBrief.domain}</Text>
+                {companyBrief.hypotheses.length > 0 && (
+                  <Stack gap="xs" mb="md">
+                    <Text size="xs" fw={600} c="dimmed">企業・案件仮説</Text>
+                    {companyBrief.hypotheses.map((h, i) => (
+                      <Group key={i} gap="xs" wrap="nowrap" align="flex-start">
+                        <Badge size="xs" variant="light" color={h.basis === "evidence" ? "teal" : "gray"}>
+                          {EVIDENCE_BASIS_LABELS[h.basis as EvidenceBasis]}
+                        </Badge>
+                        <Stack gap={2} style={{ flex: 1 }}>
+                          <Text size="sm">{h.text}</Text>
+                          {h.sourceHint && <Text size="xs" c="dimmed">根拠: {h.sourceHint}</Text>}
+                        </Stack>
+                      </Group>
+                    ))}
+                  </Stack>
+                )}
+                {companyBrief.talkingPoints.length > 0 && (
+                  <Stack gap={4} mb="md">
+                    <Text size="xs" fw={600} c="dimmed">話すべきトピック</Text>
+                    {companyBrief.talkingPoints.map((item, i) => <Text key={i} size="sm">・{item}</Text>)}
+                  </Stack>
+                )}
+                {companyBrief.topicsToAvoid.length > 0 && (
+                  <Stack gap={4}>
+                    <Text size="xs" fw={600} c="dimmed">避ける話題</Text>
+                    {companyBrief.topicsToAvoid.map((item, i) => <Text key={i} size="sm" c="orange.7">・{item}</Text>)}
+                  </Stack>
+                )}
+              </Paper>
+            </div>
+          )}
+
+          <div>
+            <Title order={5} mb="sm">技術スタック深掘り</Title>
+            {techStack.length === 0 ? (
+              <Paper withBorder p="md" radius="md">
+                <Text size="sm" c="dimmed">案件に技術スタックが登録されていません。案件情報を更新してから再生成してください。</Text>
+              </Paper>
+            ) : techDeepDive.length === 0 ? (
+              <Paper withBorder p="md" radius="md">
+                <Text size="sm" c="dimmed">技術深掘りはまだ生成されていません。上の「再生成」ボタンで作成できます。</Text>
+              </Paper>
+            ) : (
+              <Accordion variant="separated">
+                {techDeepDive.map((item, i) => (
+                  <Accordion.Item key={`${item.tech}-${i}`} value={`tech-${i}`}>
+                    <Accordion.Control><Text size="sm" fw={500}>{item.tech}</Text></Accordion.Control>
+                    <Accordion.Panel>
+                      <Stack gap="sm">
+                        {item.deepDiveTopics.length > 0 && (
+                          <div>
+                            <Text size="xs" fw={600} c="dimmed" mb={4}>深掘りされそうなトピック</Text>
+                            <List size="sm" spacing={2}>
+                              {item.deepDiveTopics.map((topic, j) => <List.Item key={j}>{topic}</List.Item>)}
+                            </List>
+                          </div>
+                        )}
+                        <div>
+                          <Text size="xs" fw={600} c="dimmed" mb={4}>経験との接続</Text>
+                          <Text size="sm">{item.experienceConnection}</Text>
+                        </div>
+                        {item.phrasesToAvoid.length > 0 && (
+                          <div>
+                            <Text size="xs" fw={600} c="dimmed" mb={4}>避ける言い回し</Text>
+                            {item.phrasesToAvoid.map((phrase, j) => <Text key={j} size="sm" c="orange.7">・{phrase}</Text>)}
+                          </div>
+                        )}
+                      </Stack>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                ))}
+              </Accordion>
+            )}
+          </div>
+
+          {redFlags.length > 0 && (
+            <div>
+              <Title order={5} mb="sm">レッドフラグ（判断・確認）</Title>
+              <Stack gap="sm">
+                {redFlags.map((rf, i) => (
+                  <Paper key={i} withBorder p="sm" radius="md" style={{ borderColor: rf.severity === "high" ? "var(--mantine-color-red-4)" : undefined }}>
+                    <Group gap="xs" mb="xs">
+                      <Badge size="xs" color={RED_FLAG_SEVERITY_COLORS[rf.severity as RedFlagSeverity]}>
+                        {RED_FLAG_SEVERITY_LABELS[rf.severity as RedFlagSeverity]}
+                      </Badge>
+                      <Badge size="xs" variant="light">{RED_FLAG_CATEGORY_LABELS[rf.category as RedFlagCategory]}</Badge>
+                    </Group>
+                    <Text size="sm" fw={500} mb={4}>{rf.flag}</Text>
+                    <Text size="xs" c="dimmed">確認質問: {rf.confirmationQuestion}</Text>
+                  </Paper>
+                ))}
+              </Stack>
+            </div>
+          )}
 
           {/* 想定質問 */}
           <div>
@@ -444,6 +651,20 @@ export function InterviewPrepTab({
               </Paper>
             </div>
           )}
+
+          <Divider />
+
+          <InterviewCareerMemoSection
+            projectId={project.id}
+            initialCareerMemo={prep?.careerMemo ?? null}
+            questions={initialQuestions}
+            userAnswers={userAnswers}
+            onPersonalized={(updated) =>
+              setUserAnswers((prev) => ({ ...prev, ...updated }))
+            }
+          />
+
+          <InterviewRehearsalSection questions={initialQuestions} />
         </>
       )}
     </Stack>

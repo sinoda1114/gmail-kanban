@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { clerkClient } from "@clerk/nextjs/server";
+import { getGoogleOAuthStatus } from "@/lib/clerk-google-oauth";
 import { db } from "@/db/client";
 import {
   users,
@@ -81,24 +81,12 @@ export async function createCalendarEvent(
     return { success: false, error: "面談日時が設定されていません" };
   }
 
-  let accessToken: string | undefined;
-  try {
-    const client = await clerkClient();
-    const tokenResponse = await client.users.getUserOauthAccessToken(
-      user.clerkUserId,
-      "oauth_google"
-    );
-    accessToken = tokenResponse.data[0]?.token;
-  } catch {
-    return {
-      success: false,
-      error: "Google アカウント連携の確認中にエラーが発生しました",
-    };
+  const googleStatus = await getGoogleOAuthStatus(user.clerkUserId);
+  if (!googleStatus.connected) {
+    return { success: false, error: googleStatus.message };
   }
 
-  if (!accessToken) {
-    return { success: false, error: "Google アカウントが連携されていません" };
-  }
+  const accessToken = googleStatus.accessToken;
 
   // Z サフィックスを付けず timeZone フィールドで Asia/Tokyo を適用する形式に統一
   const startAt = dayjs(prep.interviewAt).format("YYYY-MM-DDTHH:mm:ss");

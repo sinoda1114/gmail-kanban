@@ -1,0 +1,120 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import {
+  Container,
+  Title,
+  Stack,
+  Text,
+  Paper,
+  Badge,
+  List,
+  ThemeIcon,
+} from "@mantine/core";
+import { IconCalendar, IconCheck, IconX } from "@tabler/icons-react";
+import { DashboardShell } from "@/components/layout/DashboardShell";
+import { db } from "@/db/client";
+import { users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { getGoogleOAuthStatus } from "@/lib/clerk-google-oauth";
+
+export default async function SettingsPage() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.clerkUserId, userId),
+  });
+  if (!user) redirect("/onboarding");
+
+  const googleStatus = await getGoogleOAuthStatus(userId);
+
+  return (
+    <DashboardShell>
+      <Container size="lg" py="md">
+        <Title order={2} mb="lg">
+          設定
+        </Title>
+
+        <Stack gap="md">
+          <Paper withBorder p="md" radius="md">
+            <Stack gap="sm">
+              <Stack gap={4}>
+                <Title order={4}>Google カレンダー連携</Title>
+                <Text size="sm" c="dimmed">
+                  面談準備で設定した日時を、Google カレンダーに登録するために使います。
+                  Clerk 経由で取得した Google OAuth トークンで Calendar API
+                  を呼び出しています。
+                </Text>
+              </Stack>
+
+              {googleStatus.connected ? (
+                <Badge
+                  size="lg"
+                  variant="light"
+                  color="green"
+                  leftSection={
+                    <ThemeIcon size={16} color="green" variant="transparent">
+                      <IconCheck size={14} />
+                    </ThemeIcon>
+                  }
+                >
+                  連携済み
+                </Badge>
+              ) : (
+                <>
+                  <Badge
+                    size="lg"
+                    variant="light"
+                    color="red"
+                    leftSection={
+                      <ThemeIcon size={16} color="red" variant="transparent">
+                        <IconX size={14} />
+                      </ThemeIcon>
+                    }
+                  >
+                    未連携
+                  </Badge>
+                  <Text size="sm">{googleStatus.message}</Text>
+                  <Paper withBorder p="sm" radius="sm" bg="var(--mantine-color-gray-light)">
+                    <Stack gap="xs">
+                      <Text size="sm" fw={600}>
+                        連携手順
+                      </Text>
+                      <List size="sm" spacing="xs">
+                        <List.Item>
+                          右上のプロフィール（UserButton）→「アカウント管理」から
+                          Google アカウントを連携してください。
+                        </List.Item>
+                        <List.Item>
+                          初回サインイン時に Google
+                          を選んでいない場合は、上記から追加できます。
+                        </List.Item>
+                        <List.Item>
+                          連携後、このページを再読み込みするとステータスが更新されます。
+                        </List.Item>
+                      </List>
+                      <Text size="xs" c="dimmed">
+                        管理者向け: Clerk Dashboard の Google OAuth
+                        プロバイダで Calendar API
+                        スコープが有効である必要があります。トークンが取得できても API
+                        呼び出しが失敗する場合はスコープ設定を確認してください。
+                      </Text>
+                    </Stack>
+                  </Paper>
+                </>
+              )}
+
+              <Text size="xs" c="dimmed">
+                <IconCalendar
+                  size={14}
+                  style={{ verticalAlign: "text-bottom", marginRight: 4 }}
+                />
+                案件詳細の面談準備タブからカレンダー登録を実行できます。
+              </Text>
+            </Stack>
+          </Paper>
+        </Stack>
+      </Container>
+    </DashboardShell>
+  );
+}
