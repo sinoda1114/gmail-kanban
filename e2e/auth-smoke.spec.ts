@@ -33,7 +33,9 @@ test.describe("認証済み スモーク", () => {
     await expect(
       page.getByRole("heading", { name: "案件カンバン" })
     ).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("link", { name: "Gmail Kanban" })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "ダッシュボードへ移動" })
+    ).toBeVisible();
     await expect(page.locator(".cl-userButton-root").first()).toBeVisible({
       timeout: 15_000,
     });
