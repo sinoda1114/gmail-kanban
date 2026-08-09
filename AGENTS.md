@@ -48,9 +48,10 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 
 - パッケージ管理は `pnpm`（`packageManager: pnpm@11.5.0`）。依存更新は `pnpm install --frozen-lockfile`。
 - 検証コマンドは `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm test:e2e` / `pnpm build`（CI と同じ。e2e は `ci-skip-e2e` 解除後に CI でも必須）。dev は `pnpm dev`（port 3000）。dev 起動中に本番ビルドや `.next` 削除をしない。
-- `.env.local` は触らない（AGENTS.md 既存規律）。Cloud Agent ではシークレットを `/home/ubuntu/.config/gmail-kanban-secrets/` に置き、`source .../load.sh`（`~/.bashrc` からも自動読み込み）で注入する。
-  - Clerk: `.env.clerk`（`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）
+- `.env.local` はエージェントが手編集しない。Clerk Development キーの正本は Clerk CLI。番人は `scripts/sync-clerk-dev-secrets.sh` で Actions / `.env.clerk` / `.env.local` を冪等同期する（`notes/clerk-dev-secrets.md`）。
+- Cloud Agent ではシークレットを `/home/ubuntu/.config/gmail-kanban-secrets/` に置き、`source .../load.sh`（`~/.bashrc` からも自動読み込み）で注入する。
+  - Clerk: `.env.clerk`（同期スクリプトが書く。`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）
   - Gemini: `.env.gemini`（`GOOGLE_GENERATIVE_AI_API_KEY`）。アプリモデルは `gemini-3.1-flash-lite`。
 - Turso クラウド鍵が無い場合は `TURSO_DATABASE_URL=file:/workspace/local.db` + `pnpm exec drizzle-kit push` でローカル DB を使える。
-- Vercel の Sensitive env は CLI/API から読み戻せない。Dashboard から値をコピーして上記 secrets パスへ置く。
+- Vercel の Sensitive env は CLI/API から読み戻せない。Dashboard から値をコピーして上記 secrets パスへ置く（Clerk Dev キーは同期スクリプト経由）。
 - ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
