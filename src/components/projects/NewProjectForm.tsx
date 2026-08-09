@@ -9,9 +9,9 @@ import {
   Alert,
   Group,
   Text,
-  Badge,
   Paper,
   TagsInput,
+  Select,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createProject } from "@/app/dashboard/projects/actions";
@@ -20,6 +20,12 @@ import { fetchGmailThread } from "@/app/dashboard/projects/gmail-action";
 import { GmailFetchFields } from "@/components/projects/GmailFetchFields";
 import { parseGmailInput } from "@/lib/gmail-url";
 import type { ProjectExtraction } from "@/types/ai";
+import {
+  PROJECT_STATUSES,
+  STATUS_LABELS,
+  isProjectStatus,
+  type ProjectStatus,
+} from "@/types/project";
 
 type FormState = {
   title: string;
@@ -36,6 +42,7 @@ type FormState = {
   techStack: string[];
   startDateText: string;
   contractPeriod: string;
+  status: ProjectStatus;
 };
 
 const initialForm: FormState = {
@@ -53,6 +60,7 @@ const initialForm: FormState = {
   techStack: [],
   startDateText: "",
   contractPeriod: "",
+  status: "reply_required",
 };
 
 const MAX_GMAIL_INPUT_LENGTH = 500;
@@ -150,6 +158,10 @@ export function NewProjectForm() {
       }
       const d = result.data;
       setAiResult(d);
+      const suggestedStatus =
+        d.suggestedStatus && isProjectStatus(d.suggestedStatus)
+          ? d.suggestedStatus
+          : undefined;
       setForm((f) => ({
         ...f,
         title: d.title || f.title,
@@ -164,6 +176,7 @@ export function NewProjectForm() {
         techStack: d.techStack && d.techStack.length > 0 ? d.techStack : f.techStack,
         startDateText: d.startDateText || f.startDateText,
         contractPeriod: d.contractPeriod || f.contractPeriod,
+        status: suggestedStatus ?? f.status,
       }));
       notifications.show({
         color: "teal",
@@ -201,6 +214,7 @@ export function NewProjectForm() {
         techStack: form.techStack.length > 0 ? form.techStack : undefined,
         startDateText: form.startDateText || undefined,
         contractPeriod: form.contractPeriod || undefined,
+        status: form.status,
       });
       if (!result.success) {
         setError(result.error ?? "登録に失敗しました");
@@ -332,19 +346,24 @@ export function NewProjectForm() {
               value={form.techStack}
               onChange={(v) => set("techStack", v)}
             />
-            {aiResult.suggestedStatus && (
-              <Group gap="xs" align="center">
-                <Text size="sm" c="dimmed">
-                  AI 推奨ステータス:
-                </Text>
-                <Badge variant="light" color="violet">
-                  {aiResult.suggestedStatus}
-                </Badge>
-                <Text size="xs" c="dimmed">
-                  （登録後に詳細画面から変更できます）
-                </Text>
-              </Group>
-            )}
+            <Select
+              label="ステータス"
+              description={
+                aiResult.suggestedStatus
+                  ? `AI推奨: ${STATUS_LABELS[aiResult.suggestedStatus]}`
+                  : undefined
+              }
+              data={PROJECT_STATUSES.map((s) => ({
+                value: s,
+                label: STATUS_LABELS[s],
+              }))}
+              value={form.status}
+              onChange={(v) => {
+                if (v !== null && isProjectStatus(v)) {
+                  set("status", v);
+                }
+              }}
+            />
           </>
         )}
 
