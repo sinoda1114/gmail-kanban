@@ -1,48 +1,84 @@
 #!/usr/bin/env bash
-# Clerk Development キーの正本は Clerk CLI（linked app / INSTANCE=dev）。
-# このスクリプトは毎回 CLI から取り直し、全ターゲットへ冪等に上書きする。
-# 古い .env.local / 手元ファイルを正本にしてはいけない（環境間ドリフトの元）。
+# Clerk Development キーの正本は Clerk CLI（INSTANCE=dev）。
+# 毎回 CLI から取り直し、全ターゲットへ冪等に上書きする。
+# 古い .env.local を正本にしてはいけない。
 #
 # 同期先:
 #   1) GitHub Actions Secrets（E2E）
-#   2) $SECRETS_DIR/.env.clerk（Cloud Agent / ローカル共有置き場）
-#   3) リポの .env.local（clerk env pull の merge。任意で SKIP_DOTENV_LOCAL=1）
+#   2) $SECRETS_DIR/.env.clerk
+#   3) リポの .env.local（SKIP_DOTENV_LOCAL=1 で省略可）
 #
-# 使い方（番人マシン・リポ root）:
-#   clerk auth login && clerk link   # 初回のみ
-#   ./scripts/sync-clerk-dev-secrets.sh
+# 前提: clerk auth login（link は不要。アプリは CLERK_APP / scripts/clerk-app.id）
+# 使い方:
+#   cd ~/dev/gmail-kanban && ./scripts/sync-clerk-dev-secrets.sh
 set -euo pipefail
 
 REPO="${REPO:-sinoda1114/gmail-kanban}"
 INSTANCE="${INSTANCE:-dev}"
-# linked 済みなら不要。/tmp 実行や未 link ディレクトリ向けの明示指定
-CLERK_APP="${CLERK_APP:-app_3HcCjWlFNG5hXBCkT7Xmv9Mp77Y}"
 SECRETS_DIR="${SECRETS_DIR:-$HOME/.config/gmail-kanban-secrets}"
 SKIP_GITHUB="${SKIP_GITHUB:-0}"
 SKIP_SECRETS_DIR="${SKIP_SECRETS_DIR:-0}"
 SKIP_DOTENV_LOCAL="${SKIP_DOTENV_LOCAL:-0}"
+EXPECTED_PKG_NAME="${EXPECTED_PKG_NAME:-gmail-kanban}"
 
-# /tmp から curl 実行してもリポ root を正しく取る
+SCRIPT_PATH="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+
+# 公開の Application ID（秘密ではない）。CLERK_APP で上書き可。
+# リポ内の scripts/clerk-app.id があればそれを優先。
+resolve_clerk_app() {
+  if [[ -n "${CLERK_APP:-}" ]]; then
+    printf '%s\n' "$CLERK_APP"
+    return
+  fi
+  if [[ -f "${SCRIPT_DIR}/clerk-app.id" ]]; then
+    tr -d '[:space:]' <"${SCRIPT_DIR}/clerk-app.id"
+    return
+  fi
+  # /tmp 実行用フォールバック（Clerk Application ID はシークレットではない）
+  printf '%s\n' "app_3HcCjWlFNG5hXBCkT7Xmv9Mp77Y"
+}
+
+is_gmail_kanban_root() {
+  local root="$1" name remote
+  [[ -f "${root}/package.json" ]] || return 1
+  name="$(
+    node -e 'const p=require(process.argv[1]); process.stdout.write(String(p.name||""))' \
+      "${root}/package.json" 2>/dev/null || true
+  )"
+  [[ "$name" == "$EXPECTED_PKG_NAME" ]] || return 1
+  if remote="$(git -C "$root" remote get-url origin 2>/dev/null || true)" && [[ -n "$remote" ]]; then
+    case "$remote" in
+      *gmail-kanban*) return 0 ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 0
+}
+
 resolve_root() {
-  local script_dir candidate
-  script_dir="$(cd "$(dirname "$0")" && pwd)"
-  if [[ -f "${script_dir}/../package.json" && -d "${script_dir}/../scripts" ]]; then
-    cd "${script_dir}/.." && pwd
-    return
+  local candidate
+  if [[ -f "${SCRIPT_DIR}/../package.json" && -d "${SCRIPT_DIR}/../scripts" ]]; then
+    candidate="$(cd "${SCRIPT_DIR}/.." && pwd)"
+    if is_gmail_kanban_root "$candidate"; then
+      printf '%s\n' "$candidate"
+      return
+    fi
   fi
-  if candidate="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)" \
-    && [[ -f "${candidate}/package.json" ]]; then
-    printf '%s\n' "$candidate"
-    return
+  if candidate="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null)"; then
+    if is_gmail_kanban_root "$candidate"; then
+      printf '%s\n' "$candidate"
+      return
+    fi
   fi
-  if [[ -f "${PWD}/package.json" && -d "${PWD}/scripts" ]]; then
+  if is_gmail_kanban_root "$PWD"; then
     printf '%s\n' "$PWD"
     return
   fi
-  echo "リポ root を特定できません。~/dev/gmail-kanban で実行するか、git checkout 済みのリポ内で走らせてください。" >&2
+  echo "gmail-kanban のリポ root を特定できません（package.json name=${EXPECTED_PKG_NAME}）。" >&2
+  echo "cd ~/dev/gmail-kanban してから実行するか、SKIP_DOTENV_LOCAL=1 で .env.local 更新を省略してください。" >&2
   exit 1
 }
-ROOT="$(resolve_root)"
 
 sha256_16() {
   if command -v sha256sum >/dev/null 2>&1; then
@@ -56,7 +92,6 @@ sha256_16() {
 }
 
 fingerprint() {
-  # 値は出さず、比較用の短いハッシュだけ返す
   printf '%s\n%s\n' "$1" "$2" | sha256_16
 }
 
@@ -91,6 +126,34 @@ EOF
   chmod 600 "$dest"
 }
 
+upsert_env_keys() {
+  local file="$1" pk="$2" sk="$3" tmp status
+  umask 077
+  tmp="$(mktemp "${file}.XXXXXX")"
+  # RETURN で関数抜け時に掃除（mv 成功後は消えている想定）
+  # shellcheck disable=SC2064
+  trap "rm -f '$tmp'" RETURN
+  if [[ -f "$file" ]]; then
+    set +e
+    grep -Ev '^[[:space:]]*(NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY|CLERK_SECRET_KEY)=' "$file" >"$tmp"
+    status=$?
+    set -e
+    if [[ "$status" -gt 1 ]]; then
+      echo "${file} の読み取りに失敗しました（grep exit=${status}）。中断します。" >&2
+      exit 1
+    fi
+  else
+    : >"$tmp"
+  fi
+  {
+    printf 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=%s\n' "$pk"
+    printf 'CLERK_SECRET_KEY=%s\n' "$sk"
+  } >>"$tmp"
+  mv "$tmp" "$file"
+  chmod 600 "$file"
+  trap - RETURN
+}
+
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "$1 がありません。" >&2
@@ -99,21 +162,31 @@ require_cmd() {
 }
 
 require_cmd curl
-require_cmd shasum
+if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
+  echo "sha256sum または shasum が必要です。" >&2
+  exit 1
+fi
 if ! command -v clerk >/dev/null 2>&1; then
-  echo "clerk CLI がありません。npm i -g clerk のあと clerk auth login && clerk link" >&2
+  echo "clerk CLI がありません。npm i -g clerk のあと clerk auth login" >&2
   exit 1
 fi
 if [[ "$SKIP_GITHUB" != "1" ]]; then
   require_cmd gh
 fi
 
+CLERK_APP="$(resolve_clerk_app)"
+ROOT=""
+if [[ "$SKIP_DOTENV_LOCAL" != "1" ]]; then
+  ROOT="$(resolve_root)"
+fi
+
 TMP="$(mktemp -t clerk-dev-sync.XXXXXX)"
 trap 'rm -f "$TMP"' EXIT
 
 echo "==> Pulling Clerk keys (instance=${INSTANCE}, app=${CLERK_APP}) — this is the only source of truth"
-echo "Repo root: ${ROOT}"
-# 壊れたローカル env を正本にしない。--app で link 状態に依存しない
+if [[ -n "$ROOT" ]]; then
+  echo "Repo root: ${ROOT}"
+fi
 env -u CLERK_SECRET_KEY -u NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
   clerk env pull --app "$CLERK_APP" --instance "$INSTANCE" --file "$TMP" --mode agent
 
@@ -121,7 +194,7 @@ PK="$(read_env_key "$TMP" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)"
 SK="$(read_env_key "$TMP" CLERK_SECRET_KEY)"
 
 if [[ -z "$PK" || -z "$SK" ]]; then
-  echo "clerk env pull の結果にキーがありません。clerk auth login && clerk link を確認してください。" >&2
+  echo "clerk env pull の結果にキーがありません。clerk auth login を確認してください。" >&2
   exit 1
 fi
 case "$PK" in pk_test_*) ;; *)
@@ -146,14 +219,13 @@ HTTP_CODE="$(
     -H 'Content-Type: application/json'
 )"
 if [[ "$HTTP_CODE" != "200" ]]; then
-  echo "Testing Token API が ${HTTP_CODE}。リンク先アプリ / キーを確認してください。" >&2
+  echo "Testing Token API が ${HTTP_CODE}。アプリ / キーを確認してください。" >&2
   exit 1
 fi
 echo "Testing Token API: OK"
 
 CHANGED=0
 
-# --- 1) secrets dir (.env.clerk) ---
 if [[ "$SKIP_SECRETS_DIR" != "1" ]]; then
   DEST="${SECRETS_DIR}/.env.clerk"
   FP_FILE="${SECRETS_DIR}/.clerk-dev.fingerprint"
@@ -177,25 +249,6 @@ if [[ "$SKIP_SECRETS_DIR" != "1" ]]; then
   fi
 fi
 
-# --- 2) repo .env.local（取得済みキーを upsert。link / 2回目 pull 不要） ---
-upsert_env_keys() {
-  local file="$1" pk="$2" sk="$3" tmp
-  umask 077
-  tmp="$(mktemp "${file}.XXXXXX")"
-  if [[ -f "$file" ]]; then
-    # 対象キー行以外を残す
-    grep -Ev '^[[:space:]]*(NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY|CLERK_SECRET_KEY)=' "$file" >"$tmp" || true
-  else
-    : >"$tmp"
-  fi
-  {
-    printf 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=%s\n' "$pk"
-    printf 'CLERK_SECRET_KEY=%s\n' "$sk"
-  } >>"$tmp"
-  mv "$tmp" "$file"
-  chmod 600 "$file"
-}
-
 if [[ "$SKIP_DOTENV_LOCAL" != "1" ]]; then
   LOCAL_ENV="${ROOT}/.env.local"
   OLD_PK="$(read_env_key "$LOCAL_ENV" NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)"
@@ -209,12 +262,10 @@ if [[ "$SKIP_DOTENV_LOCAL" != "1" ]]; then
   fi
 fi
 
-# --- 3) GitHub Actions（読めないので毎回 set = 冪等上書き） ---
 if [[ "$SKIP_GITHUB" != "1" ]]; then
   echo "GitHub Actions secrets: setting (always overwrite; values not readable back)"
   printf '%s' "$PK" | gh secret set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY -R "$REPO"
   printf '%s' "$SK" | gh secret set CLERK_SECRET_KEY -R "$REPO"
-  # リポ側に「いつ同期したか」だけ残す（値は残さない）
   META="${SECRETS_DIR}/.clerk-dev.github-synced"
   mkdir -p "$SECRETS_DIR"
   umask 077

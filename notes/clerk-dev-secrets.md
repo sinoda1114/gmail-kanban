@@ -2,31 +2,41 @@
 
 ## 正本
 
-**Clerk CLI の linked app / Development instance だけが正本。**  
+**Clerk CLI の Development instance だけが正本。**  
 手元の `.env.local` や古いメモを正本にしてはいけない。
+
+アプリ指定は公開の Application ID（秘密ではない）:
+
+- 環境変数 `CLERK_APP`（最優先）
+- リポ内 `scripts/clerk-app.id`
+- スクリプト内蔵フォールバック
 
 ## 同期コマンド
 
-番人マシン（`clerk auth login` 済み。`/tmp` からでも可）:
+前提: `clerk auth login`（`clerk link` は不要）。
 
 ```bash
-# リポ内
+cd ~/dev/gmail-kanban
 ./scripts/sync-clerk-dev-secrets.sh
-
-# または main から直接
-curl -fsSL https://raw.githubusercontent.com/sinoda1114/gmail-kanban/main/scripts/sync-clerk-dev-secrets.sh -o /tmp/sync-clerk-dev-secrets.sh
-chmod +x /tmp/sync-clerk-dev-secrets.sh
-# ~/dev/gmail-kanban にいること（.env.local 更新先）
-cd ~/dev/gmail-kanban && /tmp/sync-clerk-dev-secrets.sh
 ```
 
-毎回 `clerk env pull --app <gmail-kanban> --instance dev` してから、次へ**上書き**する（値が同じならローカルはスキップ、GitHub Actions は読めないので毎回 set）。
+ローカル `main` が古いときの回避策（このリポの raw のみ。信頼できる場合）:
+
+```bash
+cd ~/dev/gmail-kanban
+curl -fsSL https://raw.githubusercontent.com/sinoda1114/gmail-kanban/main/scripts/sync-clerk-dev-secrets.sh -o /tmp/sync-clerk-dev-secrets.sh
+# 必要なら commit SHA で pin: .../main → .../<sha>/
+chmod +x /tmp/sync-clerk-dev-secrets.sh
+/tmp/sync-clerk-dev-secrets.sh
+```
+
+毎回 `clerk env pull --app <id> --instance dev` してから次へ**上書き**する（値が同じならローカルはスキップ、GitHub Actions は読めないので毎回 set）。
 
 | ターゲット | パス / 場所 |
 |---|---|
 | Cloud / 共有 | `~/.config/gmail-kanban-secrets/.env.clerk` |
-| ローカルアプリ | リポの `.env.local` |
-| CI E2E | GitHub Actions Secrets `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` |
+| ローカルアプリ | リポの `.env.local`（`package.json` name と origin で gmail-kanban か検証） |
+| CI E2E | GitHub Actions Secrets |
 
 指紋は `~/.config/gmail-kanban-secrets/.clerk-dev.fingerprint`（キー本体は置かない）。
 
@@ -40,8 +50,8 @@ cd ~/dev/gmail-kanban && /tmp/sync-clerk-dev-secrets.sh
 ## 禁止
 
 - 別環境の古い `.env.local` をコピーして Actions に載せる
-- `CLERK_ENV=/path/to/stale.env` で登録する（ラッパは拒否する）
-- 「前回セットしたから大丈夫」で fingerprint も見ずに放置する
+- `CLERK_ENV=/path/to/stale.env` で登録する
+- 「前回セットしたから大丈夫」で放置する
 
 ## 関連
 
