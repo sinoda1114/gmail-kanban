@@ -1,14 +1,14 @@
 import { test, expect } from "@playwright/test";
-import { setupClerkTestingToken } from "@clerk/testing/playwright";
+import { prepareClerkTestingPage } from "./helpers/clerk";
 
 /**
  * 認証なしで壊れないことを守る最小スモーク。
  * Clerk Testing Token で development instance の dev-browser 要件を満たす。
- * ログイン後フローは別スペックで追加する（notes/testing-discipline.md）。
+ * 認証後フローは auth-smoke.spec.ts（notes/testing-discipline.md）。
  */
 test.describe("認証ゲート スモーク", () => {
   test.beforeEach(async ({ page }) => {
-    await setupClerkTestingToken({ page });
+    await prepareClerkTestingPage(page);
   });
 
   test("未ログインで /sign-in に到達できる", async ({ page }) => {
