@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# GitHub Actions に Clerk E2E 用 Secrets を登録する（ローカル / 番人用）。
-# Cloud Agent には Secrets 書き込み権限が無いため、このスクリプトは人間側で実行する。
+# Clerk CLI で Development キーを取得し、GitHub Actions Secrets に登録する。
+# Cloud Agent には Secrets 書き込み権限が無いため、人間のマシンで実行する。
 set -euo pipefail
 
 REPO="${REPO:-sinoda1114/gmail-kanban}"
-CLERK_ENV="${CLERK_ENV:-$HOME/.config/gmail-kanban-secrets/.env.clerk}"
+INSTANCE="${INSTANCE:-dev}"
+CLERK_ENV="${CLERK_ENV:-}"
 
 strip_quotes() {
   local v="$1"
@@ -20,9 +21,21 @@ strip_quotes() {
   printf '%s' "$v"
 }
 
+if [[ -z "$CLERK_ENV" ]]; then
+  if ! command -v clerk >/dev/null 2>&1; then
+    echo "clerk CLI がありません。先に: npm i -g clerk" >&2
+    exit 1
+  fi
+  CLERK_ENV="$(mktemp -t clerk-e2e-env.XXXXXX)"
+  trap 'rm -f "$CLERK_ENV"' EXIT
+  echo "Pulling Clerk ${INSTANCE} keys via CLI → temp env..."
+  # 壊れた .env.local のキーを拾わないよう、pull 中は外す
+  env -u CLERK_SECRET_KEY -u NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
+    clerk env pull --instance "$INSTANCE" --file "$CLERK_ENV" --mode agent
+fi
+
 if [[ ! -f "$CLERK_ENV" ]]; then
   echo "Clerk env が見つかりません: $CLERK_ENV" >&2
-  echo "CLERK_ENV=/path/to/.env.local で指定するか、ファイルを置いてください。" >&2
   exit 1
 fi
 
@@ -35,34 +48,30 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="$(strip_quotes "${NEXT_PUBLIC_CLERK_PUBLISHAB
 CLERK_SECRET_KEY="$(strip_quotes "${CLERK_SECRET_KEY:-}")"
 
 if [[ -z "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" || -z "$CLERK_SECRET_KEY" ]]; then
-  echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY / CLERK_SECRET_KEY が $CLERK_ENV にありません。" >&2
+  echo "pull 結果に NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY / CLERK_SECRET_KEY がありません。" >&2
+  echo "先に: clerk auth login && cd ~/dev/gmail-kanban && clerk link" >&2
   exit 1
 fi
 
 case "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" in
   pk_test_*) ;;
-  pk_live_*)
-    echo "E2E には Development インスタンスのキー（pk_test_ / sk_test_）が必要です。今は pk_live_ です。" >&2
-    exit 1
-    ;;
   *)
-    echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY が pk_test_ で始まっていません（先頭: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:0:8}）" >&2
+    echo "Development キーが必要です（先頭: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:0:8}）。INSTANCE=dev で再実行してください。" >&2
     exit 1
     ;;
 esac
 case "$CLERK_SECRET_KEY" in
   sk_test_*) ;;
-  sk_live_*)
-    echo "E2E には Development インスタンスのキー（pk_test_ / sk_test_）が必要です。今は sk_live_ です。" >&2
-    exit 1
-    ;;
   *)
-    echo "CLERK_SECRET_KEY が sk_test_ で始まっていません（先頭: ${CLERK_SECRET_KEY:0:8}）" >&2
+    echo "Development キーが必要です（先頭: ${CLERK_SECRET_KEY:0:8}）。INSTANCE=dev で再実行してください。" >&2
     exit 1
     ;;
 esac
 
-echo "Checking Clerk Testing Token API (dev instance)..."
+echo "PK=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:0:8}… len=${#NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}"
+echo "SK=${CLERK_SECRET_KEY:0:8}… len=${#CLERK_SECRET_KEY}"
+
+echo "Checking Clerk Testing Token API..."
 HTTP_CODE="$(
   curl -sS -o /tmp/clerk-testing-token.json -w '%{http_code}' \
     -X POST 'https://api.clerk.com/v1/testing_tokens' \
@@ -70,8 +79,8 @@ HTTP_CODE="$(
     -H 'Content-Type: application/json'
 )"
 if [[ "$HTTP_CODE" != "200" ]]; then
-  echo "Testing Token API が ${HTTP_CODE} を返しました。キーが無効か、Development 用ではありません。" >&2
-  echo "Clerk Dashboard → Development → API Keys の pk_test_ / sk_test_ を .env.local に入れて再実行してください。" >&2
+  echo "Testing Token API が ${HTTP_CODE} を返しました。" >&2
+  echo "clerk auth login → clerk link で正しいアプリ（Development）に繋いでから再実行してください。" >&2
   exit 1
 fi
 echo "Testing Token API: OK"
