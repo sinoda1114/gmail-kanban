@@ -331,7 +331,8 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
       project.id,
       newSourceText,
       extraction,
-      visibleAccepted
+      visibleAccepted,
+      gmailInput.trim() || undefined
     );
     setApplying(false);
 
