@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { MantineProvider, ColorSchemeScript } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
+import { parseSiteUrl } from "@/lib/site-url";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import "@mantine/dates/styles.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
 export const metadata: Metadata = {
-  metadataBase: siteUrl ? new URL(siteUrl) : undefined,
+  metadataBase: parseSiteUrl(process.env.NEXT_PUBLIC_SITE_URL),
   title: "Gmail Kanban",
   description: "Gmailの案件をカンバンで管理するタスク管理アプリ",
   openGraph: {
