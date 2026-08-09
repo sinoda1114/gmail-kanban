@@ -15,6 +15,7 @@ import {
   Button,
   ActionIcon,
   TagsInput,
+  Divider,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconPencil, IconTrash, IconExternalLink } from "@tabler/icons-react";
@@ -32,6 +33,8 @@ import {
   deleteProject,
 } from "@/app/dashboard/projects/actions";
 import type { UpdateProjectBasicInfoInput } from "@/app/dashboard/projects/actions";
+import { RePasteUpdateSection } from "./RePasteUpdateSection";
+import { ReplyDraftSection } from "./ReplyDraftSection";
 
 interface BasicInfoTabProps {
   project: Project;
@@ -382,6 +385,11 @@ export function BasicInfoTab({ project }: BasicInfoTabProps) {
           </Text>
         </Stack>
       )}
+
+      <Divider />
+
+      <RePasteUpdateSection project={project} />
+      <ReplyDraftSection project={project} />
     </Stack>
   );
 }
