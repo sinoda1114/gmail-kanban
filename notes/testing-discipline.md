@@ -46,7 +46,8 @@
 
 - 標準 CI（`ci-standard`）: `playwright.config.*` があれば `ci / e2e` が走る
 - Clerk 用の GitHub Actions Secrets が未整備の間は `.github/ci-skip-e2e` でジョブをスキップしてよい
-- Secrets を入れたら **`ci-skip-e2e` を削除**して CI 上でも E2E を必須化する
+- 当面の E2E 必須化は `.github/workflows/e2e.yml`（Secrets を env にマップ）で行う。登録は `scripts/set-github-e2e-secrets.sh`
+- `ci-standard` が optional Clerk Secrets を e2e ジョブへ渡すようになったら（[ci-standard#2](https://github.com/sinoda1114/ci-standard/issues/2)）、**`ci-skip-e2e` を削除**して標準の `ci / e2e` に寄せ、固有 `e2e.yml` を退役する
 - ローカル / Cursor Cloud では secrets を読んで `pnpm test:e2e` を回す（エージェント検証に含める）
 
 ## 4. エージェントの検証ゲート（更新）
