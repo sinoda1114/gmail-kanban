@@ -7,7 +7,6 @@ import {
   Group,
   Text,
   Button,
-  Textarea,
   Paper,
   Title,
   Alert,
@@ -26,6 +25,11 @@ import {
   applyAcceptedProjectUpdates,
   type AcceptedProjectUpdateFields,
 } from "@/app/dashboard/projects/re-paste-action";
+import { fetchGmailThread } from "@/app/dashboard/projects/gmail-action";
+import { GmailFetchFields } from "@/components/projects/GmailFetchFields";
+import { parseGmailInput } from "@/lib/gmail-url";
+
+const MAX_GMAIL_INPUT_LENGTH = 500;
 
 const REMOTE_TYPE_LABELS: Record<string, string> = {
   full_remote: "フルリモート",
@@ -166,6 +170,9 @@ interface RePasteUpdateSectionProps {
 
 export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
   const router = useRouter();
+  const [gmailInput, setGmailInput] = useState(project.gmailUrl ?? "");
+  const [fetchedGmailUrl, setFetchedGmailUrl] = useState<string | null>(null);
+  const [gmailLoading, setGmailLoading] = useState(false);
   const [newSourceText, setNewSourceText] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -191,6 +198,75 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
     }
     return next;
   }, [proposedChanges, accepted]);
+
+  async function handleFetchGmail() {
+    const input = gmailInput.trim();
+    if (!input) {
+      const message = "Gmail URL またはスレッド ID を入力してください";
+      setError(message);
+      return;
+    }
+    if (input.length > MAX_GMAIL_INPUT_LENGTH) {
+      const message = `入力が長すぎます（${MAX_GMAIL_INPUT_LENGTH}文字以内）`;
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
+      return;
+    }
+    if (!parseGmailInput(input)) {
+      const message =
+        "Gmail の URL またはスレッド ID の形式が正しくありません";
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
+      return;
+    }
+    setGmailLoading(true);
+    setError(null);
+    try {
+      const result = await fetchGmailThread(input);
+      if (!result.success) {
+        setError(result.error);
+        notifications.show({
+          color: "red",
+          title: "Gmail取得エラー",
+          message: result.error,
+        });
+        return;
+      }
+      setGmailInput(result.gmailUrl);
+      setFetchedGmailUrl(result.gmailUrl);
+      setNewSourceText(result.text);
+      setExtraction(null);
+      setConcerns([]);
+      setAccepted({});
+      setConfirmOpen(false);
+      setApplyError(null);
+      notifications.show({
+        color: "teal",
+        title: "Gmail取得完了",
+        message: "スレッド本文をメール本文欄に反映しました",
+      });
+    } catch (err) {
+      console.error("Gmail fetch failed:", err);
+      const message =
+        "Gmail 取得中にエラーが発生しました。しばらく待ってから再試行してください";
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
+    } finally {
+      setGmailLoading(false);
+    }
+  }
 
   async function handleExtract() {
     if (!newSourceText.trim()) {
@@ -259,11 +335,18 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
 
     setApplyError(null);
     setApplying(true);
+    const gmailUrlToApply = fetchedGmailUrl
+      ? fetchedGmailUrl
+      : (() => {
+          const trimmed = gmailInput.trim();
+          return trimmed !== (project.gmailUrl ?? "") ? trimmed : undefined;
+        })();
     const result = await applyAcceptedProjectUpdates(
       project.id,
       newSourceText,
       extraction,
-      visibleAccepted
+      visibleAccepted,
+      gmailUrlToApply
     );
     setApplying(false);
 
@@ -274,6 +357,10 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
         message: `${selectedCount}件の項目を更新しました`,
       });
       setNewSourceText("");
+      if (gmailUrlToApply !== undefined) {
+        setGmailInput(gmailUrlToApply);
+      }
+      setFetchedGmailUrl(null);
       setExtraction(null);
       setConcerns([]);
       setAccepted({});
@@ -292,7 +379,8 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
         メール再貼り付けで更新
       </Title>
       <Text size="sm" c="dimmed" mb="sm">
-        新しいメール本文を貼り付けてAIで差分を抽出し、適用する項目だけを選んで更新できます。
+        Gmail からスレッドを取得するか、新しいメール本文を貼り付けて AI
+        で差分を抽出し、適用する項目だけを選んで更新できます。
       </Text>
 
       {error && (
@@ -302,12 +390,17 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
       )}
 
       <Stack gap="sm">
-        <Textarea
-          label="新しいメール本文"
-          placeholder="エージェントから届いた最新メールをここに貼り付け"
-          rows={6}
-          value={newSourceText}
-          onChange={(e) => setNewSourceText(e.target.value)}
+        <GmailFetchFields
+          gmailInput={gmailInput}
+          sourceText={newSourceText}
+          onGmailInputChange={(value) => {
+            setGmailInput(value);
+            setFetchedGmailUrl(null);
+          }}
+          onSourceTextChange={setNewSourceText}
+          onFetchGmail={handleFetchGmail}
+          gmailLoading={gmailLoading}
+          sourceRows={6}
         />
         <Group justify="flex-end">
           <Button

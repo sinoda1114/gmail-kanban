@@ -39,8 +39,10 @@
 - 置き場: `e2e/**/*.spec.ts`
 - `@clerk/testing` + Testing Token を使う（development instance の `dev-browser-missing` 回避）
 - ホストは **`localhost`**（`127.0.0.1` だと Clerk rewrite が 500 になりやすい）
-- 最初の必須スモーク: 未ログインで `/sign-in` に到達／保護ルートが sign-in へ誘導
-- 認証後フロー（カンバン DnD・案件作成など）は Clerk テストユーザー／Secrets が揃ってから追加する
+- 最初の必須スモーク: 未ログインで `/sign-in` に到達／保護ルートが sign-in へ誘導（`e2e/smoke.spec.ts`）
+- 認証後スモーク: `clerk.signIn`（ticket）→ `/dashboard` でカンバンシェル表示（`e2e/auth-smoke.spec.ts`）
+- 認証 E2E 用テストユーザー: 環境変数 `E2E_CLERK_USER_EMAIL`、または `E2E_USER_JSON_PATH`（未指定時は `~/.config/gmail-kanban-secrets/e2e-user.json` の `email`）。未設定なら当該スペックは `test.skip`
+- 認証後の詳細フロー（カンバン DnD・案件作成など）は別スペックで追加する
 
 ### CI での扱い
 
