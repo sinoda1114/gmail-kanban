@@ -11,6 +11,10 @@ export const PROJECT_STATUSES = [
 
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
+export function isProjectStatus(value: string): value is ProjectStatus {
+  return (PROJECT_STATUSES as readonly string[]).includes(value);
+}
+
 export const STATUS_LABELS: Record<ProjectStatus, string> = {
   reply_required: "返信必要",
   waiting_reply: "相手返信待ち",
