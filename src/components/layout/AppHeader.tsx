@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Group, Title, Button } from "@mantine/core";
 import { UserButton } from "@clerk/nextjs";
-import { IconBell, IconMail, IconSettings } from "@tabler/icons-react";
+import { IconBell, IconCreditCard, IconMail, IconSettings } from "@tabler/icons-react";
 
 export function AppHeader() {
   return (
@@ -32,6 +32,15 @@ export function AppHeader() {
           href="/dashboard/alerts"
         >
           要対応
+        </Button>
+        <Button
+          variant="subtle"
+          size="compact-sm"
+          leftSection={<IconCreditCard size={16} />}
+          component={Link}
+          href="/dashboard/billing"
+        >
+          課金
         </Button>
         <Button
           variant="subtle"

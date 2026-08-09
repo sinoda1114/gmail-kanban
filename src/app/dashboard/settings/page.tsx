@@ -9,10 +9,18 @@ import {
   Badge,
   List,
   ThemeIcon,
+  Button,
   Anchor,
   Code,
 } from "@mantine/core";
-import { IconCalendar, IconCheck, IconMail, IconX } from "@tabler/icons-react";
+import {
+  IconCalendar,
+  IconCheck,
+  IconCreditCard,
+  IconMail,
+  IconX,
+} from "@tabler/icons-react";
+import Link from "next/link";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
@@ -41,6 +49,25 @@ export default async function SettingsPage() {
         </Title>
 
         <Stack gap="md">
+          <Paper withBorder p="md" radius="md">
+            <Stack gap="sm">
+              <Stack gap={4}>
+                <Title order={4}>課金・プラン</Title>
+                <Text size="sm" c="dimmed">
+                  現在のプラン、案件数の上限、Pro へのアップグレードは課金画面で確認できます。
+                </Text>
+              </Stack>
+              <Button
+                variant="light"
+                leftSection={<IconCreditCard size={16} />}
+                component={Link}
+                href="/dashboard/billing"
+              >
+                課金・プランを開く
+              </Button>
+            </Stack>
+          </Paper>
+
           <Paper withBorder p="md" radius="md">
             <Stack gap="sm">
               <Stack gap={4}>
