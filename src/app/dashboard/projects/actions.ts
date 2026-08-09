@@ -6,7 +6,7 @@ import { projects, projectStatusHistory, users } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
-import type { ProjectStatus } from "@/types/project";
+import { PROJECT_STATUSES, type ProjectStatus } from "@/types/project";
 
 export type CreateProjectInput = {
   title: string;
@@ -23,6 +23,7 @@ export type CreateProjectInput = {
   techStack?: string[];
   startDateText?: string;
   contractPeriod?: string;
+  status?: ProjectStatus;
 };
 
 export type UpdateProjectBasicInfoInput = {
@@ -61,29 +62,46 @@ export async function createProject(
     return { success: false, error: "タイトルは必須です" };
   }
 
+  const status: ProjectStatus =
+    input.status !== undefined ? input.status : "reply_required";
+  if (!PROJECT_STATUSES.includes(status)) {
+    return { success: false, error: "無効なステータスです" };
+  }
+
   const id = randomUUID();
   const now = new Date().toISOString();
 
-  await db.insert(projects).values({
-    id,
-    userId: user.id,
-    title: input.title,
-    status: "reply_required",
-    gmailUrl: input.gmailUrl,
-    sourceText: input.sourceText,
-    agentCompany: input.agentCompany,
-    agentPerson: input.agentPerson,
-    nextAction: input.nextAction,
-    summary: input.summary,
-    price: input.price,
-    workRate: input.workRate,
-    location: input.location,
-    remoteType: input.remoteType,
-    techStack: input.techStack,
-    startDateText: input.startDateText,
-    contractPeriod: input.contractPeriod,
-    createdAt: now,
-    updatedAt: now,
+  await db.transaction(async (tx) => {
+    await tx.insert(projects).values({
+      id,
+      userId: user.id,
+      title: input.title,
+      status,
+      gmailUrl: input.gmailUrl,
+      sourceText: input.sourceText,
+      agentCompany: input.agentCompany,
+      agentPerson: input.agentPerson,
+      nextAction: input.nextAction,
+      summary: input.summary,
+      price: input.price,
+      workRate: input.workRate,
+      location: input.location,
+      remoteType: input.remoteType,
+      techStack: input.techStack,
+      startDateText: input.startDateText,
+      contractPeriod: input.contractPeriod,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await tx.insert(projectStatusHistory).values({
+      id: randomUUID(),
+      projectId: id,
+      userId: user.id,
+      fromStatus: null,
+      toStatus: status,
+      changedAt: now,
+    });
   });
 
   revalidatePath("/dashboard");
