@@ -99,7 +99,7 @@ echo "SK=${CLERK_SECRET_KEY:0:8}… len=${#CLERK_SECRET_KEY}"
 
 echo "Checking Clerk Testing Token API..."
 HTTP_CODE="$(
-  curl -sS -o /tmp/clerk-testing-token.json -w '%{http_code}' \
+  curl -sS -o /dev/null -w '%{http_code}' \
     -X POST 'https://api.clerk.com/v1/testing_tokens' \
     -H "Authorization: Bearer ${CLERK_SECRET_KEY}" \
     -H 'Content-Type: application/json'
