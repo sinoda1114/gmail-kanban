@@ -34,6 +34,19 @@ describe("serializeInterviewPartner", () => {
   it("custom は trim", () => {
     expect(serializeInterviewPartner("custom", " CTO ")).toBe("CTO");
   });
+  it("custom 空文字は general", () => {
+    expect(serializeInterviewPartner("custom", "")).toBe("general");
+    expect(serializeInterviewPartner("custom", "   ")).toBe("general");
+  });
+});
+
+describe("resolveInterviewPartner bare custom", () => {
+  it("保存値 custom は general 扱い", () => {
+    expect(resolveInterviewPartner("custom")).toEqual({
+      value: "general",
+      customLabel: "",
+    });
+  });
 });
 
 describe("buildPartnerPromptGuidance", () => {

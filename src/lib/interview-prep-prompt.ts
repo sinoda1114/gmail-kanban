@@ -11,6 +11,9 @@ export function resolveInterviewPartner(
   if (!stored || stored.trim() === "") {
     return { value: "general", customLabel: "" };
   }
+  if (stored === "custom") {
+    return { value: "general", customLabel: "" };
+  }
   if (KNOWN_PARTNERS.includes(stored as InterviewPartnerValue)) {
     return { value: stored as InterviewPartnerValue, customLabel: "" };
   }
@@ -21,7 +24,10 @@ export function serializeInterviewPartner(
   value: InterviewPartnerValue,
   customLabel: string
 ): string {
-  if (value === "custom") return customLabel.trim();
+  if (value === "custom") {
+    const trimmed = customLabel.trim();
+    return trimmed === "" ? "general" : trimmed;
+  }
   return value;
 }
 
