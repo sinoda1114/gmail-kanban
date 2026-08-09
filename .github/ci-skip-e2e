@@ -1,0 +1,4 @@
+# Clerk 認証付き E2E を GitHub Actions Secrets なしで安定実行できるまで CI の e2e ジョブをスキップする。
+# Secrets（NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY / CLERK_SECRET_KEY 等）を Actions に入れ、
+# PR 前に `pnpm build && pnpm test:e2e` が緑になったらこのファイルを削除すること。
+# 規律の正本: notes/testing-discipline.md
