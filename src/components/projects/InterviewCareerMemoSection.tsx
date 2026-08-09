@@ -31,6 +31,7 @@ interface InterviewCareerMemoSectionProps {
   initialCareerMemo: string | null;
   questions: QuestionWithAnswer[];
   userAnswers: Record<string, string>;
+  onPersonalized?: (updatedAnswers: Record<string, string>) => void;
 }
 
 export function InterviewCareerMemoSection({
@@ -38,6 +39,7 @@ export function InterviewCareerMemoSection({
   initialCareerMemo,
   questions,
   userAnswers,
+  onPersonalized,
 }: InterviewCareerMemoSectionProps) {
   const router = useRouter();
   const [careerMemo, setCareerMemo] = useState(initialCareerMemo ?? "");
@@ -82,12 +84,23 @@ export function InterviewCareerMemoSection({
     setConfirmOpen(false);
 
     if (result.success) {
+      if (result.updatedAnswers) {
+        onPersonalized?.(result.updatedAnswers);
+      }
       router.refresh();
-      notifications.show({
-        color: "teal",
-        title: "パーソナライズ完了",
-        message: `${result.updatedCount ?? 0}件の回答を更新しました（AI回答案はそのまま保持）`,
-      });
+      if (result.partialFailure) {
+        notifications.show({
+          color: "yellow",
+          title: "一部のみパーソナライズ",
+          message: `${result.updatedCount ?? 0}件を更新しましたが、${result.failedCount ?? 0}件は更新できませんでした。対象を減らすか再実行してください。`,
+        });
+      } else {
+        notifications.show({
+          color: "teal",
+          title: "パーソナライズ完了",
+          message: `${result.updatedCount ?? 0}件の回答を更新しました（AI回答案はそのまま保持）`,
+        });
+      }
     } else {
       notifications.show({
         color: "red",

@@ -78,6 +78,9 @@ export async function personalizeInterviewAnswers(
 ): Promise<{
   success: boolean;
   updatedCount?: number;
+  updatedAnswers?: Record<string, string>;
+  partialFailure?: boolean;
+  failedCount?: number;
   error?: string;
 }> {
   const user = await getAuthedUser();
@@ -178,6 +181,12 @@ ${questionBlock}
       return { success: false, error: "AIが有効な回答を生成できませんでした" };
     }
 
+    const savedIds = new Set(toSave.map((a) => a.questionId));
+    const failedCount = questionIds.filter((id) => !savedIds.has(id)).length;
+    const updatedAnswers = Object.fromEntries(
+      toSave.map((a) => [a.questionId, a.userAnswer])
+    );
+
     const now = new Date().toISOString();
 
     await db.transaction(async (tx) => {
@@ -186,6 +195,17 @@ ${questionBlock}
           .update(interviewPreparations)
           .set({ careerMemo: trimmedMemo, updatedAt: now })
           .where(eq(interviewPreparations.id, prep.id));
+      } else {
+        await tx.insert(interviewPreparations).values({
+          id: randomUUID(),
+          projectId,
+          userId: user.id,
+          careerMemo: trimmedMemo,
+          interviewType: "online",
+          interviewPartner: "general",
+          createdAt: now,
+          updatedAt: now,
+        });
       }
 
       for (const item of toSave) {
@@ -220,8 +240,19 @@ ${questionBlock}
     });
 
     revalidatePath(`/dashboard/projects/${projectId}`);
-    return { success: true, updatedCount: toSave.length };
-  } catch {
+    return {
+      success: true,
+      updatedCount: toSave.length,
+      updatedAnswers,
+      partialFailure: failedCount > 0,
+      failedCount,
+    };
+  } catch (error) {
+    console.error("interview_personalize failed", {
+      projectId,
+      taskType: "interview_personalize",
+      message: error instanceof Error ? error.message : "unknown error",
+    });
     return { success: false, error: "AI処理に失敗しました" };
   }
 }

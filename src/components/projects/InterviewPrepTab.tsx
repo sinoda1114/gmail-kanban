@@ -454,6 +454,9 @@ export function InterviewPrepTab({
             initialCareerMemo={prep?.careerMemo ?? null}
             questions={initialQuestions}
             userAnswers={userAnswers}
+            onPersonalized={(updated) =>
+              setUserAnswers((prev) => ({ ...prev, ...updated }))
+            }
           />
 
           <InterviewRehearsalSection questions={initialQuestions} />

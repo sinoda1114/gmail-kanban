@@ -109,7 +109,12 @@ ${answerRow?.aiAnswer ?? "（なし）"}
     });
 
     return { success: true, feedback: object };
-  } catch {
+  } catch (error) {
+    console.error("interview_rehearsal failed", {
+      questionId,
+      taskType: "interview_rehearsal",
+      message: error instanceof Error ? error.message : "unknown error",
+    });
     return { success: false, error: "AI処理に失敗しました" };
   }
 }

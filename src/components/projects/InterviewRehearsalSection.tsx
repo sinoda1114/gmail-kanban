@@ -48,10 +48,17 @@ export function InterviewRehearsalSection({
 
   const selectedQuestion = targetQuestions.find((q) => q.id === selectedId);
 
-  const selectData = targetQuestions.map((q) => ({
-    value: q.id,
-    label: `Q${questions.indexOf(q) + 1}. ${q.question.slice(0, 50)}${q.question.length > 50 ? "…" : ""}`,
-  }));
+  const questionNumberById = new Map(
+    questions.map((q, i) => [q.id, i + 1])
+  );
+
+  const selectData = targetQuestions.map((q) => {
+    const num = questionNumberById.get(q.id) ?? 0;
+    return {
+      value: q.id,
+      label: `Q${num}. ${q.question.slice(0, 50)}${q.question.length > 50 ? "…" : ""}`,
+    };
+  });
 
   async function handleGetFeedback() {
     if (!selectedId) {
@@ -100,6 +107,7 @@ export function InterviewRehearsalSection({
           value={selectedId}
           onChange={(v) => {
             setSelectedId(v);
+            setDraftAnswer("");
             setFeedback(null);
           }}
           searchable
