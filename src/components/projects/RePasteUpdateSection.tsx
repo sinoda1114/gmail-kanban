@@ -246,7 +246,8 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
         title: "Gmail取得完了",
         message: "スレッド本文をメール本文欄に反映しました",
       });
-    } catch {
+    } catch (err) {
+      console.error("Gmail fetch failed:", err);
       const message =
         "Gmail 取得中にエラーが発生しました。しばらく待ってから再試行してください";
       setError(message);
