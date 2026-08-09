@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { buildReminderFingerprint, isReminderDismissed } from "../reminders";
+import {
+  buildReminderFingerprint,
+  isReminderDismissed,
+  validateReminderFingerprint,
+  REMINDER_FINGERPRINT_MAX_LENGTH,
+} from "../reminders";
 
 describe("buildReminderFingerprint", () => {
   it("uses daysElapsed bucket for non-interview reminders", () => {
@@ -41,6 +46,60 @@ describe("buildReminderFingerprint", () => {
     });
     expect(base).not.toBe(statusChanged);
     expect(base).not.toBe(daysChanged);
+  });
+});
+
+describe("validateReminderFingerprint", () => {
+  it("accepts a well-formed non-interview fingerprint", () => {
+    expect(
+      validateReminderFingerprint("reply_required|reply|3")
+    ).toEqual({ valid: true, fingerprint: "reply_required|reply|3" });
+  });
+
+  it("accepts a well-formed interview fingerprint", () => {
+    expect(
+      validateReminderFingerprint("interview_scheduled|interview|2026-08-10")
+    ).toEqual({
+      valid: true,
+      fingerprint: "interview_scheduled|interview|2026-08-10",
+    });
+  });
+
+  it("rejects reminder type mismatch", () => {
+    expect(
+      validateReminderFingerprint("reply_required|reply|3", {
+        expectedReminderType: "follow_up",
+      })
+    ).toEqual({ valid: false, error: "Invalid fingerprint" });
+  });
+
+  it("rejects empty, malformed, or overlong fingerprints", () => {
+    expect(validateReminderFingerprint("")).toEqual({
+      valid: false,
+      error: "Invalid fingerprint",
+    });
+    expect(validateReminderFingerprint("   ")).toEqual({
+      valid: false,
+      error: "Invalid fingerprint",
+    });
+    expect(validateReminderFingerprint("reply_required|reply")).toEqual({
+      valid: false,
+      error: "Invalid fingerprint",
+    });
+    expect(
+      validateReminderFingerprint("bad_status|reply|3")
+    ).toEqual({ valid: false, error: "Invalid fingerprint" });
+    expect(
+      validateReminderFingerprint("reply_required|bad_type|3")
+    ).toEqual({ valid: false, error: "Invalid fingerprint" });
+    expect(
+      validateReminderFingerprint("interview_scheduled|interview|not-a-date")
+    ).toEqual({ valid: false, error: "Invalid fingerprint" });
+    expect(
+      validateReminderFingerprint(
+        "x".repeat(REMINDER_FINGERPRINT_MAX_LENGTH + 1)
+      )
+    ).toEqual({ valid: false, error: "Invalid fingerprint" });
   });
 });
 

@@ -7,6 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import type { ReminderType } from "@/types/project";
+import { validateReminderFingerprint } from "@/lib/reminders";
 
 export async function markReminderDone(input: {
   projectId: string;
@@ -26,6 +27,14 @@ export async function markReminderDone(input: {
   });
   if (!project) return { success: false, error: "Project not found" };
 
+  const fingerprintCheck = validateReminderFingerprint(input.fingerprint, {
+    expectedReminderType: input.reminderType,
+  });
+  if (!fingerprintCheck.valid) {
+    return { success: false, error: fingerprintCheck.error };
+  }
+  const fingerprint = fingerprintCheck.fingerprint;
+
   const now = new Date().toISOString();
 
   const existing = await db.query.reminders.findFirst({
@@ -41,7 +50,7 @@ export async function markReminderDone(input: {
       .update(reminders)
       .set({
         done: true,
-        message: input.fingerprint,
+        message: fingerprint,
         remindAt: now,
       })
       .where(eq(reminders.id, existing.id));
@@ -52,7 +61,7 @@ export async function markReminderDone(input: {
       userId: user.id,
       reminderType: input.reminderType,
       remindAt: now,
-      message: input.fingerprint,
+      message: fingerprint,
       done: true,
     });
   }

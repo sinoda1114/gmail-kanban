@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { notifications } from "@mantine/notifications";
 import {
   Stack,
   Group,
@@ -21,6 +23,7 @@ type AlertsListProps = {
 };
 
 export function AlertsList({ activeReminders, doneReminders }: AlertsListProps) {
+  const router = useRouter();
   const [showDone, setShowDone] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -29,12 +32,28 @@ export function AlertsList({ activeReminders, doneReminders }: AlertsListProps) 
     const key = item.projectId + item.reminderType;
     setPendingKey(key);
     startTransition(async () => {
-      await markReminderDone({
-        projectId: item.projectId,
-        reminderType: item.reminderType,
-        fingerprint: item.fingerprint,
-      });
-      setPendingKey(null);
+      try {
+        const result = await markReminderDone({
+          projectId: item.projectId,
+          reminderType: item.reminderType,
+          fingerprint: item.fingerprint,
+        });
+        if (!result.success) {
+          notifications.show({
+            color: "red",
+            message: result.error ?? "対応済みの保存に失敗しました",
+          });
+          return;
+        }
+        router.refresh();
+      } catch {
+        notifications.show({
+          color: "red",
+          message: "対応済みの保存に失敗しました",
+        });
+      } finally {
+        setPendingKey(null);
+      }
     });
   };
 
