@@ -22,6 +22,7 @@ import type { ProjectExtraction } from "@/types/ai";
 import {
   PROJECT_STATUSES,
   STATUS_LABELS,
+  isProjectStatus,
   type ProjectStatus,
 } from "@/types/project";
 
@@ -89,8 +90,7 @@ export function NewProjectForm() {
       const d = result.data;
       setAiResult(d);
       const suggestedStatus =
-        d.suggestedStatus &&
-        PROJECT_STATUSES.includes(d.suggestedStatus)
+        d.suggestedStatus && isProjectStatus(d.suggestedStatus)
           ? d.suggestedStatus
           : undefined;
       setForm((f) => ({
@@ -307,9 +307,11 @@ export function NewProjectForm() {
                 label: STATUS_LABELS[s],
               }))}
               value={form.status}
-              onChange={(v) =>
-                set("status", (v as ProjectStatus) ?? "reply_required")
-              }
+              onChange={(v) => {
+                if (v !== null && isProjectStatus(v)) {
+                  set("status", v);
+                }
+              }}
             />
           </>
         )}
