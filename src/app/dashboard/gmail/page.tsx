@@ -12,7 +12,7 @@ import {
   Group,
 } from "@mantine/core";
 import { DashboardShell } from "@/components/layout/DashboardShell";
-import { GMAIL_READONLY_SCOPE } from "@/lib/google-oauth";
+import { GMAIL_READONLY_SCOPE } from "@/lib/clerk-google-oauth";
 
 export default async function GmailHelperPage() {
   const { userId } = await auth();

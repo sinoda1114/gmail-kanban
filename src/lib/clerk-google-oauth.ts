@@ -1,5 +1,8 @@
 import { clerkClient } from "@clerk/nextjs/server";
 
+export const GMAIL_READONLY_SCOPE =
+  "https://www.googleapis.com/auth/gmail.readonly";
+
 export type GoogleOAuthStatus =
   | { connected: true; accessToken: string }
   | { connected: false; reason: "no_token" | "error"; message: string };

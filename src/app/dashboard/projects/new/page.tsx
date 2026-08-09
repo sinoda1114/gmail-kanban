@@ -10,7 +10,7 @@ import {
   Anchor,
   Code,
 } from "@mantine/core";
-import { GMAIL_READONLY_SCOPE } from "@/lib/google-oauth";
+import { GMAIL_READONLY_SCOPE } from "@/lib/clerk-google-oauth";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { NewProjectForm } from "@/components/projects/NewProjectForm";
 

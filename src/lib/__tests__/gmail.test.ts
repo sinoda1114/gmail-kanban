@@ -106,3 +106,26 @@ describe("formatGmailThreadText", () => {
     expect(text.indexOf("first")).toBeLessThan(text.indexOf("second"));
   });
 });
+
+describe("decodeBase64Url resilience", () => {
+  it("returns empty body for invalid base64 payload", () => {
+    const extracted = extractTextFromGmailMessage({
+      payload: {
+        parts: [{ mimeType: "text/plain", body: { data: "!!!not-base64!!!" } }],
+      },
+      snippet: "fallback snippet",
+    });
+    expect(extracted.body).toBe("");
+  });
+
+  it("strips html without throwing on malformed markup", () => {
+    const html = Buffer.from("<p>hello<b>world", "utf8").toString("base64url");
+    const extracted = extractTextFromGmailMessage({
+      payload: {
+        parts: [{ mimeType: "text/html", body: { data: html } }],
+      },
+    });
+    expect(extracted.body).toContain("hello");
+    expect(extracted.body).toContain("world");
+  });
+});

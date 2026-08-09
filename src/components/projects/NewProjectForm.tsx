@@ -18,6 +18,7 @@ import { createProject } from "@/app/dashboard/projects/actions";
 import { extractProjectFromText } from "@/app/dashboard/projects/extract-action";
 import { fetchGmailThread } from "@/app/dashboard/projects/gmail-action";
 import { GmailFetchFields } from "@/components/projects/GmailFetchFields";
+import { parseGmailInput } from "@/lib/gmail-url";
 import type { ProjectExtraction } from "@/types/ai";
 
 type FormState = {
@@ -54,6 +55,8 @@ const initialForm: FormState = {
   contractPeriod: "",
 };
 
+const MAX_GMAIL_INPUT_LENGTH = 500;
+
 export function NewProjectForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -70,7 +73,29 @@ export function NewProjectForm() {
   async function handleFetchGmail() {
     const input = form.gmailUrl.trim();
     if (!input) {
-      setError("Gmail URL またはスレッド ID を入力してください");
+      const message = "Gmail URL またはスレッド ID を入力してください";
+      setError(message);
+      return;
+    }
+    if (input.length > MAX_GMAIL_INPUT_LENGTH) {
+      const message = `入力が長すぎます（${MAX_GMAIL_INPUT_LENGTH}文字以内）`;
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
+      return;
+    }
+    if (!parseGmailInput(input)) {
+      const message =
+        "Gmail の URL またはスレッド ID の形式が正しくありません";
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
       return;
     }
     setGmailLoading(true);
@@ -97,7 +122,14 @@ export function NewProjectForm() {
         message: "スレッド本文をメール本文欄に反映しました",
       });
     } catch {
-      setError("Gmail 取得中にエラーが発生しました");
+      const message =
+        "Gmail 取得中にエラーが発生しました。しばらく待ってから再試行してください";
+      setError(message);
+      notifications.show({
+        color: "red",
+        title: "Gmail取得エラー",
+        message,
+      });
     } finally {
       setGmailLoading(false);
     }

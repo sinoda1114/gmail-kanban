@@ -21,13 +21,23 @@ export type GmailThreadResource = {
   messages?: GmailMessageResource[];
 };
 
+const MAX_HTML_STRIP_LENGTH = 500_000;
+
 function decodeBase64Url(data: string): string {
-  const normalized = data.replace(/-/g, "+").replace(/_/g, "/");
-  const pad =
-    normalized.length % 4 === 0
-      ? ""
-      : "=".repeat(4 - (normalized.length % 4));
-  return Buffer.from(normalized + pad, "base64").toString("utf8");
+  if (!data) return "";
+  if (!/^[A-Za-z0-9_-]+={0,2}$/.test(data)) return "";
+  try {
+    const normalized = data.replace(/-/g, "+").replace(/_/g, "/");
+    const pad =
+      normalized.length % 4 === 0
+        ? ""
+        : "=".repeat(4 - (normalized.length % 4));
+    const decoded = Buffer.from(normalized + pad, "base64").toString("utf8");
+    if (decoded.includes("\uFFFD")) return "";
+    return decoded;
+  } catch {
+    return "";
+  }
 }
 
 function headerValue(
@@ -49,20 +59,33 @@ function collectParts(part: GmailPart | undefined, out: GmailPart[]): void {
 }
 
 function stripHtml(html: string): string {
-  return html
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]+\n/g, "\n")
-    .trim();
+  if (!html) return "";
+  const input =
+    html.length > MAX_HTML_STRIP_LENGTH
+      ? html.slice(0, MAX_HTML_STRIP_LENGTH)
+      : html;
+
+  try {
+    return input
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#(\d+);/g, (_, code: string) =>
+        String.fromCharCode(Number(code))
+      )
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/[ \t]+\n/g, "\n")
+      .trim();
+  } catch {
+    return input.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  }
 }
 
 export function extractTextFromGmailMessage(message: GmailMessageResource): {
