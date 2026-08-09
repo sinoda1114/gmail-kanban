@@ -21,9 +21,20 @@ SKIP_SECRETS_DIR="${SKIP_SECRETS_DIR:-0}"
 SKIP_DOTENV_LOCAL="${SKIP_DOTENV_LOCAL:-0}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+sha256_16() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk '{print substr($1,1,16)}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 | awk '{print substr($1,1,16)}'
+  else
+    echo "sha256sum または shasum が必要です。" >&2
+    exit 1
+  fi
+}
+
 fingerprint() {
   # 値は出さず、比較用の短いハッシュだけ返す
-  printf '%s\n%s\n' "$1" "$2" | shasum -a 256 | awk '{print substr($1,1,16)}'
+  printf '%s\n%s\n' "$1" "$2" | sha256_16
 }
 
 read_env_key() {
