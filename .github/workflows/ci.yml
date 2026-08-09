@@ -15,7 +15,29 @@ permissions:
   contents: read
 
 jobs:
+  validate-clerk-secrets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+    steps:
+      - name: Clerk Secrets の有無を確認
+        run: |
+          if [ -z "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" ] || [ -z "$CLERK_SECRET_KEY" ]; then
+            echo "::error::GitHub Actions Secrets に NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY / CLERK_SECRET_KEY が未設定です。"
+            echo "ローカルで scripts/set-github-e2e-secrets.sh を実行するか、Repo Settings → Secrets に登録してください。"
+            exit 1
+          fi
+          case "$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" in pk_test_*) ;; *)
+            echo "::error::NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY は pk_test_ である必要があります"; exit 1 ;;
+          esac
+          case "$CLERK_SECRET_KEY" in sk_test_*) ;; *)
+            echo "::error::CLERK_SECRET_KEY は sk_test_ である必要があります"; exit 1 ;;
+          esac
+
   ci:
+    needs: validate-clerk-secrets
     uses: sinoda1114/ci-standard/.github/workflows/node-ci.yml@main
     secrets:
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
