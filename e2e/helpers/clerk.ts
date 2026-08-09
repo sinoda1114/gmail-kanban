@@ -9,28 +9,40 @@ const DEFAULT_E2E_USER_JSON = join(
   ".config/gmail-kanban-secrets/e2e-user.json"
 );
 
+const CLERK_PUBLISHABLE_KEY_ENV_NAMES = [
+  "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  "CLERK_PUBLISHABLE_KEY",
+] as const;
+
+/** globalSetup と worker 双方で使う Clerk E2E 必須 env の早期検証。 */
+export function assertClerkE2eEnv() {
+  const publishableKey =
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??
+    process.env.CLERK_PUBLISHABLE_KEY;
+  const secretKey = process.env.CLERK_SECRET_KEY;
+
+  if (!publishableKey?.startsWith("pk_")) {
+    throw new Error(
+      `E2E: Clerk publishable key (pk_...) が未設定です。次のいずれかを設定してください: ${CLERK_PUBLISHABLE_KEY_ENV_NAMES.join(", ")}。secrets を読み込んでから pnpm test:e2e を実行してください。`
+    );
+  }
+  if (!secretKey?.startsWith("sk_")) {
+    throw new Error(
+      "E2E: CLERK_SECRET_KEY (sk_...) が未設定です。secrets を読み込んでから pnpm test:e2e を実行してください。"
+    );
+  }
+}
+
 let clerkWorkerReady: Promise<void> | undefined;
 
-/** function-based globalSetup では CLERK_FAPI / TOKEN が worker に届かないため、worker ごとに一度だけ実行。 */
+/**
+ * function-based globalSetup では CLERK_FAPI / Testing Token が worker に届かないため、
+ * clerkSetup は worker ごとに一度だけ実行する（global-setup は env 検証のみ）。
+ */
 async function ensureClerkWorkerSetup() {
   if (!clerkWorkerReady) {
     clerkWorkerReady = (async () => {
-      const publishableKey =
-        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??
-        process.env.CLERK_PUBLISHABLE_KEY;
-      const secretKey = process.env.CLERK_SECRET_KEY;
-
-      if (!publishableKey?.startsWith("pk_")) {
-        throw new Error(
-          "E2E: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (pk_...) が未設定です。secrets を読み込んでから pnpm test:e2e を実行してください。"
-        );
-      }
-      if (!secretKey?.startsWith("sk_")) {
-        throw new Error(
-          "E2E: CLERK_SECRET_KEY (sk_...) が未設定です。secrets を読み込んでから pnpm test:e2e を実行してください。"
-        );
-      }
-
+      assertClerkE2eEnv();
       await clerkSetup({ dotenv: false });
     })();
   }
@@ -58,7 +70,11 @@ export function resolveE2eClerkUserEmail(): string | undefined {
     const parsed = JSON.parse(raw) as { email?: string };
     const email = parsed.email?.trim();
     return email || undefined;
-  } catch {
+  } catch (error) {
+    console.warn(
+      `E2E user config not found or invalid at ${jsonPath}:`,
+      error instanceof Error ? error.message : String(error)
+    );
     return undefined;
   }
 }

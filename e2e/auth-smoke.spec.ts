@@ -28,6 +28,8 @@ test.describe("認証済み スモーク", () => {
 
     await signInE2eTestUser(page, e2eUserEmail!);
 
+    // 初回サインインは users 行が無いため /onboarding 経由になる（最終 URL は /dashboard）。
+    // Turso / ローカル file DB が利用可能であることが前提（CI e2e ジョブも同様）。
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
     await expect(
@@ -36,7 +38,7 @@ test.describe("認証済み スモーク", () => {
     await expect(
       page.getByRole("link", { name: "ダッシュボードへ移動" })
     ).toBeVisible();
-    await expect(page.locator(".cl-userButton-root").first()).toBeVisible({
+    await expect(page.getByRole("link", { name: "設定" })).toBeVisible({
       timeout: 15_000,
     });
   });
