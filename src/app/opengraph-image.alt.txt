@@ -1,0 +1,1 @@
+Gmail Kanban. Gmailの案件をカンバンで管理
