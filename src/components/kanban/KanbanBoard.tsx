@@ -60,8 +60,13 @@ export function KanbanBoard({ projects: initialProjects }: KanbanBoardProps) {
     [projects, searchText, statusFilters]
   );
 
+  const hasActiveSearch = searchText.trim().length > 0;
+  const filtersIncludeCollapsed = statusFilters.some((s) =>
+    COLLAPSED_STATUSES.includes(s)
+  );
+
   const effectiveShowCollapsed =
-    showCollapsed || statusFilters.some((s) => COLLAPSED_STATUSES.includes(s));
+    showCollapsed || filtersIncludeCollapsed || hasActiveSearch;
 
   const visibleStatuses = useMemo(() => {
     if (effectiveShowCollapsed) return PROJECT_STATUSES;

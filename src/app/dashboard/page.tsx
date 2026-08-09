@@ -7,6 +7,7 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { db } from "@/db/client";
 import { projects, users, interviewPreparations } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { pickBestInterviewAtByProject } from "@/lib/interview-prep";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -32,14 +33,13 @@ export default async function DashboardPage() {
       .select({
         projectId: interviewPreparations.projectId,
         interviewAt: interviewPreparations.interviewAt,
+        updatedAt: interviewPreparations.updatedAt,
       })
       .from(interviewPreparations)
       .where(eq(interviewPreparations.userId, user.id)),
   ]);
 
-  const interviewAtByProject = new Map(
-    preps.map((p) => [p.projectId, p.interviewAt])
-  );
+  const interviewAtByProject = pickBestInterviewAtByProject(preps);
 
   const kanbanProjects = projectList.map((project) => ({
     ...project,
