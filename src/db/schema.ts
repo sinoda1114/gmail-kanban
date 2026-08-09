@@ -71,6 +71,45 @@ export const interviewPreparations = sqliteTable("interview_preparations", {
   strategy: text("strategy"),
   concerns: text("concerns", { mode: "json" }).$type<string[]>(),
   checklist: text("checklist", { mode: "json" }).$type<string[]>(),
+  companyBrief: text("company_brief", { mode: "json" }).$type<{
+    domain: string;
+    hypotheses: Array<{
+      text: string;
+      basis: "evidence" | "speculation";
+      sourceHint?: string;
+    }>;
+    talkingPoints: string[];
+    topicsToAvoid: string[];
+  } | null>(),
+  techDeepDive: text("tech_deep_dive", { mode: "json" }).$type<
+    Array<{
+      tech: string;
+      deepDiveTopics: string[];
+      experienceConnection: string;
+      phrasesToAvoid: string[];
+    }> | null
+  >(),
+  redFlags: text("red_flags", { mode: "json" }).$type<
+    Array<{
+      flag: string;
+      severity: "high" | "medium" | "low";
+      confirmationQuestion: string;
+      category:
+        | "rate"
+        | "work_style"
+        | "onsite"
+        | "period"
+        | "vague_requirements"
+        | "other";
+    }> | null
+  >(),
+  cheatSheet: text("cheat_sheet", { mode: "json" }).$type<{
+    keyExperiences: string[];
+    numbers?: string[];
+    topReverseQuestions: string[];
+    dontTouchPoints: string[];
+    summary: string;
+  } | null>(),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
