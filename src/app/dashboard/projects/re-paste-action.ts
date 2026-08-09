@@ -126,7 +126,8 @@ export async function applyAcceptedProjectUpdates(
   projectId: string,
   newSourceText: string,
   extraction: ProjectExtraction,
-  accepted: AcceptedProjectUpdateFields
+  accepted: AcceptedProjectUpdateFields,
+  gmailUrl?: string
 ): Promise<{ success: boolean; error?: string }> {
   const user = await getAuthedUser();
   if (!user) return { success: false, error: "Unauthorized" };
@@ -140,6 +141,10 @@ export async function applyAcceptedProjectUpdates(
   }
 
   const input: UpdateProjectBasicInfoInput = {};
+
+  if (gmailUrl !== undefined && gmailUrl !== (project.gmailUrl ?? "")) {
+    input.gmailUrl = gmailUrl;
+  }
 
   if (accepted.title && extraction.title) {
     input.title = extraction.title;
