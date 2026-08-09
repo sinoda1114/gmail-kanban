@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Stack,
   Group,
@@ -45,6 +45,16 @@ export function InterviewRehearsalSection({
   const [draftAnswer, setDraftAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<RehearsalFeedback | null>(null);
+
+  useEffect(() => {
+    if (!selectedId || !targetQuestions.some((q) => q.id === selectedId)) {
+      const newId = targetQuestions[0]?.id ?? null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedId(newId);
+      setDraftAnswer("");
+      setFeedback(null);
+    }
+  }, [questions, selectedId, targetQuestions]);
 
   const selectedQuestion = targetQuestions.find((q) => q.id === selectedId);
 

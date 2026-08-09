@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Stack,
@@ -50,14 +50,31 @@ export function InterviewCareerMemoSection({
   const [personalizing, setPersonalizing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  useEffect(() => {
+    const validIds = new Set(questions.map((q) => q.id));
+    const currentValid = selectedIds.filter((id) => validIds.has(id));
+    const highPriorityIds = questions
+      .filter((q) => q.priority === "high")
+      .map((q) => q.id);
+
+    if (currentValid.length === 0 && highPriorityIds.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedIds(highPriorityIds);
+    } else if (currentValid.length !== selectedIds.length) {
+      setSelectedIds(currentValid);
+    }
+  }, [questions, selectedIds]);
+
   const questionOptions = questions.map((q, i) => ({
     value: q.id,
     label: `Q${i + 1}. ${q.question.slice(0, 60)}${q.question.length > 60 ? "…" : ""} [${PRIORITY_LABELS[q.priority as Priority] ?? q.priority}]`,
   }));
 
-  const hasExistingAnswers = selectedIds.some(
-    (id) => (userAnswers[id] ?? "").trim().length > 0
-  );
+  const hasExistingAnswers = selectedIds.some((id) => {
+    const inMemory = (userAnswers[id] ?? "").trim().length > 0;
+    const persisted = questions.find((q) => q.id === id)?.answer?.userAnswer?.trim().length ?? 0;
+    return inMemory || persisted > 0;
+  });
 
   async function handleSaveMemo() {
     setSavingMemo(true);
