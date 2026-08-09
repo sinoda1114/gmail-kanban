@@ -171,6 +171,7 @@ interface RePasteUpdateSectionProps {
 export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
   const router = useRouter();
   const [gmailInput, setGmailInput] = useState(project.gmailUrl ?? "");
+  const [fetchedGmailUrl, setFetchedGmailUrl] = useState<string | null>(null);
   const [gmailLoading, setGmailLoading] = useState(false);
   const [newSourceText, setNewSourceText] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
@@ -240,7 +241,13 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
         return;
       }
       setGmailInput(result.gmailUrl);
+      setFetchedGmailUrl(result.gmailUrl);
       setNewSourceText(result.text);
+      setExtraction(null);
+      setConcerns([]);
+      setAccepted({});
+      setConfirmOpen(false);
+      setApplyError(null);
       notifications.show({
         color: "teal",
         title: "Gmail取得完了",
@@ -328,12 +335,18 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
 
     setApplyError(null);
     setApplying(true);
+    const gmailUrlToApply = fetchedGmailUrl
+      ? fetchedGmailUrl
+      : (() => {
+          const trimmed = gmailInput.trim();
+          return trimmed !== (project.gmailUrl ?? "") ? trimmed : undefined;
+        })();
     const result = await applyAcceptedProjectUpdates(
       project.id,
       newSourceText,
       extraction,
       visibleAccepted,
-      gmailInput.trim() || undefined
+      gmailUrlToApply
     );
     setApplying(false);
 
@@ -344,6 +357,10 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
         message: `${selectedCount}件の項目を更新しました`,
       });
       setNewSourceText("");
+      if (gmailUrlToApply !== undefined) {
+        setGmailInput(gmailUrlToApply);
+      }
+      setFetchedGmailUrl(null);
       setExtraction(null);
       setConcerns([]);
       setAccepted({});
@@ -376,7 +393,10 @@ export function RePasteUpdateSection({ project }: RePasteUpdateSectionProps) {
         <GmailFetchFields
           gmailInput={gmailInput}
           sourceText={newSourceText}
-          onGmailInputChange={setGmailInput}
+          onGmailInputChange={(value) => {
+            setGmailInput(value);
+            setFetchedGmailUrl(null);
+          }}
           onSourceTextChange={setNewSourceText}
           onFetchGmail={handleFetchGmail}
           gmailLoading={gmailLoading}

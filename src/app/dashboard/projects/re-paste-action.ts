@@ -142,7 +142,7 @@ export async function applyAcceptedProjectUpdates(
 
   const input: UpdateProjectBasicInfoInput = {};
 
-  if (gmailUrl && gmailUrl !== project.gmailUrl) {
+  if (gmailUrl !== undefined && gmailUrl !== (project.gmailUrl ?? "")) {
     input.gmailUrl = gmailUrl;
   }
 
