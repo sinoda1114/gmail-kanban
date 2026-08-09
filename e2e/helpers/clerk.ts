@@ -36,6 +36,7 @@ export function resolveE2eClerkUserEmail(): string | undefined {
 
 /** Testing Token + ticket ベースのサーバー側サインイン（UI 入力は使わない）。 */
 export async function signInE2eTestUser(page: Page, emailAddress: string) {
-  await page.goto("/");
+  // `/` は RSC リダイレクトのみで Clerk JS が載らないため sign-in へ直接行く
+  await page.goto("/sign-in");
   await clerk.signIn({ page, emailAddress });
 }

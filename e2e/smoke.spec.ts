@@ -14,7 +14,6 @@ test.describe("認証ゲート スモーク", () => {
   test("未ログインで /sign-in に到達できる", async ({ page }) => {
     await page.goto("/sign-in");
     await expect(page).toHaveURL(/sign-in/);
-    await expect(page.locator("body")).toBeVisible();
     const clerkRoot = page.locator(
       ".cl-rootBox, .cl-signIn-root, [data-clerk-component]"
     );

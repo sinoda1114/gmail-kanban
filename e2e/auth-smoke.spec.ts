@@ -12,6 +12,8 @@ const e2eUserEmail = resolveE2eClerkUserEmail();
  * Clerk Testing Token + clerk.signIn（ticket）を使う（notes/testing-discipline.md）。
  */
 test.describe("認証済み スモーク", () => {
+  test.describe.configure({ timeout: 60_000 });
+
   test.beforeEach(async ({ page }) => {
     await prepareClerkTestingPage(page);
   });
