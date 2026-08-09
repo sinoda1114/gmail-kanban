@@ -167,19 +167,29 @@ ${merged.nextAction.trim() || "（なし）"}
 
     const now = new Date().toISOString();
 
+    const noteFields = {
+      duringNote: merged.duringNote,
+      afterNote: merged.afterNote,
+      impression: merged.impression,
+      ownTemperature: merged.ownTemperature,
+      concern: merged.concern,
+      nextAction: merged.nextAction,
+      retrospective: object,
+      updatedAt: now,
+    };
+
     if (note) {
       await db
         .update(interviewNotes)
-        .set({ retrospective: object, updatedAt: now })
+        .set(noteFields)
         .where(eq(interviewNotes.id, note.id));
     } else {
       await db.insert(interviewNotes).values({
         id: randomUUID(),
         projectId,
         userId: user.id,
-        retrospective: object,
+        ...noteFields,
         createdAt: now,
-        updatedAt: now,
       });
     }
 
@@ -194,7 +204,12 @@ ${merged.nextAction.trim() || "（なし）"}
 
     revalidatePath(`/dashboard/projects/${projectId}`);
     return { success: true, retrospective: object };
-  } catch {
+  } catch (error) {
+    console.error("interview_retrospective failed", {
+      projectId,
+      taskType: "interview_retrospective",
+      message: error instanceof Error ? error.message : "unknown error",
+    });
     return { success: false, error: "AI処理に失敗しました" };
   }
 }

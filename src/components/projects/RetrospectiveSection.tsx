@@ -18,19 +18,14 @@ import type { InterviewRetrospective } from "@/types/retrospective";
 import {
   generateRetrospective,
   saveRetrospective,
+  type RetrospectiveNoteInput,
 } from "@/app/dashboard/projects/retrospective-action";
+import { saveInterviewNote } from "@/app/dashboard/projects/interview-notes-action";
 
 interface RetrospectiveSectionProps {
   project: Project;
   note: InterviewNote | null;
-  currentNotes?: {
-    duringNote?: string;
-    afterNote?: string;
-    impression?: string;
-    ownTemperature?: string;
-    concern?: string;
-    nextAction?: string;
-  };
+  currentNotes?: RetrospectiveNoteInput & { resultStatus?: string };
 }
 
 const EMPTY_RETROSPECTIVE: InterviewRetrospective = {
@@ -100,6 +95,24 @@ export function RetrospectiveSection({
 
     setAiLoading(true);
     setError(null);
+
+    if (currentNotes) {
+      const saveResult = await saveInterviewNote(project.id, {
+        duringNote: currentNotes.duringNote,
+        afterNote: currentNotes.afterNote,
+        impression: currentNotes.impression,
+        ownTemperature: currentNotes.ownTemperature,
+        concern: currentNotes.concern,
+        nextAction: currentNotes.nextAction,
+        resultStatus: currentNotes.resultStatus,
+      });
+      if (!saveResult.success) {
+        setAiLoading(false);
+        setError(saveResult.error ?? "面談メモの保存に失敗しました");
+        return;
+      }
+    }
+
     const result = await generateRetrospective(project.id, currentNotes);
     setAiLoading(false);
 
