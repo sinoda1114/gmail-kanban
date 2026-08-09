@@ -11,6 +11,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - 開発フロー詳細: `notes/dev-workflow-multiagent.md`
 - タスク管理詳細: `notes/task-management-issue-workflow.md`
 - テスト規律（選択的 TDD / Vitest / Playwright）: `notes/testing-discipline.md`
+- 課金方針（Stripe / RevenueCat）: `notes/billing-strategy.md`
 
 ## このプロジェクト固有の値
 
