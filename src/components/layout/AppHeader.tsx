@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Group, Title, UnstyledButton } from "@mantine/core";
+import { Group, Title, UnstyledButton, Button } from "@mantine/core";
 import { UserButton } from "@clerk/nextjs";
-import { IconMail } from "@tabler/icons-react";
+import { IconBell, IconMail, IconSettings } from "@tabler/icons-react";
 
 export function AppHeader() {
   return (
@@ -19,7 +19,27 @@ export function AppHeader() {
           <Title order={4}>Gmail Kanban</Title>
         </Group>
       </UnstyledButton>
-      <UserButton />
+      <Group gap="xs">
+        <Button
+          variant="subtle"
+          size="compact-sm"
+          leftSection={<IconBell size={16} />}
+          component={Link}
+          href="/dashboard/alerts"
+        >
+          要対応
+        </Button>
+        <Button
+          variant="subtle"
+          size="compact-sm"
+          leftSection={<IconSettings size={16} />}
+          component={Link}
+          href="/dashboard/settings"
+        >
+          設定
+        </Button>
+        <UserButton />
+      </Group>
     </Group>
   );
 }
