@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   TextInput,
@@ -71,6 +72,7 @@ export function NewProjectForm() {
   const [aiLoading, setAiLoading] = useState(false);
   const [gmailLoading, setGmailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [projectLimitHit, setProjectLimitHit] = useState(false);
   const [aiResult, setAiResult] = useState<ProjectExtraction | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
 
@@ -198,6 +200,7 @@ export function NewProjectForm() {
     }
     setLoading(true);
     setError(null);
+    setProjectLimitHit(false);
     try {
       const result = await createProject({
         title: form.title,
@@ -217,6 +220,7 @@ export function NewProjectForm() {
         status: form.status,
       });
       if (!result.success) {
+        setProjectLimitHit(result.code === "project_limit");
         setError(result.error ?? "登録に失敗しました");
         notifications.show({
           color: "red",
@@ -241,6 +245,13 @@ export function NewProjectForm() {
         {error !== null && (
           <Alert color="red" title="エラー">
             {error}
+            {projectLimitHit && (
+              <Text size="sm" mt="xs">
+                <Link href="/dashboard/billing" style={{ fontWeight: 600 }}>
+                  課金・プラン画面で Pro にアップグレード
+                </Link>
+              </Text>
+            )}
           </Alert>
         )}
 

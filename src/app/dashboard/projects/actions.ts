@@ -7,6 +7,7 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import { PROJECT_STATUSES, type ProjectStatus } from "@/types/project";
+import { canCreateProject, PROJECT_LIMIT_REACHED_ERROR } from "@/lib/billing";
 
 export type CreateProjectInput = {
   title: string;
@@ -49,7 +50,12 @@ export type UpdateProjectBasicInfoInput = {
 
 export async function createProject(
   input: CreateProjectInput
-): Promise<{ success: boolean; error?: string; projectId?: string }> {
+): Promise<{
+  success: boolean;
+  error?: string;
+  projectId?: string;
+  code?: "project_limit";
+}> {
   const { userId: clerkUserId } = await auth();
   if (!clerkUserId) return { success: false, error: "Unauthorized" };
 
@@ -60,6 +66,14 @@ export async function createProject(
 
   if (!input.title.trim()) {
     return { success: false, error: "タイトルは必須です" };
+  }
+
+  if (!(await canCreateProject(user.id))) {
+    return {
+      success: false,
+      error: PROJECT_LIMIT_REACHED_ERROR,
+      code: "project_limit",
+    };
   }
 
   const status: ProjectStatus =

@@ -91,3 +91,31 @@ export async function createCheckoutSession(): Promise<CheckoutResult> {
     return { success: false, error: "Failed to create checkout session" };
   }
 }
+
+export async function createCustomerPortalSession(): Promise<CheckoutResult> {
+  const user = await getAuthedUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) {
+    return { success: false, error: "Billing is not configured" };
+  }
+
+  const billing = await db.query.billingSubscriptions.findFirst({
+    where: eq(billingSubscriptions.userId, user.id),
+  });
+  if (!billing?.stripeCustomerId) {
+    return { success: false, error: "Stripe customer not found" };
+  }
+
+  try {
+    const session = await getStripe().billingPortal.sessions.create({
+      customer: billing.stripeCustomerId,
+      return_url: `${siteUrl}/dashboard/billing`,
+    });
+    if (!session.url) return { success: false, error: "Portal URL was not created" };
+    return { success: true, url: session.url };
+  } catch {
+    return { success: false, error: "Failed to create portal session" };
+  }
+}
