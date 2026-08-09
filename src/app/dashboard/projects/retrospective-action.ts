@@ -8,6 +8,7 @@ import { users, projects, interviewNotes, aiExtractionLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
+import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import {
   InterviewRetrospectiveSchema,
   type InterviewRetrospective,
@@ -116,7 +117,7 @@ export async function generateRetrospective(
     return { success: false, error: EMPTY_NOTES_MESSAGE };
   }
 
-  const modelId = "gemini-3.1-flash-lite";
+  const modelId = GEMINI_MODEL_ID;
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
     : "（記載なし）";

@@ -15,6 +15,7 @@ import {
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
+import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import { PersonalizedAnswersSchema } from "@/types/interview-prep";
 
 async function getAuthedUser() {
@@ -126,7 +127,7 @@ export async function personalizeInterviewAnswers(
     answers.map((a) => [a.questionId, a])
   );
 
-  const modelId = "gemini-3.1-flash-lite";
+  const modelId = GEMINI_MODEL_ID;
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
     : "";

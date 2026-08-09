@@ -8,6 +8,7 @@ import { users, projects, aiExtractionLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
+import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import { ProjectExtractionSchema, type ProjectExtraction } from "@/types/ai";
 import {
   updateProjectBasicInfo,
@@ -45,7 +46,7 @@ export async function extractProjectUpdateFromText(
   }
 
   // Project-standard model id (see AGENTS.md); keep in sync with other AI actions.
-  const modelId = "gemini-3.1-flash-lite";
+  const modelId = GEMINI_MODEL_ID;
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
     : "";
