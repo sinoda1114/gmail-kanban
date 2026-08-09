@@ -16,6 +16,7 @@ import {
 import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
+import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import { InterviewPrepAISchema } from "@/types/interview-prep";
 import { buildPartnerPromptGuidance } from "@/lib/interview-prep-prompt";
 
@@ -180,7 +181,7 @@ export async function generateInterviewPrep(
     });
   }
 
-  const modelId = "gemini-3.1-flash-lite";
+  const modelId = GEMINI_MODEL_ID;
   const prep = await db.query.interviewPreparations.findFirst({
     where: eq(interviewPreparations.id, prepId),
   });
