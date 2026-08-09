@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { db } from "@/db/client";
 import { billingSubscriptions, users } from "@/db/schema";
+import { getUserBilling, getEffectivePlan } from "@/lib/billing";
 
 let stripeClient: Stripe | null = null;
 
@@ -106,6 +107,12 @@ export async function createCustomerPortalSession(): Promise<CheckoutResult> {
   });
   if (!billing?.stripeCustomerId) {
     return { success: false, error: "Stripe customer not found" };
+  }
+
+  const userBilling = await getUserBilling(user.id);
+  const effectivePlan = getEffectivePlan(userBilling);
+  if (effectivePlan !== "pro") {
+    return { success: false, error: "Customer portal is only available for Pro subscribers" };
   }
 
   try {

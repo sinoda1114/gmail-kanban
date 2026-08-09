@@ -7,7 +7,13 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import { PROJECT_STATUSES, type ProjectStatus } from "@/types/project";
-import { canCreateProject, PROJECT_LIMIT_REACHED_ERROR } from "@/lib/billing";
+import {
+  getUserBilling,
+  getEffectivePlan,
+  getUserProjectCount,
+  canAddProject,
+  PROJECT_LIMIT_REACHED_ERROR,
+} from "@/lib/billing";
 
 export type CreateProjectInput = {
   title: string;
@@ -68,14 +74,6 @@ export async function createProject(
     return { success: false, error: "タイトルは必須です" };
   }
 
-  if (!(await canCreateProject(user.id))) {
-    return {
-      success: false,
-      error: PROJECT_LIMIT_REACHED_ERROR,
-      code: "project_limit",
-    };
-  }
-
   const status: ProjectStatus =
     input.status !== undefined ? input.status : "reply_required";
   if (!PROJECT_STATUSES.includes(status)) {
@@ -85,38 +83,51 @@ export async function createProject(
   const id = randomUUID();
   const now = new Date().toISOString();
 
-  await db.transaction(async (tx) => {
-    await tx.insert(projects).values({
-      id,
-      userId: user.id,
-      title: input.title,
-      status,
-      gmailUrl: input.gmailUrl,
-      sourceText: input.sourceText,
-      agentCompany: input.agentCompany,
-      agentPerson: input.agentPerson,
-      nextAction: input.nextAction,
-      summary: input.summary,
-      price: input.price,
-      workRate: input.workRate,
-      location: input.location,
-      remoteType: input.remoteType,
-      techStack: input.techStack,
-      startDateText: input.startDateText,
-      contractPeriod: input.contractPeriod,
-      createdAt: now,
-      updatedAt: now,
-    });
+  try {
+    await db.transaction(async (tx) => {
+      const billing = await getUserBilling(user.id);
+      const plan = getEffectivePlan(billing);
+      const projectCount = await getUserProjectCount(user.id);
+      if (!canAddProject(projectCount, plan)) {
+        throw new Error(PROJECT_LIMIT_REACHED_ERROR);
+      }
 
-    await tx.insert(projectStatusHistory).values({
-      id: randomUUID(),
-      projectId: id,
-      userId: user.id,
-      fromStatus: null,
-      toStatus: status,
-      changedAt: now,
+      await tx.insert(projects).values({
+        id,
+        userId: user.id,
+        title: input.title,
+        status,
+        gmailUrl: input.gmailUrl,
+        sourceText: input.sourceText,
+        agentCompany: input.agentCompany,
+        agentPerson: input.agentPerson,
+        nextAction: input.nextAction,
+        summary: input.summary,
+        price: input.price,
+        workRate: input.workRate,
+        location: input.location,
+        remoteType: input.remoteType,
+        techStack: input.techStack,
+        startDateText: input.startDateText,
+        contractPeriod: input.contractPeriod,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await tx.insert(projectStatusHistory).values({
+        id: randomUUID(),
+        projectId: id,
+        userId: user.id,
+        fromStatus: null,
+        toStatus: status,
+        changedAt: now,
+      });
     });
-  });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "プロジェクトの作成に失敗しました";
+    const code = message === PROJECT_LIMIT_REACHED_ERROR ? "project_limit" as const : undefined;
+    return { success: false, error: message, code };
+  }
 
   revalidatePath("/dashboard");
   return { success: true, projectId: id };

@@ -13,11 +13,9 @@ import {
   getUserProjectCount,
 } from "@/lib/billing";
 
-type BillingPageProps = {
-  searchParams: Promise<{ success?: string }>;
-};
+type BillingPageProps = Record<string, never>;
 
-export default async function BillingPage({ searchParams }: BillingPageProps) {
+export default async function BillingPage({}: BillingPageProps) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
@@ -35,9 +33,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     where: eq(billingSubscriptions.userId, user.id),
   });
 
-  const params = await searchParams;
-  const showSuccessBanner = params.success === "true";
-
   return (
     <DashboardShell>
       <Container size="lg" py="md">
@@ -48,7 +43,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           effectivePlan={effectivePlan}
           projectCountLabel={projectCountLabel}
           currentPeriodEnd={billing.currentPeriodEnd}
-          showSuccessBanner={showSuccessBanner}
           hasStripeCustomer={Boolean(billingRecord?.stripeCustomerId)}
         />
       </Container>

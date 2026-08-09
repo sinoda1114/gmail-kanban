@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  Alert,
   Badge,
   Button,
   Group,
@@ -24,7 +23,6 @@ type BillingActionsProps = {
   effectivePlan: BillingPlan;
   projectCountLabel: string;
   currentPeriodEnd: string | null;
-  showSuccessBanner: boolean;
   hasStripeCustomer: boolean;
 };
 
@@ -44,7 +42,6 @@ export function BillingActions({
   effectivePlan,
   projectCountLabel,
   currentPeriodEnd,
-  showSuccessBanner,
   hasStripeCustomer,
 }: BillingActionsProps) {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -103,12 +100,6 @@ export function BillingActions({
 
   return (
     <Stack gap="md">
-      {showSuccessBanner && (
-        <Alert color="teal" title="アップグレード完了">
-          Pro プランへの切り替えを受け付けました。反映まで少し時間がかかる場合があります。
-        </Alert>
-      )}
-
       <Paper withBorder p="md" radius="md">
         <Stack gap="sm">
           <Group justify="space-between" align="flex-start">
