@@ -245,3 +245,35 @@ export const InterviewPrepAISchema = z.object({
 });
 
 export type InterviewPrepAI = z.infer<typeof InterviewPrepAISchema>;
+
+export const PersonalizedAnswersSchema = z.object({
+  answers: z
+    .array(
+      z.object({
+        questionId: z.string().describe("対象質問のID"),
+        userAnswer: z
+          .string()
+          .max(800)
+          .describe("経歴メモと案件情報のみに基づくパーソナライズ回答"),
+      })
+    )
+    .max(20)
+    .describe("各質問に対するパーソナライズ済み回答"),
+});
+
+export type PersonalizedAnswers = z.infer<typeof PersonalizedAnswersSchema>;
+
+export const RehearsalFeedbackSchema = z.object({
+  specificity: z
+    .string()
+    .max(300)
+    .describe("具体性の評価（良い点・不足点）"),
+  length: z.string().max(200).describe("長さ・構成の評価"),
+  weaknesses: z
+    .array(z.string().max(150))
+    .max(5)
+    .describe("改善すべき弱点"),
+  summary: z.string().max(300).describe("総合フィードバック（1〜2文）"),
+});
+
+export type RehearsalFeedback = z.infer<typeof RehearsalFeedbackSchema>;
