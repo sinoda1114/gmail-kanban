@@ -7,6 +7,7 @@ import { db } from "@/db/client";
 import { users, projects, aiExtractionLogs } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import { NegotiationSchema, type NegotiationContent } from "@/types/negotiation";
 
 async function getAuthedUser() {
@@ -37,7 +38,7 @@ export async function generateNegotiationPhrases(
   const project = await getOwnedProject(projectId, user.id);
   if (!project) return { success: false, error: "Project not found" };
 
-  const modelId = "gemini-3.1-flash-lite";
+  const modelId = GEMINI_MODEL_ID;
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
     : "（記載なし）";

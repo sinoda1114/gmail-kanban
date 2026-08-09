@@ -7,6 +7,7 @@ import { db } from "@/db/client";
 import { users, aiExtractionLogs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import { ProjectExtractionSchema, type ProjectExtraction } from "@/types/ai";
 
 export async function extractProjectFromText(
@@ -24,7 +25,7 @@ export async function extractProjectFromText(
     return { success: false, error: "テキストを入力してください" };
   }
 
-  const modelId = "gemini-3.1-flash-lite";
+  const modelId = GEMINI_MODEL_ID;
 
   try {
     const { object } = await generateObject({
