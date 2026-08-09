@@ -1,6 +1,0 @@
-# 標準 CI（ci-standard）の e2e ジョブは Secrets をプロセス env に渡さない。
-# Clerk 付き E2E は当面 `.github/workflows/e2e.yml` で必須化する。
-# Secrets 同期: scripts/sync-clerk-dev-secrets.sh（notes/clerk-dev-secrets.md）
-# ci-standard が Secrets マップを入れたら（ci-standard#2）このファイルを削除し、
-# 標準の `ci / e2e` に寄せて e2e.yml を退役すること。
-# 規律の正本: notes/testing-discipline.md

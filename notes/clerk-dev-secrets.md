@@ -56,5 +56,5 @@ chmod +x /tmp/sync-clerk-dev-secrets.sh
 ## 関連
 
 - `notes/testing-discipline.md`
-- `.github/workflows/e2e.yml`
+- `notes/patches/README-ci-standard-clerk-secrets.md`（標準 `ci / e2e` への寄せ方）
 - 互換: `scripts/set-github-e2e-secrets.sh` → 本スクリプトへ委譲

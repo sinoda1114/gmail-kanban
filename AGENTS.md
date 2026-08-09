@@ -47,7 +47,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 ## Cursor Cloud specific instructions
 
 - パッケージ管理は `pnpm`（`packageManager: pnpm@11.5.0`）。依存更新は `pnpm install --frozen-lockfile`。
-- 検証コマンドは `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm test:e2e` / `pnpm build`（CI と同じ。e2e は `ci-skip-e2e` 解除後に CI でも必須）。dev は `pnpm dev`（port 3000）。dev 起動中に本番ビルドや `.next` 削除をしない。
+- 検証コマンドは `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm test:e2e` / `pnpm build`（CI と同じ。e2e は標準 `ci / e2e` でも必須）。dev は `pnpm dev`（port 3000）。dev 起動中に本番ビルドや `.next` 削除をしない。
 - `.env.local` はエージェントが手編集しない。Clerk Development キーの正本は Clerk CLI。番人は `scripts/sync-clerk-dev-secrets.sh` で Actions / `.env.clerk` / `.env.local` を冪等同期する（`notes/clerk-dev-secrets.md`）。
 - Cloud Agent ではシークレットを `/home/ubuntu/.config/gmail-kanban-secrets/` に置き、`source .../load.sh`（`~/.bashrc` からも自動読み込み）で注入する。
   - Clerk: `.env.clerk`（同期スクリプトが書く。`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）
