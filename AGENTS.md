@@ -10,6 +10,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 
 - 開発フロー詳細: `notes/dev-workflow-multiagent.md`
 - タスク管理詳細: `notes/task-management-issue-workflow.md`
+- テスト規律（選択的 TDD / Vitest / Playwright）: `notes/testing-discipline.md`
 
 ## このプロジェクト固有の値
 
@@ -38,14 +39,14 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 ## dev 規律
 
 - dev サーバ起動中にビルド成果物を消したり本番ビルドを実行しない（壊れる）。dev は 1 つ。
-- AI 検証は `tsc` / `eslint` / `test` で行う（手動確認をユーザーに丸投げしない）。
+- AI 検証は `tsc` / `eslint` / `test`（該当時 `test:e2e`）で行う（手動確認をユーザーに丸投げしない）。詳細は `notes/testing-discipline.md`。
 - `.env.local` は触らない・中身を出力しない（本番 env は Vercel ダッシュボードが正本）。
 - シークレット（API キー・トークン）はログ / 出力に出さない。必要なら redact する。
 
 ## Cursor Cloud specific instructions
 
 - パッケージ管理は `pnpm`（`packageManager: pnpm@11.5.0`）。依存更新は `pnpm install --frozen-lockfile`。
-- 検証コマンドは `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm build`（CI と同じ）。dev は `pnpm dev`（port 3000）。dev 起動中に本番ビルドや `.next` 削除をしない。
+- 検証コマンドは `pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm test:e2e` / `pnpm build`（CI と同じ。e2e は `ci-skip-e2e` 解除後に CI でも必須）。dev は `pnpm dev`（port 3000）。dev 起動中に本番ビルドや `.next` 削除をしない。
 - `.env.local` は触らない（AGENTS.md 既存規律）。Cloud Agent ではシークレットを `/home/ubuntu/.config/gmail-kanban-secrets/` に置き、`source .../load.sh`（`~/.bashrc` からも自動読み込み）で注入する。
   - Clerk: `.env.clerk`（`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）
   - Gemini: `.env.gemini`（`GOOGLE_GENERATIVE_AI_API_KEY`）。アプリモデルは `gemini-3.1-flash-lite`。

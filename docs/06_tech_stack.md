@@ -218,7 +218,8 @@ MVPでは、まずNext.jsのServer Actions / Route Handlers中心で十分です
 | CI      | GitHub Actions |
 | デプロイ    | Vercel         |
 
-テストはMVP初期では最低限でよいですが、AI出力JSON、ステータス変更、ユーザーごとのデータ分離は早めにテスト対象にした方が良いです。
+テスト規律の正本は `notes/testing-discipline.md`（選択的 TDD / Vitest / Playwright）。
+AI出力JSON、ステータス変更、ユーザーごとのデータ分離、認証ゲートは優先回帰対象。
 
 ---
 
