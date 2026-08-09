@@ -53,7 +53,7 @@ jobs:
       - name: CI用環境変数を読み込み (.github/ci.env)
         run: |
           if [ -f .github/ci.env ]; then
-            grep -v '^\s*#' .github/ci.env >> "$GITHUB_ENV"
+            grep -v '^[[:space:]]*#' .github/ci.env >> "$GITHUB_ENV"
           fi
 
       - name: Install dependencies
