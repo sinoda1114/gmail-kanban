@@ -17,12 +17,15 @@ test.describe("設定画面", () => {
   test("サインイン後に設定のカレンダーと Gmail 連携ブロックが見える", async ({
     page,
   }) => {
-    test.skip(
-      !e2eUserEmail,
-      "E2E_CLERK_USER_EMAIL または ~/.config/gmail-kanban-secrets/e2e-user.json が未設定です。"
-    );
+    if (!e2eUserEmail) {
+      test.skip(
+        true,
+        "E2E_CLERK_USER_EMAIL または ~/.config/gmail-kanban-secrets/e2e-user.json が未設定です。"
+      );
+      return;
+    }
 
-    await signInE2eTestUser(page, e2eUserEmail!);
+    await signInE2eTestUser(page, e2eUserEmail);
     const response = await page.goto("/dashboard/settings", {
       waitUntil: "domcontentloaded",
     });
