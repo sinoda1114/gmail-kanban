@@ -1,12 +1,12 @@
 # Settings
 
-サインインした利用者は設定で Google カレンダー連携と Gmail 連携の状態を読む。接続の有無がバッジで分かる。トークンは出さない。
+サインインした利用者は設定で Google アカウント連携の有無を読む。バッジは Clerk が Google OAuth トークンを返したかどうか。Calendar / Gmail スコープの許可までは見ない。トークンは出さない。
 
 ## Sub-features
 
 - `settings-open` opens `/dashboard/settings` from the header.
-- `calendar-status` shows Google カレンダー連携 as `連携済み` or `未連携`.
-- `gmail-status` shows Gmail 連携 as `Google 連携済み` or `未連携`, plus the readonly scope string.
+- `calendar-status` shows Google カレンダー連携 as `連携済み` or `未連携` (OAuth token present, not Calendar scope).
+- `gmail-status` shows Gmail 連携 as `Google 連携済み` or `未連携` (same token check), plus the readonly scope string as copy.
 
 ## How to get to it (user POV)
 
@@ -28,5 +28,5 @@ Preconditions:
 ## Gotchas
 
 - First-time users redirect `/dashboard/settings` → `/onboarding` → `/dashboard` if the `users` row is missing. Sign in through the auth-smoke path first. File DB needs `pnpm exec drizzle-kit push` or dashboard/settings RSC throws `no such table: users`.
-- OAuth tokens must never appear in artifacts or command output. `getGoogleOAuthStatus` may hold an access token on the server; it must not render.
+- OAuth tokens must never appear in artifacts or command output. `getGoogleOAuthStatus` may hold an access token on the server; it must not render. A `連携済み` badge is not proof that Calendar or Gmail scopes were granted.
 - `/dashboard/gmail` is a helper page, not settings. Settings still shows Gmail status and scope.

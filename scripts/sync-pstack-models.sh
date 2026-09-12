@@ -12,5 +12,9 @@ if [[ ! -f "$src" ]]; then
 fi
 
 mkdir -p "$(dirname "$dest")"
+if [[ ! -d "$(dirname "$dest")" ]]; then
+  echo "sync-pstack-models: failed to create $(dirname "$dest")" >&2
+  exit 1
+fi
 cp "$src" "$dest"
 echo "sync-pstack-models: wrote $dest"

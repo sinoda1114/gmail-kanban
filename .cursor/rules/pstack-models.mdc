@@ -14,6 +14,7 @@ judgment and prose: claude-fable-5-1-thinking-high
 hardest tasks: claude-fable-5-1-thinking-high
 how explorer: cursor-grok-4.6-high
 how explainer: claude-fable-5-1-thinking-high
+how critics: claude-fable-5-1-thinking-high, gpt-5.6-sol-high, cursor-grok-4.6-high, claude-opus-5-thinking-high
 why investigators: cursor-grok-4.6-high
 why synthesizer: claude-fable-5-1-thinking-high
 reflect tooling: gpt-5.6-sol-high

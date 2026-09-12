@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+root="$(cd "$(dirname "$0")/../../../.." && pwd)"
+
+load_env() {
+  local f="$1"
+  [[ -f "$f" ]] || return 0
+  set -a
+  # shellcheck disable=SC1090
+  source "$f"
+  set +a
+}
+
+load_env "$HOME/.config/gmail-kanban-secrets/load.sh"
+load_env "$root/.env.local"
+
 base="${VERIFY_BASE_URL:-http://localhost:3000}"
 health_url="${base%/}/api/health"
 
@@ -13,27 +27,43 @@ if ! grep -q '"ok":true' <<<"$body"; then
 fi
 
 fail=0
-if [[ "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" == pk_* ]] || [[ "${CLERK_PUBLISHABLE_KEY:-}" == pk_* ]]; then
+pk="${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-${CLERK_PUBLISHABLE_KEY:-}}"
+if [[ "$pk" == pk_test_* ]]; then
   echo "doctor: Clerk publishable key present"
+elif [[ "$pk" == pk_* ]]; then
+  echo "doctor: FAIL Clerk publishable key must be pk_test_ (not live)" >&2
+  fail=1
 else
-  echo "doctor: FAIL Clerk publishable key missing (pk_...)" >&2
+  echo "doctor: FAIL Clerk publishable key missing (pk_test_...)" >&2
   fail=1
 fi
 
-if [[ "${CLERK_SECRET_KEY:-}" == sk_* ]]; then
+if [[ "${CLERK_SECRET_KEY:-}" == sk_test_* ]]; then
   echo "doctor: Clerk secret key present"
+elif [[ "${CLERK_SECRET_KEY:-}" == sk_* ]]; then
+  echo "doctor: FAIL Clerk secret key must be sk_test_ (not live)" >&2
+  fail=1
 else
-  echo "doctor: FAIL Clerk secret key missing (sk_...)" >&2
+  echo "doctor: FAIL Clerk secret key missing (sk_test_...)" >&2
   fail=1
 fi
 
 user_json="${E2E_USER_JSON_PATH:-$HOME/.config/gmail-kanban-secrets/e2e-user.json}"
 if [[ -n "${E2E_CLERK_USER_EMAIL:-}" ]]; then
   echo "doctor: E2E user email from env"
-elif [[ -f "$user_json" ]]; then
-  echo "doctor: E2E user json present"
+elif [[ -f "$user_json" ]] && python3 - "$user_json" <<'PY'
+import json, sys
+try:
+    data = json.load(open(sys.argv[1], encoding="utf-8"))
+except Exception:
+    sys.exit(1)
+email = data.get("email") if isinstance(data, dict) else None
+sys.exit(0 if isinstance(email, str) and email.strip() else 1)
+PY
+then
+  echo "doctor: E2E user json has email"
 else
-  echo "doctor: WARN authenticated paths will skip (no E2E user)"
+  echo "doctor: WARN authenticated paths will skip (no E2E user email)"
 fi
 
 if [[ "${TURSO_DATABASE_URL:-}" == file:* ]]; then

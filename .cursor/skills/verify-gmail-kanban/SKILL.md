@@ -11,7 +11,7 @@ Gmail Kanban は Clerk 付きの Next.js Web UI。ユーザーが触るのはブ
 
 ## Launch
 
-Cloud では先に `source /home/ubuntu/.config/gmail-kanban-secrets/load.sh`。ローカルは既存の `.env.local` を使う（エージェントは編集しない・中身を出さない）。Turso クラウド鍵が無いときは `TURSO_DATABASE_URL=file:/workspace/local.db` と `pnpm exec drizzle-kit push`。空の file DB のまま認証後ページを開くと `no such table: users` で RSC が落ちる。push したあと、起動中の `next start` は一度止めて入れ直す。
+Cloud では先に `source /home/ubuntu/.config/gmail-kanban-secrets/load.sh`。ローカルは既存の `.env.local` を使う（エージェントは編集しない・中身を出さない）。`doctor.sh` は `load.sh` とリポの `.env.local` を値を出さずに読む。Turso クラウド鍵が無いときは `TURSO_DATABASE_URL=file:/workspace/local.db` と `pnpm exec drizzle-kit push`。空の file DB のまま認証後ページを開くと `no such table: users` で RSC が落ちる。push したあと、起動中の `next start` は一度止めて入れ直す。
 
 ポート:
 
@@ -33,7 +33,7 @@ export E2E_BASE_URL=http://localhost:3005
 pnpm test:e2e -- e2e/smoke.spec.ts
 ```
 
-`pnpm test:e2e` は build → `next start --hostname localhost --port 3005`。準備完了は `GET /api/health` が `{"ok":true}`。Playwright の `webServer` がプロセスを持つ。こちらから `pkill` しない。このスキルが自分で `next start` した場合だけ、その PID を止める。
+`pnpm test:e2e` は build → `next start --hostname localhost --port 3005`。準備完了は `GET /api/health` が `{"ok":true}`。Playwright の `webServer` がプロセスを持つ。CI 以外では `reuseExistingServer` が付き、すでに `:3005` で動いているサーバを再利用する。古い `next start` が残っていると doctor は通ってもビルドが古い。その PID だけ止めて入れ直す。こちらから `pkill` しない。このスキルが自分で `next start` した場合だけ、その PID を止める。
 
 対話起動:
 
@@ -56,13 +56,13 @@ VERIFY_BASE_URL=http://localhost:3000 .cursor/skills/verify-gmail-kanban/scripts
 隔離 E2E なら `VERIFY_BASE_URL=http://localhost:3005`。成功条件:
 
 - `GET {base}/api/health` が `{"ok":true}`
-- Clerk publishable key が `pk_` で始まる（値は出さない）
-- `CLERK_SECRET_KEY` が `sk_` で始まる（値は出さない）
+- Clerk publishable key が `pk_test_` で始まる（値は出さない。live の `pk_` は FAIL）
+- `CLERK_SECRET_KEY` が `sk_test_` で始まる（値は出さない。live の `sk_` は FAIL）
 - `TURSO_DATABASE_URL` が `file:` なら `users` テーブルがある（無ければ FAIL。`pnpm exec drizzle-kit push`）
 
-認証後パスを踏むなら、`E2E_CLERK_USER_EMAIL` か `~/.config/gmail-kanban-secrets/e2e-user.json` があること。無いときはそのパスを skip し、未ログイン経路だけ証明する。
+認証後パスを踏むなら、`E2E_CLERK_USER_EMAIL` か `e2e-user.json` の `email` があること。ファイルがあるだけでは足りない。無いときはそのパスを skip し、未ログイン経路だけ証明する。
 
-Doctor が落ちたらそのインスタンスは運転しない。別プロセスの Next を奪わない。
+Doctor はシェルの preflight だ。対象プロセスの中身は見ない。読む env は `load.sh` と `.env.local`。Doctor が落ちたらそのインスタンスは運転しない。別プロセスの Next を奪わない。
 
 ## Drive
 

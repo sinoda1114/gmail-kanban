@@ -24,6 +24,7 @@ Preconditions:
 
 - **Open from header.** Choose `getByRole("link", { name: "要対応" })`. URL is `/dashboard/alerts`. Heading `要対応一覧` is visible.
 - **Empty or list.** If none, text `現在、対応が必要な案件はありません。` is visible. If some, each row names a project and a reminder type label (`要対応`, `催促候補`, `面談準備リマインド`, `進捗確認候補`, `再確認候補`).
+- **Dismiss.** If an active row has button `対応済み`, choose it. The row leaves the default list. Re-open `/dashboard/alerts`. The project stays gone unless `対応済みを表示` is on, then it appears with badge `対応済み`. A toast alone is not persistence.
 - **Show done.** The switch `対応済みを表示` mounts only when done reminders exist. Turning it on reveals them. Default view hides them. With only done items and the switch off, text `未対応の案件はありません。対応済みを表示で確認できます。` is visible.
 - **Proof.** Screenshot heading `要対応一覧` with either an empty copy or at least one reminder row. Save under `verify-artifacts/<run-id>/alerts/`.
 
