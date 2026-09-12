@@ -26,7 +26,7 @@ test.describe("設定画面", () => {
     const response = await page.goto("/dashboard/settings", {
       waitUntil: "domcontentloaded",
     });
-    expect(response?.status(), "settings must not 500").toBe(200);
+    expect(response?.status()).toBe(200);
     await expect(page).toHaveURL(/\/dashboard\/settings/);
     await expect(page.getByRole("heading", { name: "設定" })).toBeVisible({
       timeout: 15_000,
