@@ -42,6 +42,13 @@ describe("parseStoredRetrospective", () => {
   it("壊れた JSON は null", () => {
     expect(parseStoredRetrospective({ wentWell: 1 })).toBeNull();
     expect(parseStoredRetrospective(null)).toBeNull();
+    expect(parseStoredRetrospective("{")).toBeNull();
+  });
+
+  it("文字列 JSON も受け付ける", () => {
+    expect(
+      parseStoredRetrospective(JSON.stringify(full))?.nextPrepTips
+    ).toBe("障害対応の数字を用意する");
   });
 
   it("空の有効オブジェクトは null", () => {

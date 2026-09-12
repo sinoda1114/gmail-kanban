@@ -18,7 +18,15 @@ export function hasRetrospectiveContent(
 export function parseStoredRetrospective(
   raw: unknown
 ): InterviewRetrospective | null {
-  const parsed = InterviewRetrospectiveSchema.safeParse(raw);
+  let value = raw;
+  if (typeof raw === "string") {
+    try {
+      value = JSON.parse(raw) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  const parsed = InterviewRetrospectiveSchema.safeParse(value);
   if (!parsed.success) return null;
   if (!hasRetrospectiveContent(parsed.data)) return null;
   return parsed.data;
