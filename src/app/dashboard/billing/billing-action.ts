@@ -6,6 +6,12 @@ import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { db } from "@/db/client";
 import { billingSubscriptions, users } from "@/db/schema";
+import { getUserBilling } from "@/lib/billing";
+import {
+  ALREADY_ON_PRO_MESSAGE,
+  effectiveBillingPlan,
+  isProCheckoutBlocked,
+} from "@/lib/billing-limits";
 
 let stripeClient: Stripe | null = null;
 
@@ -71,6 +77,15 @@ export async function createCheckoutSession(): Promise<CheckoutResult> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   if (!process.env.STRIPE_SECRET_KEY || !priceId || !siteUrl) {
     return { success: false, error: "Billing is not configured" };
+  }
+
+  const billingState = await getUserBilling(user.id);
+  if (
+    isProCheckoutBlocked(
+      effectiveBillingPlan(billingState.plan, billingState.status)
+    )
+  ) {
+    return { success: false, error: ALREADY_ON_PRO_MESSAGE };
   }
 
   try {

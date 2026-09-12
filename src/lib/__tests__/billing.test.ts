@@ -26,8 +26,10 @@ import {
   getProjectLimitStatus,
 } from "@/lib/billing";
 import {
+  ALREADY_ON_PRO_MESSAGE,
   FREE_PROJECT_LIMIT_MESSAGE,
   effectiveBillingPlan,
+  isProCheckoutBlocked,
   isProjectLimitError,
 } from "@/lib/billing-limits";
 
@@ -48,6 +50,17 @@ describe("FREE_PROJECT_LIMIT_MESSAGE", () => {
     );
     expect(isProjectLimitError(FREE_PROJECT_LIMIT_MESSAGE)).toBe(true);
     expect(isProjectLimitError("Unauthorized")).toBe(false);
+  });
+});
+
+describe("isProCheckoutBlocked", () => {
+  it("blocks checkout for an effective Pro plan", () => {
+    expect(isProCheckoutBlocked("pro")).toBe(true);
+    expect(ALREADY_ON_PRO_MESSAGE).toBe("すでに Pro プランです");
+  });
+
+  it("allows checkout for Free", () => {
+    expect(isProCheckoutBlocked("free")).toBe(false);
   });
 });
 

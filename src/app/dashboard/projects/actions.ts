@@ -3,14 +3,23 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db/client";
 import { projects, projectStatusHistory, users } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import {
   FREE_PROJECT_LIMIT_MESSAGE,
   canCreateProject,
+  getUserBilling,
 } from "@/lib/billing";
+import { PLAN_LIMITS, effectiveBillingPlan } from "@/lib/billing-limits";
 import { PROJECT_STATUSES, type ProjectStatus } from "@/types/project";
+
+class ProjectLimitReachedError extends Error {
+  constructor() {
+    super(FREE_PROJECT_LIMIT_MESSAGE);
+    this.name = "ProjectLimitReachedError";
+  }
+}
 
 export type CreateProjectInput = {
   title: string;
@@ -78,9 +87,28 @@ export async function createProject(
 
   const id = randomUUID();
   const now = new Date().toISOString();
+  const billing = await getUserBilling(user.id);
+  const projectLimit =
+    PLAN_LIMITS[effectiveBillingPlan(billing.plan, billing.status)].maxProjects;
 
-  await db.transaction(async (tx) => {
-    await tx.insert(projects).values({
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .update(users)
+        .set({ updatedAt: now })
+        .where(eq(users.id, user.id));
+
+      if (projectLimit !== Infinity) {
+        const [result] = await tx
+          .select({ value: count() })
+          .from(projects)
+          .where(eq(projects.userId, user.id));
+        if ((result?.value ?? 0) >= projectLimit) {
+          throw new ProjectLimitReachedError();
+        }
+      }
+
+      await tx.insert(projects).values({
       id,
       userId: user.id,
       title: input.title,
@@ -110,7 +138,13 @@ export async function createProject(
       toStatus: status,
       changedAt: now,
     });
-  });
+    });
+  } catch (error) {
+    if (error instanceof ProjectLimitReachedError) {
+      return { success: false, error: FREE_PROJECT_LIMIT_MESSAGE };
+    }
+    throw error;
+  }
 
   revalidatePath("/dashboard");
   return { success: true, projectId: id };
