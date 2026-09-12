@@ -58,4 +58,5 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - Turso クラウド鍵が無い場合は `TURSO_DATABASE_URL=file:/workspace/local.db` + `pnpm exec drizzle-kit push` でローカル DB を使える。
 - Vercel の Sensitive env は CLI/API から読み戻せない。Dashboard から値をコピーして上記 secrets パスへ置く（Clerk Dev キーは同期スクリプト経由）。
 - ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
+- Mantine の複合コンポーネント静的メンバ（`List.Item` など）は Server Component では `undefined` になりページが 500 になる。RSC では `Stack` と `Text` にするか、`"use client"` の島へ出す。
 - pstack モデル割当をホームへコピーする: `./scripts/sync-pstack-models.sh`（スキルは `~/.cursor/rules/pstack-models.mdc` を読む）。
