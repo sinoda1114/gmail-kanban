@@ -11,6 +11,7 @@ import {
   interviewQuestions,
   interviewAnswers,
   interviewReverseQuestions,
+  interviewNotes,
   aiExtractionLogs,
 } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
@@ -19,6 +20,11 @@ import { randomUUID } from "crypto";
 import { GEMINI_MODEL_ID } from "@/lib/ai-model";
 import { InterviewPrepAISchema } from "@/types/interview-prep";
 import { buildPartnerPromptGuidance } from "@/lib/interview-prep-prompt";
+import {
+  buildRetrospectivePromptGuidance,
+  parseStoredRetrospective,
+} from "@/lib/retrospective";
+import type { InterviewRetrospective } from "@/types/retrospective";
 
 export type SaveInterviewInfoInput = {
   interviewAt?: string;
@@ -57,12 +63,15 @@ function buildInterviewPrepPrompt(
     startDateText: string | null;
   },
   interviewType: string | null | undefined,
-  interviewPartner: string | null | undefined
+  interviewPartner: string | null | undefined,
+  retrospective?: InterviewRetrospective | null
 ): string {
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
     : "";
   const partnerGuidance = buildPartnerPromptGuidance(interviewPartner);
+  const retrospectiveGuidance =
+    buildRetrospectivePromptGuidance(retrospective);
 
   return `
 フリーランスの面談準備をしてください。以下の案件情報を参考にしてください。
@@ -82,7 +91,7 @@ function buildInterviewPrepPrompt(
 ${project.sourceText || "（なし）"}
 
 ${partnerGuidance}
-
+${retrospectiveGuidance ? `\n${retrospectiveGuidance}\n` : ""}
 以下を生成してください:
 1. questions: 面接でよく聞かれる想定質問（最大15件）とAI回答案。カテゴリはtechnical/pm/condition/experienceのいずれか。priorityはhigh/medium/lowで。面談相手の種別に合わせて質問の比重を調整。
 2. reverseQuestions: 自分から聞く逆質問（各カテゴリ2〜3件）。面談相手に応じた確認事項を含める。
@@ -186,10 +195,19 @@ export async function generateInterviewPrep(
     where: eq(interviewPreparations.id, prepId),
   });
 
+  const note = await db.query.interviewNotes.findFirst({
+    where: and(
+      eq(interviewNotes.projectId, projectId),
+      eq(interviewNotes.userId, user.id)
+    ),
+  });
+  const retrospective = parseStoredRetrospective(note?.retrospective);
+
   const prompt = buildInterviewPrepPrompt(
     project,
     prep?.interviewType,
-    prep?.interviewPartner ?? "general"
+    prep?.interviewPartner ?? "general",
+    retrospective
   );
 
   try {

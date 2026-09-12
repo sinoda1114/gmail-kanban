@@ -73,6 +73,7 @@ interface InterviewPrepTabProps {
   questions: QuestionWithAnswer[];
   reverseQuestions: InterviewReverseQuestion[];
   calendarUrl: string | null;
+  hasPriorRetrospective?: boolean;
 }
 
 type InfoForm = {
@@ -93,6 +94,7 @@ export function InterviewPrepTab({
   questions: initialQuestions,
   reverseQuestions: initialReverseQs,
   calendarUrl,
+  hasPriorRetrospective = false,
 }: InterviewPrepTabProps) {
   const router = useRouter();
   const initialPartner = resolveInterviewPartner(prep?.interviewPartner);
@@ -178,8 +180,9 @@ export function InterviewPrepTab({
       notifications.show({
         color: "teal",
         title: "AI面談準備完了",
-        message:
-          "想定質問・逆質問・企業ブリーフ・技術深掘り・レッドフラグ・チートシートを生成しました。",
+        message: hasPriorRetrospective
+          ? "前回の振り返りを反映して、想定質問・逆質問・企業ブリーフなどを生成しました。"
+          : "想定質問・逆質問・企業ブリーフ・技術深掘り・レッドフラグ・チートシートを生成しました。",
       });
     } else {
       setError(result.error ?? "AI処理に失敗しました");
@@ -326,6 +329,12 @@ export function InterviewPrepTab({
           </Group>
         </Stack>
       </Paper>
+
+      {hasPriorRetrospective && (
+        <Text size="sm" c="dimmed">
+          この案件の面談振り返りを、準備の生成に反映します。内容の確認・編集は面談メモタブから。
+        </Text>
+      )}
 
       {/* AI生成ボタン */}
       <Button

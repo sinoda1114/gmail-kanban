@@ -22,6 +22,7 @@ import { BasicInfoTab } from "./BasicInfoTab";
 import { InterviewPrepTab } from "./InterviewPrepTab";
 import { InterviewNoteTab } from "./InterviewNoteTab";
 import { resolveProjectDetailTab } from "@/lib/project-detail";
+import { parseStoredRetrospective } from "@/lib/retrospective";
 
 type QuestionWithAnswer = InterviewQuestion & {
   answer: InterviewAnswer | null;
@@ -81,6 +82,9 @@ export function ProjectDetailView({
             questions={interviewQuestions}
             reverseQuestions={reverseQuestions}
             calendarUrl={calendarEvent?.calendarUrl ?? null}
+            hasPriorRetrospective={
+              parseStoredRetrospective(interviewNote?.retrospective) !== null
+            }
           />
         </Tabs.Panel>
 
