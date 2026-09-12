@@ -5,7 +5,7 @@ import {
 
 export function hasRetrospectiveContent(
   retrospective: InterviewRetrospective | null | undefined
-): boolean {
+): retrospective is InterviewRetrospective {
   if (!retrospective) return false;
   return [
     retrospective.wentWell,
@@ -35,7 +35,7 @@ export function parseStoredRetrospective(
 export function buildRetrospectivePromptGuidance(
   retrospective: InterviewRetrospective | null | undefined
 ): string {
-  if (!hasRetrospectiveContent(retrospective) || !retrospective) {
+  if (!hasRetrospectiveContent(retrospective)) {
     return "";
   }
 
