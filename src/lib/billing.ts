@@ -12,10 +12,12 @@ export {
   PLAN_LIMITS,
   FREE_PROJECT_LIMIT_MESSAGE,
   ALREADY_ON_PRO_MESSAGE,
+  PENDING_SUBSCRIPTION_MESSAGE,
   effectiveBillingPlan,
+  getProCheckoutBlock,
   isBillingPlan,
   isProjectLimitError,
-  isProCheckoutBlocked,
+  proCheckoutBlockMessage,
 } from "@/lib/billing-limits";
 export type { BillingPlan } from "@/lib/billing-limits";
 
@@ -24,6 +26,7 @@ export type UserBilling = {
   status: string;
   currentPeriodEnd: string | null;
   stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
 };
 
 export type ProjectLimitStatus = {
@@ -31,6 +34,7 @@ export type ProjectLimitStatus = {
   status: string;
   currentPeriodEnd: string | null;
   stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
   effectivePlan: BillingPlan;
   allowed: boolean;
   currentCount: number;
@@ -48,6 +52,7 @@ export async function getUserBilling(userId: string): Promise<UserBilling> {
       status: "active",
       currentPeriodEnd: null,
       stripeCustomerId: billing?.stripeCustomerId ?? null,
+      stripeSubscriptionId: billing?.stripeSubscriptionId ?? null,
     };
   }
 
@@ -56,6 +61,7 @@ export async function getUserBilling(userId: string): Promise<UserBilling> {
     status: billing.status,
     currentPeriodEnd: billing.currentPeriodEnd,
     stripeCustomerId: billing.stripeCustomerId,
+    stripeSubscriptionId: billing.stripeSubscriptionId,
   };
 }
 

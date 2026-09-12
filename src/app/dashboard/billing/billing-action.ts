@@ -8,9 +8,8 @@ import { db } from "@/db/client";
 import { billingSubscriptions, users } from "@/db/schema";
 import { getUserBilling } from "@/lib/billing";
 import {
-  ALREADY_ON_PRO_MESSAGE,
-  effectiveBillingPlan,
-  isProCheckoutBlocked,
+  getProCheckoutBlock,
+  proCheckoutBlockMessage,
 } from "@/lib/billing-limits";
 
 let stripeClient: Stripe | null = null;
@@ -80,18 +79,22 @@ export async function createCheckoutSession(): Promise<CheckoutResult> {
   }
 
   const billingState = await getUserBilling(user.id);
-  if (
-    isProCheckoutBlocked(
-      effectiveBillingPlan(billingState.plan, billingState.status)
-    )
-  ) {
-    return { success: false, error: ALREADY_ON_PRO_MESSAGE };
+  const existingBlock = getProCheckoutBlock(billingState);
+  if (existingBlock.blocked) {
+    return {
+      success: false,
+      error: proCheckoutBlockMessage(existingBlock.reason),
+    };
   }
 
   try {
     const billing = await getOrCreateBilling(user.id, user.email, user.name);
-    if (billing.stripeSubscriptionId && billing.status !== "canceled") {
-      return { success: false, error: ALREADY_ON_PRO_MESSAGE };
+    const createdBlock = getProCheckoutBlock(billing);
+    if (createdBlock.blocked) {
+      return {
+        success: false,
+        error: proCheckoutBlockMessage(createdBlock.reason),
+      };
     }
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",

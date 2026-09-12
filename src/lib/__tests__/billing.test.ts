@@ -28,9 +28,11 @@ import {
 import {
   ALREADY_ON_PRO_MESSAGE,
   FREE_PROJECT_LIMIT_MESSAGE,
+  PENDING_SUBSCRIPTION_MESSAGE,
   effectiveBillingPlan,
-  isProCheckoutBlocked,
+  getProCheckoutBlock,
   isProjectLimitError,
+  proCheckoutBlockMessage,
 } from "@/lib/billing-limits";
 
 describe("PLAN_LIMITS", () => {
@@ -53,14 +55,56 @@ describe("FREE_PROJECT_LIMIT_MESSAGE", () => {
   });
 });
 
-describe("isProCheckoutBlocked", () => {
+describe("getProCheckoutBlock", () => {
   it("blocks checkout for an effective Pro plan", () => {
-    expect(isProCheckoutBlocked("pro")).toBe(true);
-    expect(ALREADY_ON_PRO_MESSAGE).toBe("すでに Pro プランです");
+    expect(
+      getProCheckoutBlock({
+        plan: "pro",
+        status: "active",
+        stripeSubscriptionId: "sub_test",
+      })
+    ).toEqual({ blocked: true, reason: "already-pro" });
+    expect(proCheckoutBlockMessage("already-pro")).toBe(ALREADY_ON_PRO_MESSAGE);
   });
 
-  it("allows checkout for Free", () => {
-    expect(isProCheckoutBlocked("free")).toBe(false);
+  it("allows checkout for Free without a subscription", () => {
+    expect(
+      getProCheckoutBlock({
+        plan: "free",
+        status: "active",
+        stripeSubscriptionId: null,
+      })
+    ).toEqual({ blocked: false });
+  });
+
+  it("blocks Free rows that still have a non-canceled subscription id", () => {
+    expect(
+      getProCheckoutBlock({
+        plan: "free",
+        status: "active",
+        stripeSubscriptionId: "sub_pending",
+      })
+    ).toEqual({ blocked: true, reason: "pending-subscription" });
+    expect(
+      getProCheckoutBlock({
+        plan: "pro",
+        status: "past_due",
+        stripeSubscriptionId: "sub_past_due",
+      })
+    ).toEqual({ blocked: true, reason: "pending-subscription" });
+    expect(proCheckoutBlockMessage("pending-subscription")).toBe(
+      PENDING_SUBSCRIPTION_MESSAGE
+    );
+  });
+
+  it("allows checkout after a canceled subscription", () => {
+    expect(
+      getProCheckoutBlock({
+        plan: "pro",
+        status: "canceled",
+        stripeSubscriptionId: "sub_old",
+      })
+    ).toEqual({ blocked: false });
   });
 });
 
@@ -154,6 +198,7 @@ describe("getProjectLimitStatus", () => {
       status: "active",
       currentPeriodEnd: null,
       stripeCustomerId: null,
+      stripeSubscriptionId: null,
       effectivePlan: "free",
       allowed: true,
       currentCount: 4,
@@ -167,6 +212,7 @@ describe("getProjectLimitStatus", () => {
       status: "active",
       currentPeriodEnd: "2026-09-01T00:00:00.000Z",
       stripeCustomerId: "cus_test",
+      stripeSubscriptionId: "sub_test",
     });
     mockWhere.mockResolvedValue([{ value: 12 }]);
 
@@ -175,6 +221,7 @@ describe("getProjectLimitStatus", () => {
       status: "active",
       currentPeriodEnd: "2026-09-01T00:00:00.000Z",
       stripeCustomerId: "cus_test",
+      stripeSubscriptionId: "sub_test",
       effectivePlan: "pro",
       allowed: true,
       currentCount: 12,

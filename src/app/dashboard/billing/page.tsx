@@ -16,7 +16,11 @@ import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { getProjectLimitStatus } from "@/lib/billing";
-import { PLAN_LIMITS } from "@/lib/billing-limits";
+import {
+  PENDING_SUBSCRIPTION_MESSAGE,
+  PLAN_LIMITS,
+  getProCheckoutBlock,
+} from "@/lib/billing-limits";
 
 function planLabel(plan: "free" | "pro"): string {
   return plan === "pro" ? "Pro" : "Free";
@@ -45,6 +49,8 @@ export default async function BillingPage({
   const portalReady = Boolean(
     process.env.STRIPE_SECRET_KEY && process.env.NEXT_PUBLIC_SITE_URL
   );
+  const checkoutBlock = getProCheckoutBlock(limit);
+  const canUpgrade = checkoutReady && !checkoutBlock.blocked;
   const usageLabel =
     limit.maxProjects === null
       ? `${limit.currentCount} 件（無制限）`
@@ -108,6 +114,10 @@ export default async function BillingPage({
                 <Text size="sm" c="dimmed">
                   Pro プランです。カード情報の変更や解約は「お支払いを管理」から行えます。
                 </Text>
+              ) : checkoutBlock.blocked ? (
+                <Text size="sm" c="dimmed">
+                  {PENDING_SUBSCRIPTION_MESSAGE}
+                </Text>
               ) : checkoutReady ? (
                 <Text size="sm" c="dimmed">
                   Stripe Checkout で Pro にアップグレードします。決済画面は Stripe がホストします。
@@ -118,7 +128,7 @@ export default async function BillingPage({
                 </Text>
               )}
               <BillingActions
-                canUpgrade={checkoutReady && limit.effectivePlan === "free"}
+                canUpgrade={canUpgrade}
                 canManage={portalReady && Boolean(limit.stripeCustomerId)}
               />
             </Stack>
