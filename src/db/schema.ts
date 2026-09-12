@@ -5,6 +5,12 @@ import {
   sqliteTable,
 } from "drizzle-orm/sqlite-core";
 import type { InterviewRetrospective } from "@/types/retrospective";
+import type { InterviewResearchPack } from "@/types/interview-research";
+import type {
+  PracticeMessage,
+  PracticeSessionStatus,
+} from "@/types/interview-practice";
+import type { RehearsalFeedback } from "@/types/interview-prep";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -187,6 +193,34 @@ export const calendarEvents = sqliteTable("calendar_events", {
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
+export const interviewResearchPacks = sqliteTable("interview_research_packs", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id").notNull().references(() => projects.id),
+  userId: text("user_id").notNull().references(() => users.id),
+  pack: text("pack", { mode: "json" }).$type<InterviewResearchPack>().notNull(),
+  sources: text("sources", { mode: "json" }).$type<string[] | null>(),
+  model: text("model"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+export const interviewPracticeSessions = sqliteTable(
+  "interview_practice_sessions",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id").notNull().references(() => projects.id),
+    userId: text("user_id").notNull().references(() => users.id),
+    status: text("status").$type<PracticeSessionStatus>().notNull().default("active"),
+    messages: text("messages", { mode: "json" })
+      .$type<PracticeMessage[]>()
+      .notNull(),
+    feedback: text("feedback", { mode: "json" }).$type<RehearsalFeedback | null>(),
+    model: text("model"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  }
+);
+
 export const aiExtractionLogs = sqliteTable("ai_extraction_logs", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id),
@@ -222,3 +256,6 @@ export type InterviewReverseQuestion = typeof interviewReverseQuestions.$inferSe
 export type InterviewNote = typeof interviewNotes.$inferSelect;
 export type Reminder = typeof reminders.$inferSelect;
 export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InterviewResearchPackRow = typeof interviewResearchPacks.$inferSelect;
+export type InterviewPracticeSession =
+  typeof interviewPracticeSessions.$inferSelect;

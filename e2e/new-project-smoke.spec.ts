@@ -48,7 +48,20 @@ test.describe("案件登録", () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("tab", { name: "基本情報" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "面談対策" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "面談準備" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "面談練習" })).toBeVisible();
     await expect(page.getByRole("link", { name: "案件一覧へ戻る" })).toBeVisible();
+
+    await page.getByRole("tab", { name: "面談対策" }).click();
+    await expect(
+      page.getByRole("button", { name: "AIで面談対策を作成" })
+    ).toBeVisible();
+
+    await page.getByRole("tab", { name: "面談練習" }).click();
+    await expect(
+      page.getByRole("button", { name: "通し練習を開始" })
+    ).toBeVisible();
 
     await page.getByRole("link", { name: "案件一覧へ戻る" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);

@@ -11,11 +11,14 @@ import {
   interviewReverseQuestions,
   interviewNotes,
   calendarEvents,
+  interviewResearchPacks,
+  interviewPracticeSessions,
 } from "@/db/schema";
 import { eq, and, desc, asc, inArray } from "drizzle-orm";
 import { Container } from "@mantine/core";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ProjectDetailView } from "@/components/projects/ProjectDetailView";
+import { parseStoredResearchPack } from "@/lib/interview-research";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -39,7 +42,8 @@ export default async function ProjectDetailPage({ params, searchParams }: PagePr
   });
   if (!project) notFound();
 
-  const [history, prep, note, calendarEvent] = await Promise.all([
+  const [history, prep, note, calendarEvent, researchRow, practiceSession] =
+    await Promise.all([
     db
       .select()
       .from(projectStatusHistory)
@@ -60,6 +64,20 @@ export default async function ProjectDetailPage({ params, searchParams }: PagePr
     }),
     db.query.calendarEvents.findFirst({
       where: and(eq(calendarEvents.projectId, id), eq(calendarEvents.userId, user.id)),
+    }),
+    db.query.interviewResearchPacks.findFirst({
+      where: and(
+        eq(interviewResearchPacks.projectId, id),
+        eq(interviewResearchPacks.userId, user.id)
+      ),
+      orderBy: desc(interviewResearchPacks.updatedAt),
+    }),
+    db.query.interviewPracticeSessions.findFirst({
+      where: and(
+        eq(interviewPracticeSessions.projectId, id),
+        eq(interviewPracticeSessions.userId, user.id)
+      ),
+      orderBy: desc(interviewPracticeSessions.updatedAt),
     }),
   ]);
 
@@ -116,6 +134,12 @@ export default async function ProjectDetailPage({ params, searchParams }: PagePr
           reverseQuestions={reverseQs}
           interviewNote={note ?? null}
           calendarEvent={calendarEvent ?? null}
+          researchPack={parseStoredResearchPack(researchRow?.pack)}
+          researchSources={
+            Array.isArray(researchRow?.sources) ? researchRow.sources : []
+          }
+          researchUpdatedAt={researchRow?.updatedAt ?? null}
+          practiceSession={practiceSession ?? null}
           initialTab={tab}
         />
       </Container>

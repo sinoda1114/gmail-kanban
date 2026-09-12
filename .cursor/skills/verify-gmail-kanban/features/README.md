@@ -44,4 +44,6 @@
 - [Alerts](./alerts.md) は要対応一覧と対応済みトグル。
 - [Settings](./settings.md) は設定画面と Google 連携の表示。
 - [Billing](./billing.md) はプラン画面と案件数上限。
-- [Interview prep](./interview-prep.md) は案件詳細の面談準備と、振り返りの次回反映。
+- [Interview prep](./interview-prep.md) は案件詳細の面談準備と、振り返り・対策パックの次回反映。
+- [Interview research](./interview-research.md) は案件詳細の面談対策（検索グラウンディング）。
+- [Interview practice](./interview-practice.md) は案件詳細の面談練習（通し練習と1問リハーサル）。

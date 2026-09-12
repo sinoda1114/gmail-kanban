@@ -6,6 +6,7 @@
 
 - `prep-tab` shows heading `面談情報` and the generate button `AIで面談準備を一括作成` (or `AIで面談準備を再生成（拡張含む）` after the first run).
 - `retrospective-hint` shows copy `この案件の面談振り返りを、準備の生成に反映します` when a non-empty retrospective exists on the same project. Absent when notes have no retrospective.
+- `research-hint` shows copy `この案件の面談対策パックを、準備の生成に反映します` when a research pack exists. Absent otherwise.
 
 ## How to get to it (user POV)
 
