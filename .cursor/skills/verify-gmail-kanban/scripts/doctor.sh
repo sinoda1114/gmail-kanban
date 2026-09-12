@@ -36,6 +36,26 @@ else
   echo "doctor: WARN authenticated paths will skip (no E2E user)"
 fi
 
+if [[ "${TURSO_DATABASE_URL:-}" == file:* ]]; then
+  if ! python3 - "$TURSO_DATABASE_URL" <<'PY'
+import sqlite3, sys
+url = sys.argv[1]
+path = url[5:]
+try:
+    con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    names = {row[0] for row in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+except Exception:
+    sys.exit(2)
+sys.exit(0 if "users" in names else 1)
+PY
+  then
+    echo "doctor: FAIL file DB has no users table. Run: pnpm exec drizzle-kit push" >&2
+    fail=1
+  else
+    echo "doctor: file DB schema present"
+  fi
+fi
+
 if [[ "$fail" -ne 0 ]]; then
   exit 1
 fi

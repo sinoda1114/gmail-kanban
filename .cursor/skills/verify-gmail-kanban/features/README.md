@@ -8,6 +8,7 @@
 - 未ログイン証明は `http://localhost:3000`（対話）または `http://localhost:3005`（隔離 E2E）。
 - `scripts/doctor.sh` が `{"ok":true}` と Clerk 鍵の存在を返す。値は出さない。
 - 認証後パスは `E2E_CLERK_USER_EMAIL` または `~/.config/gmail-kanban-secrets/e2e-user.json`。未設定ならその feature を skip し、未ログイン経路だけ証明する。
+- `TURSO_DATABASE_URL` が `file:` のとき、認証後パスの前に `pnpm exec drizzle-kit push`。`doctor.sh` は `users` テーブルが無い file DB を FAIL にする。
 - このランが起動していない Next プロセスは運転しない。
 - `pnpm dev` 起動中は `pnpm build` / `pnpm test:e2e` を走らせない。
 
@@ -36,8 +37,8 @@
 
 ## Features
 
-- [Auth gate](./auth-gate.md) は未ログインの `/sign-in` 到達と、保護ルートから sign-in への誘導。
+- [Auth gate](./auth-gate.md) は未ログインの `/sign-in`・`/sign-up` 到達と、保護ルートから sign-in への誘導。
 - [Dashboard kanban](./dashboard-kanban.md) はサインイン後のカンバンシェル、検索、空状態。
-- [New project](./new-project.md) は案件登録フォームと、カンバンへの反映。
+- [New project](./new-project.md) は案件登録フォーム、詳細への遷移、カンバンへの反映。
 - [Alerts](./alerts.md) は要対応一覧と対応済みトグル。
 - [Settings](./settings.md) は設定画面と Google 連携の表示。

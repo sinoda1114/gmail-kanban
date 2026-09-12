@@ -19,7 +19,7 @@
 
 Preconditions:
 
-- Doctor is green.
+- Doctor is green (file DB must include the `users` table).
 - `E2E_CLERK_USER_EMAIL` or `~/.config/gmail-kanban-secrets/e2e-user.json` is present. Otherwise skip this feature.
 - Turso or `TURSO_DATABASE_URL=file:/workspace/local.db` is usable. First sign-in writes a user row.
 - `e2e/auth-smoke.spec.ts` is the harness for `shell-visible`.

@@ -11,7 +11,7 @@ Gmail Kanban は Clerk 付きの Next.js Web UI。ユーザーが触るのはブ
 
 ## Launch
 
-Cloud では先に `source /home/ubuntu/.config/gmail-kanban-secrets/load.sh`。ローカルは既存の `.env.local` を使う（エージェントは編集しない・中身を出さない）。Turso クラウド鍵が無いときは `TURSO_DATABASE_URL=file:/workspace/local.db` と `pnpm exec drizzle-kit push`。
+Cloud では先に `source /home/ubuntu/.config/gmail-kanban-secrets/load.sh`。ローカルは既存の `.env.local` を使う（エージェントは編集しない・中身を出さない）。Turso クラウド鍵が無いときは `TURSO_DATABASE_URL=file:/workspace/local.db` と `pnpm exec drizzle-kit push`。空の file DB のまま認証後ページを開くと `no such table: users` で RSC が落ちる。push したあと、起動中の `next start` は一度止めて入れ直す。
 
 ポート:
 
@@ -58,6 +58,7 @@ VERIFY_BASE_URL=http://localhost:3000 .cursor/skills/verify-gmail-kanban/scripts
 - `GET {base}/api/health` が `{"ok":true}`
 - Clerk publishable key が `pk_` で始まる（値は出さない）
 - `CLERK_SECRET_KEY` が `sk_` で始まる（値は出さない）
+- `TURSO_DATABASE_URL` が `file:` なら `users` テーブルがある（無ければ FAIL。`pnpm exec drizzle-kit push`）
 
 認証後パスを踏むなら、`E2E_CLERK_USER_EMAIL` か `~/.config/gmail-kanban-secrets/e2e-user.json` があること。無いときはそのパスを skip し、未ログイン経路だけ証明する。
 
@@ -78,6 +79,7 @@ Doctor が落ちたらそのインスタンスは運転しない。別プロセ�
 | 設定 | `getByRole("link", { name: "設定" })` |
 | 要対応（ヘッダー） | `getByRole("link", { name: "要対応" })` |
 | 案件登録 | `getByRole("link", { name: "案件登録" })` |
+| キャンセル（案件登録） | `getByRole("link", { name: "キャンセル" })`（ボタンではない） |
 | 空カンバン | テキスト `案件がまだありません。「案件登録」から追加してください。` |
 | カンバン検索 | プレースホルダ `タイトル・エージェント・技術・次アクションで検索` |
 | 登録する | `getByRole("button", { name: "登録する" })` |
