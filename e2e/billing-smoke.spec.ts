@@ -45,7 +45,9 @@ test.describe("プラン画面", () => {
       page.getByText("Free", { exact: true }).or(page.getByText("Pro", { exact: true }))
     ).toBeVisible();
     await expect(
-      page.getByText(/課金はまだ設定されていません|Pro にアップグレード/)
+      page.getByText(
+        /課金はまだ設定されていません|Pro にアップグレード|Pro プランです/
+      )
     ).toBeVisible();
   });
 });

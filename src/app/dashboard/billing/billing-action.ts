@@ -90,6 +90,9 @@ export async function createCheckoutSession(): Promise<CheckoutResult> {
 
   try {
     const billing = await getOrCreateBilling(user.id, user.email, user.name);
+    if (billing.stripeSubscriptionId && billing.status !== "canceled") {
+      return { success: false, error: ALREADY_ON_PRO_MESSAGE };
+    }
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       customer: billing.stripeCustomerId ?? undefined,
