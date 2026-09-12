@@ -36,7 +36,7 @@ chmod +x /tmp/sync-clerk-dev-secrets.sh
 |---|---|
 | Cloud / 共有 | `~/.config/gmail-kanban-secrets/.env.clerk` |
 | ローカルアプリ | リポの `.env.local`（`package.json` name と origin で gmail-kanban か検証） |
-| CI E2E | GitHub Actions Secrets |
+| CI E2E | GitHub Actions Secrets（`pk_test_` / `sk_test_` のみ。live キーは E2E が拒否する） |
 
 指紋は `~/.config/gmail-kanban-secrets/.clerk-dev.fingerprint`（キー本体は置かない）。
 
