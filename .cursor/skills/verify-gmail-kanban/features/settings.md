@@ -18,7 +18,7 @@
 Preconditions:
 
 - Doctor is green and the E2E user can reach `/dashboard`.
-- No dedicated e2e spec yet.
+- Dedicated spec: `e2e/settings-smoke.spec.ts`.
 
 - **Open settings.** Choose `getByRole("link", { name: "設定" })`. URL is `/dashboard/settings`. Heading `設定` is visible. If the document is a Next error overlay (`This page couldn’t load` / status 500), stop. That is a product regression, not map drift.
 - **Calendar block.** Heading `Google カレンダー連携` is visible. Badge `連携済み` or `未連携` is visible. Do not print token values.

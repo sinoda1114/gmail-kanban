@@ -20,7 +20,7 @@
 Preconditions:
 
 - Doctor is green (file DB must have a `users` table) and the E2E user can reach `/dashboard`.
-- No dedicated e2e spec yet. Drive with Playwright locators or the browser. Do not call `createProject` from a unit test and call that proof.
+- Dedicated spec: `e2e/new-project-smoke.spec.ts` (manual title + 登録する → detail UUID URL → 案件一覧へ戻る).
 
 - **Open form.** Choose `案件登録`. Run `page.getByRole("link", { name: "案件登録" }).click()`. URL is `/dashboard/projects/new`. Heading `案件登録` is visible. Link `キャンセル` is visible (`component="a"`, not a button).
 - **Cancel.** Choose `getByRole("link", { name: "キャンセル" })`. URL is `/dashboard`. No new card titled `Verify draft`.
