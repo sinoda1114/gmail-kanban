@@ -30,6 +30,12 @@ test.describe("案件登録", () => {
       timeout: 15_000,
     });
     await expect(page.getByRole("link", { name: "キャンセル" })).toBeVisible();
+    await expect(page.getByText(/案件 \d+/)).toBeVisible();
+    if (await page.getByText("案件数の上限").isVisible()) {
+      throw new Error(
+        "Free プランの案件数上限に達しています。E2E ユーザーの作りっぱなし案件を削除してください。"
+      );
+    }
 
     await page.getByRole("textbox", { name: "案件タイトル *" }).fill(title);
     await page.getByRole("button", { name: "登録する" }).click();
@@ -43,9 +49,17 @@ test.describe("案件登録", () => {
     });
     await expect(page.getByRole("tab", { name: "基本情報" })).toBeVisible();
     await expect(page.getByRole("link", { name: "案件一覧へ戻る" })).toBeVisible();
+    const detailUrl = page.url();
 
     await page.getByRole("link", { name: "案件一覧へ戻る" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByText(title)).toBeVisible();
+
+    await page.goto(detailUrl);
+    const dialogPromise = page.waitForEvent("dialog");
+    await page.getByRole("button", { name: "削除" }).click();
+    await (await dialogPromise).accept();
+    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page.getByText(title)).toHaveCount(0);
   });
 });

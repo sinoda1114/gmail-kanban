@@ -6,6 +6,10 @@ import { projects, projectStatusHistory, users } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
+import {
+  FREE_PROJECT_LIMIT_MESSAGE,
+  canCreateProject,
+} from "@/lib/billing";
 import { PROJECT_STATUSES, type ProjectStatus } from "@/types/project";
 
 export type CreateProjectInput = {
@@ -60,6 +64,10 @@ export async function createProject(
 
   if (!input.title.trim()) {
     return { success: false, error: "タイトルは必須です" };
+  }
+
+  if (!(await canCreateProject(user.id))) {
+    return { success: false, error: FREE_PROJECT_LIMIT_MESSAGE };
   }
 
   const status: ProjectStatus =

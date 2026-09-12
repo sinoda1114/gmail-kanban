@@ -69,7 +69,7 @@ export async function createCheckoutSession(): Promise<CheckoutResult> {
 
   const priceId = process.env.STRIPE_PRO_PRICE_ID;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (!priceId || !siteUrl) {
+  if (!process.env.STRIPE_SECRET_KEY || !priceId || !siteUrl) {
     return { success: false, error: "Billing is not configured" };
   }
 
@@ -91,3 +91,35 @@ export async function createCheckoutSession(): Promise<CheckoutResult> {
     return { success: false, error: "Failed to create checkout session" };
   }
 }
+
+export async function createBillingPortalSession(): Promise<CheckoutResult> {
+  const user = await getAuthedUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!process.env.STRIPE_SECRET_KEY || !siteUrl) {
+    return { success: false, error: "Billing is not configured" };
+  }
+
+  const billing = await db.query.billingSubscriptions.findFirst({
+    where: eq(billingSubscriptions.userId, user.id),
+  });
+  if (!billing?.stripeCustomerId) {
+    return {
+      success: false,
+      error: "お支払い管理は、初回のアップグレード後に利用できます",
+    };
+  }
+
+  try {
+    const session = await getStripe().billingPortal.sessions.create({
+      customer: billing.stripeCustomerId,
+      return_url: `${siteUrl}/dashboard/billing`,
+    });
+    if (!session.url) return { success: false, error: "Portal URL was not created" };
+    return { success: true, url: session.url };
+  } catch {
+    return { success: false, error: "Failed to open billing portal" };
+  }
+}
+

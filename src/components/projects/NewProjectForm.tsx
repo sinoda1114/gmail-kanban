@@ -12,6 +12,7 @@ import {
   Paper,
   TagsInput,
   Select,
+  Anchor,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createProject } from "@/app/dashboard/projects/actions";
@@ -19,6 +20,7 @@ import { extractProjectFromText } from "@/app/dashboard/projects/extract-action"
 import { fetchGmailThread } from "@/app/dashboard/projects/gmail-action";
 import { GmailFetchFields } from "@/components/projects/GmailFetchFields";
 import { parseGmailInput } from "@/lib/gmail-url";
+import { isProjectLimitError } from "@/lib/billing-limits";
 import type { ProjectExtraction } from "@/types/ai";
 import {
   PROJECT_STATUSES,
@@ -65,7 +67,11 @@ const initialForm: FormState = {
 
 const MAX_GMAIL_INPUT_LENGTH = 500;
 
-export function NewProjectForm() {
+export function NewProjectForm({
+  atProjectLimit = false,
+}: {
+  atProjectLimit?: boolean;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -192,6 +198,9 @@ export function NewProjectForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (atProjectLimit) {
+      return;
+    }
     if (!form.title.trim()) {
       setError("案件タイトルは必須です");
       return;
@@ -241,6 +250,12 @@ export function NewProjectForm() {
         {error !== null && (
           <Alert color="red" title="エラー">
             {error}
+            {isProjectLimitError(error) && (
+              <>
+                {" "}
+                <Anchor href="/dashboard/billing">プラン画面へ</Anchor>
+              </>
+            )}
           </Alert>
         )}
 
@@ -374,7 +389,7 @@ export function NewProjectForm() {
           onChange={(e) => set("nextAction", e.target.value)}
         />
 
-        <Button type="submit" loading={loading}>
+        <Button type="submit" loading={loading} disabled={atProjectLimit}>
           登録する
         </Button>
       </Stack>

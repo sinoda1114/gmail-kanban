@@ -42,3 +42,4 @@
 - [New project](./new-project.md) は案件登録フォーム、詳細への遷移、カンバンへの反映。
 - [Alerts](./alerts.md) は要対応一覧と対応済みトグル。
 - [Settings](./settings.md) は設定画面と Google 連携の表示。
+- [Billing](./billing.md) はプラン画面と案件数上限。

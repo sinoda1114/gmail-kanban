@@ -36,3 +36,4 @@ Preconditions:
 - FMfcgz links are unsupported. Do not treat a hang as success.
 - AI で整理する is optional. Manual title + 登録する is enough to prove create.
 - Clean up the created card from 案件詳細 → `削除` (confirm dialog). Keep the artifacts.
+- Free プランは案件 5 件まで。上限に達すると見出し近くに `案件数の上限` が出て `登録する` が disabled になる。サーバーの `createProject` も同じ文面で拒否する。再利用 DB の E2E ユーザーは作りっぱなしのカードを消す。

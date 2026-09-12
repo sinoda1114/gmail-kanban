@@ -41,5 +41,6 @@ test.describe("認証済み スモーク", () => {
     await expect(page.getByRole("link", { name: "設定" })).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.getByRole("link", { name: "プラン" })).toBeVisible();
   });
 });
