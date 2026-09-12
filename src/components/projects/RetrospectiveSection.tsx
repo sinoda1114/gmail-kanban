@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Stack,
   Group,
@@ -21,6 +22,7 @@ import {
   type RetrospectiveNoteInput,
 } from "@/app/dashboard/projects/retrospective-action";
 import { saveInterviewNote } from "@/app/dashboard/projects/interview-notes-action";
+import { parseStoredRetrospective } from "@/lib/retrospective";
 
 interface RetrospectiveSectionProps {
   project: Project;
@@ -71,8 +73,9 @@ export function RetrospectiveSection({
   note,
   currentNotes,
 }: RetrospectiveSectionProps) {
+  const router = useRouter();
   const [retrospective, setRetrospective] = useState<InterviewRetrospective>(
-    note?.retrospective ?? EMPTY_RETROSPECTIVE
+    parseStoredRetrospective(note?.retrospective) ?? EMPTY_RETROSPECTIVE
   );
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -128,6 +131,7 @@ export function RetrospectiveSection({
         title: "振り返り生成完了",
         message: "内容を確認し、必要に応じて編集・保存してください。",
       });
+      router.refresh();
     }
   }
 
@@ -138,6 +142,7 @@ export function RetrospectiveSection({
 
     if (result.success) {
       notifications.show({ color: "green", message: "振り返りを保存しました" });
+      router.refresh();
     } else {
       notifications.show({
         color: "red",

@@ -102,4 +102,11 @@ describe("buildRetrospectivePromptGuidance", () => {
     expect(g).toContain("前向き");
     expect(g).toContain("ここに無い事実は作らない");
   });
+
+  it("likelyFollowUps は想定質問側であり逆質問には載せない", () => {
+    const g = buildRetrospectivePromptGuidance(full);
+    expect(g).toContain("likelyFollowUps は先方が次に聞いてきそうなこと");
+    expect(g).toContain("questions");
+    expect(g).not.toMatch(/likelyFollowUps を reverseQuestions/);
+  });
 });

@@ -55,7 +55,7 @@ ${fields.join("\n\n")}
 
 反映方針:
 - nextPrepTips を strategy・想定質問・逆質問の優先度に反映する
-- likelyFollowUps を reverseQuestions に含める（重複は避ける）
+- likelyFollowUps は先方が次に聞いてきそうなことなので questions（想定質問）へ。reverseQuestions（自分から聞く逆質問）には入れない
 - temperatureAssessment はアピールの強弱と確認事項の温度に使う
 - 振り返りに書かれていない出来事・数字・社名は追加しない
 `.trim();
