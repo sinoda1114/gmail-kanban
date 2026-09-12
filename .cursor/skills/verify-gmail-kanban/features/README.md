@@ -38,6 +38,7 @@
 ## Features
 
 - [Auth gate](./auth-gate.md) は未ログインの `/sign-in`・`/sign-up` 到達と、保護ルートから sign-in への誘導。
+- [Landing](./landing.md) は未ログインの `/` 公開 LP と、ログイン済みの dashboard 誘導。
 - [Dashboard kanban](./dashboard-kanban.md) はサインイン後のカンバンシェル、検索、空状態。
 - [New project](./new-project.md) は案件登録フォーム、詳細への遷移、カンバンへの反映。
 - [Alerts](./alerts.md) は要対応一覧と対応済みトグル。

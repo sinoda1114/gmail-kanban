@@ -20,6 +20,22 @@ test.describe("認証ゲート スモーク", () => {
     await expect(clerkRoot.first()).toBeVisible({ timeout: 15_000 });
   });
 
+  test("未ログインで公開LPが見られる", async ({ page }) => {
+    await page.goto("/");
+    await expect(page).not.toHaveURL(/sign-in/);
+    await expect(page).toHaveURL(/\/$/);
+    await expect(
+      page.getByRole("heading", { name: "Gmail Kanban" })
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByRole("link", { name: "無料で始める" })
+    ).toHaveAttribute("href", "/sign-up");
+    await expect(page.getByRole("link", { name: "ログイン" })).toHaveAttribute(
+      "href",
+      "/sign-in"
+    );
+  });
+
   test("保護ルートは未ログインだと sign-in へ誘導される", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page).toHaveURL(/sign-in/, { timeout: 15_000 });

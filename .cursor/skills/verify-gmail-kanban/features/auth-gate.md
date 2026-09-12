@@ -7,14 +7,14 @@
 - `signin-open` opens `/sign-in` and shows the Clerk sign-in root.
 - `signup-open` opens `/sign-up` and shows the Clerk sign-up root.
 - `protect-dashboard` sends `/dashboard` to `/sign-in` when there is no session.
-- `home-redirect` sends `/` to `/sign-in` when there is no session.
+- `home-lp` shows the public landing page on `/` when there is no session.
 
 ## How to get to it (user POV)
 
 - Open `/sign-in` in the browser.
 - Open `/sign-up` in the browser.
 - Open `/dashboard` while signed out.
-- Open `/` while signed out (home redirects to sign-in).
+- Open `/` while signed out (public LP, not a sign-in redirect).
 
 ## Driving it with Playwright
 
@@ -27,7 +27,7 @@ Preconditions:
 - **Open sign-in.** Go to `/sign-in`. Run `pnpm exec playwright test e2e/smoke.spec.ts` with `E2E_BASE_URL` set to the instance under test (isolation default `http://localhost:3005`; existing `pnpm dev` uses `http://localhost:3000`). URL matches `/sign-in`. Locator `.cl-rootBox, .cl-signIn-root, [data-clerk-component]` is visible within 15s.
 - **Open sign-up.** Go to `/sign-up`. URL matches `/sign-up`. Locator `.cl-rootBox, .cl-signUp-root, [data-clerk-component]` is visible within 15s. Not in `smoke.spec.ts`.
 - **Protect dashboard.** Go to `/dashboard` signed out. The same spec asserts the URL matches `/sign-in` within 15s. The kanban heading `案件カンバン` is not visible.
-- **Home redirect.** Go to `/` signed out. The app redirects to `/sign-in`. Browser: `page.goto("/")` then `toHaveURL(/sign-in/)`. HTTP: `GET /` returns `307` with `Location` starting `/sign-in`. This entry is not in `smoke.spec.ts`; either proof is enough, do not skip it.
+- **Home LP.** Go to `/` signed out. URL stays `/` (not `/sign-in`). Heading `Gmail Kanban` and links `無料で始める` / `ログイン` are visible. Dedicated coverage is in `e2e/smoke.spec.ts`.
 - **Proof.** Keep the Playwright list output (pass lines for both smoke tests) under `verify-artifacts/<run-id>/auth-gate/playwright.log`. A screenshot of `/sign-in` with the Clerk root visible goes next to it as `sign-in.png`. Keep the `/` redirect status line in `home-redirect.txt`.
 
 ## Gotchas

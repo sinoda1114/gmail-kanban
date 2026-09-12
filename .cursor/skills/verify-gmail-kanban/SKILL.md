@@ -66,13 +66,14 @@ Doctor はシェルの preflight だ。対象プロセスの中身は見ない�
 
 ## Drive
 
-既存ハーネス: Playwright（`e2e/**/*.spec.ts`、`@clerk/testing` の Testing Token）。ワーカーは `e2e/helpers/clerk.ts` の `prepareClerkTestingPage` を先に呼ぶ。認証後は `signInE2eTestUser(page, email)`。`/` は RSC リダイレクトだけで Clerk JS が載らないので、サインインは `/sign-in` へ直接行く。
+既存ハーネス: Playwright（`e2e/**/*.spec.ts`、`@clerk/testing` の Testing Token）。ワーカーは `e2e/helpers/clerk.ts` の `prepareClerkTestingPage` を先に呼ぶ。認証後は `signInE2eTestUser(page, email)`。`/` の未ログインは公開 LP で Clerk JS が載らないので、サインインは `/sign-in` へ直接行く。
 
 安定ハンドル（座標やタブ順は使わない）:
 
 | ユーザーが見るもの | ハンドル |
 |---|---|
 | サインイン画面 | URL `/sign-in`、Clerk ルート `.cl-rootBox, .cl-signIn-root, [data-clerk-component]` |
+| 公開LP | URL `/`、見出し `Gmail Kanban`、リンク `無料で始める` / `ログイン` |
 | 保護ルート誘導 | `/dashboard` → URL が `/sign-in` |
 | カンバン見出し | `getByRole("heading", { name: "案件カンバン" })` |
 | ヘッダーのホーム | `getByRole("link", { name: "ダッシュボードへ移動" })` |
