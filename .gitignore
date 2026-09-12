@@ -22,6 +22,9 @@ coverage/
 /ci-e2e.db
 /ci-e2e.db-*
 
+# pstack / verify skill proof (keep local; do not commit)
+/verify-artifacts/
+
 # OS / エディタ
 .DS_Store
 *.log

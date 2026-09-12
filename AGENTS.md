@@ -12,6 +12,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - タスク管理詳細: `notes/task-management-issue-workflow.md`
 - テスト規律（選択的 TDD / Vitest / Playwright）: `notes/testing-discipline.md`
 - 課金方針（Stripe / RevenueCat）: `notes/billing-strategy.md`
+- pstack（`/poteto-mode`・モデル割当・コスト上限）: `notes/pstack.md`
 
 ## このプロジェクト固有の値
 
@@ -24,6 +25,8 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 | 独自ドメイン | gmail-kanban.vercel.app |
 | 絶対 URL の env | `NEXT_PUBLIC_SITE_URL`（=`https://gmail-kanban.vercel.app`・ハードコード禁止） |
 | タスク正本 | GitHub Issue / Project「Gmail Kanban Tasks」 |
+| エージェント作業スタイル | pstack（`/poteto-mode`）。モデルは `.cursor/rules/pstack-models.mdc` |
+| pstack コスト上限 | `fast` / `xhigh` / `max` は利用者がその会話で指示したときだけ。既定の天井は `high` |
 
 ## 役割境界（このプロジェクト）
 
@@ -55,3 +58,4 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - Turso クラウド鍵が無い場合は `TURSO_DATABASE_URL=file:/workspace/local.db` + `pnpm exec drizzle-kit push` でローカル DB を使える。
 - Vercel の Sensitive env は CLI/API から読み戻せない。Dashboard から値をコピーして上記 secrets パスへ置く（Clerk Dev キーは同期スクリプト経由）。
 - ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
+- pstack モデル割当をホームへコピーする: `./scripts/sync-pstack-models.sh`（スキルは `~/.cursor/rules/pstack-models.mdc` を読む）。
