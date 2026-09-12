@@ -23,8 +23,8 @@ Preconditions:
 
 - **Open sign-in.** Go to `/sign-in`. Run `pnpm exec playwright test e2e/smoke.spec.ts` with `E2E_BASE_URL` set to the instance under test (isolation default `http://localhost:3005`; existing `pnpm dev` uses `http://localhost:3000`). URL matches `/sign-in`. Locator `.cl-rootBox, .cl-signIn-root, [data-clerk-component]` is visible within 15s.
 - **Protect dashboard.** Go to `/dashboard` signed out. The same spec asserts the URL matches `/sign-in` within 15s. The kanban heading `案件カンバン` is not visible.
-- **Home redirect.** Go to `/` signed out. The app redirects to `/sign-in`. Confirm with `page.goto("/")` then `toHaveURL(/sign-in/)`. This entry is not in `smoke.spec.ts` yet; drive it in the browser or add the assertion before claiming it.
-- **Proof.** Keep the Playwright list output (pass lines for both tests) under `verify-artifacts/<run-id>/auth-gate/playwright.log`. A screenshot of `/sign-in` with the Clerk root visible goes next to it as `sign-in.png`.
+- **Home redirect.** Go to `/` signed out. The app redirects to `/sign-in`. Browser: `page.goto("/")` then `toHaveURL(/sign-in/)`. HTTP: `GET /` returns `307` with `Location` starting `/sign-in`. This entry is not in `smoke.spec.ts`; either proof is enough, do not skip it.
+- **Proof.** Keep the Playwright list output (pass lines for both tests) under `verify-artifacts/<run-id>/auth-gate/playwright.log`. A screenshot of `/sign-in` with the Clerk root visible goes next to it as `sign-in.png`. Keep the `/` redirect status line in `home-redirect.txt`.
 
 ## Gotchas
 
