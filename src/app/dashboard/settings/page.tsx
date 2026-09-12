@@ -7,7 +7,6 @@ import {
   Text,
   Paper,
   Badge,
-  List,
   ThemeIcon,
   Anchor,
   Code,
@@ -85,19 +84,19 @@ export default async function SettingsPage() {
                       <Text size="sm" fw={600}>
                         連携手順
                       </Text>
-                      <List size="sm" spacing="xs">
-                        <List.Item>
+                      <Stack gap="xs" component="ul" pl="md">
+                        <Text size="sm" component="li">
                           右上のプロフィール（UserButton）→「アカウント管理」から
                           Google アカウントを連携してください。
-                        </List.Item>
-                        <List.Item>
+                        </Text>
+                        <Text size="sm" component="li">
                           初回サインイン時に Google
                           を選んでいない場合は、上記から追加できます。
-                        </List.Item>
-                        <List.Item>
+                        </Text>
+                        <Text size="sm" component="li">
                           連携後、このページを再読み込みするとステータスが更新されます。
-                        </List.Item>
-                      </List>
+                        </Text>
+                      </Stack>
                       <Text size="xs" c="dimmed">
                         管理者向け: Clerk Dashboard の Google OAuth
                         プロバイダで Calendar API
@@ -163,15 +162,15 @@ export default async function SettingsPage() {
                       <Text size="sm" fw={600}>
                         連携手順
                       </Text>
-                      <List size="sm" spacing="xs">
-                        <List.Item>
+                      <Stack gap="xs" component="ul" pl="md">
+                        <Text size="sm" component="li">
                           右上のプロフィール（UserButton）→「アカウント管理」から
                           Google アカウントを連携してください。
-                        </List.Item>
-                        <List.Item>
+                        </Text>
+                        <Text size="sm" component="li">
                           連携後、このページを再読み込みするとステータスが更新されます。
-                        </List.Item>
-                      </List>
+                        </Text>
+                      </Stack>
                     </Stack>
                   </Paper>
                 </>
