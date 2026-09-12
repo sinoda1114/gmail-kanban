@@ -2,8 +2,14 @@
 
 自分が案件メールを追うときに、このアプリで何をするかの手順。開発者向けのテスト手順ではない。
 
-本番: https://gmail-kanban.vercel.app  
-手元: `http://localhost:3000`（ホストは `localhost`。`127.0.0.1` だとログイン画面が壊れやすい）
+## 今どこを開くか
+
+`https://gmail-kanban.vercel.app` は今、古い Vite サイトを向いている。`/sign-in` は 404 になるので使わない。
+
+機能確認は次のどちらか。
+
+- 手元: `http://localhost:3000`（ホストは `localhost`。`127.0.0.1` だとログイン画面が壊れやすい）
+- Vercel の Next.js デプロイ: [プロジェクト](https://vercel.com/sinoda1114s-projects/gmail-kanban) から最新 Production / Preview を Visit。Deployment Protection の SSO を通す。Google は押さず、メールで入る。
 
 Free プランは案件 5 件まで。確認用の案件は最後に削除してよい。AI 生成（面談準備・振り返り・返信ドラフト）は Gemini を使う。
 
