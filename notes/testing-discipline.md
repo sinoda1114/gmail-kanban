@@ -48,6 +48,7 @@
 
 - 標準 CI（`ci-standard`）: `playwright.config.*` があれば `ci / e2e` が走る
 - Clerk Testing Token 用のキーは呼び出し側 `ci.yml` の `secrets:` 明示マップ（`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）。未設定なら空のまま unsigned スモークだけが通る
+- `ci-standard` の `workflow_call` が Clerk secrets を宣言するまで（PR #6）、呼び出しは当該コミット SHA に固定する。`@main` へ未宣言 secrets を渡すと失敗する
 - Clerk Development キーの正本は Clerk CLI。登録・更新は **`scripts/sync-clerk-dev-secrets.sh`**（GitHub Actions / `.env.clerk` / `.env.local` へ冪等上書き）。詳細は `notes/clerk-dev-secrets.md`
 - キーをローテしたら必ず同期スクリプトを再実行する。古い `.env` をコピーして Actions に載せない
 - ローカル / Cursor Cloud では secrets を読んで `pnpm test:e2e` を回す（エージェント検証に含める）
