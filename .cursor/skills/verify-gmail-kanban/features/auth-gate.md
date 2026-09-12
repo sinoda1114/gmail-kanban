@@ -28,7 +28,7 @@ Preconditions:
 - **Open sign-up.** Go to `/sign-up`. URL matches `/sign-up`. Locator `.cl-rootBox, .cl-signUp-root, [data-clerk-component]` is visible within 15s. Not in `smoke.spec.ts`.
 - **Protect dashboard.** Go to `/dashboard` signed out. The same spec asserts the URL matches `/sign-in` within 15s. The kanban heading `案件カンバン` is not visible.
 - **Home LP.** Go to `/` signed out. URL stays `/` (not `/sign-in`). Heading `Gmail Kanban` and links `無料で始める` / `ログイン` are visible. Dedicated coverage is in `e2e/smoke.spec.ts`.
-- **Proof.** Keep the Playwright list output (pass lines for both smoke tests) under `verify-artifacts/<run-id>/auth-gate/playwright.log`. A screenshot of `/sign-in` with the Clerk root visible goes next to it as `sign-in.png`. Keep the `/` redirect status line in `home-redirect.txt`.
+- **Proof.** Keep the Playwright list output (pass lines for both smoke tests) under `verify-artifacts/<run-id>/auth-gate/playwright.log`. A screenshot of `/sign-in` with the Clerk root visible goes next to it as `sign-in.png`. Unsigned `/` is the public LP (200, heading `Gmail Kanban`); do not record a `/` → `/sign-in` redirect. That proof lives in the landing feature map.
 
 ## Gotchas
 
