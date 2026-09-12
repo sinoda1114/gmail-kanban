@@ -3,35 +3,14 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { clerk, clerkSetup, setupClerkTestingToken } from "@clerk/testing/playwright";
 import type { Page } from "@playwright/test";
+import { assertClerkE2eEnv } from "../../src/lib/clerk-e2e-env";
+
+export { assertClerkE2eEnv };
 
 const DEFAULT_E2E_USER_JSON = join(
   homedir(),
   ".config/gmail-kanban-secrets/e2e-user.json"
 );
-
-const CLERK_PUBLISHABLE_KEY_ENV_NAMES = [
-  "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-  "CLERK_PUBLISHABLE_KEY",
-] as const;
-
-/** globalSetup と worker 双方で使う Clerk E2E 必須 env の早期検証。 */
-export function assertClerkE2eEnv() {
-  const publishableKey =
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ??
-    process.env.CLERK_PUBLISHABLE_KEY;
-  const secretKey = process.env.CLERK_SECRET_KEY;
-
-  if (!publishableKey?.startsWith("pk_")) {
-    throw new Error(
-      `E2E: Clerk publishable key (pk_...) が未設定です。次のいずれかを設定してください: ${CLERK_PUBLISHABLE_KEY_ENV_NAMES.join(", ")}。secrets を読み込んでから pnpm test:e2e を実行してください。`
-    );
-  }
-  if (!secretKey?.startsWith("sk_")) {
-    throw new Error(
-      "E2E: CLERK_SECRET_KEY (sk_...) が未設定です。secrets を読み込んでから pnpm test:e2e を実行してください。"
-    );
-  }
-}
 
 let clerkWorkerReady: Promise<void> | undefined;
 
