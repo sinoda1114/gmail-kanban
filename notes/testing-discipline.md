@@ -46,12 +46,12 @@
 
 ### CI での扱い
 
-- 標準 CI（`ci-standard`）: `playwright.config.*` があれば `ci / e2e` が走る
-- Clerk 用の GitHub Actions Secrets が未整備の間は `.github/ci-skip-e2e` でジョブをスキップしてよい
-- 当面の E2E 必須化は `.github/workflows/e2e.yml`（Secrets を env にマップ）で行う
+- 標準 CI（`ci-standard`）: `playwright.config.*` があれば `ci / e2e` が走る。e2e 前に `package.json` の `db:migrate` があれば実行する
+- このリポは SQL migration journal が無いので `db:migrate` は `drizzle-kit push`（file DB の CI / ローカルと同じ）
+- Clerk Testing Token 用のキーは呼び出し側 `ci.yml` の `secrets:` 明示マップ（`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）。未設定なら空のまま unsigned スモークだけが通る
+- `ci-standard` の `workflow_call` が Clerk secrets を宣言するまで（PR #6）、呼び出しは当該コミット SHA に固定する。`@main` へ未宣言 secrets を渡すと失敗する
 - Clerk Development キーの正本は Clerk CLI。登録・更新は **`scripts/sync-clerk-dev-secrets.sh`**（GitHub Actions / `.env.clerk` / `.env.local` へ冪等上書き）。詳細は `notes/clerk-dev-secrets.md`
 - キーをローテしたら必ず同期スクリプトを再実行する。古い `.env` をコピーして Actions に載せない
-- `ci-standard` が optional Clerk Secrets を e2e ジョブへ渡すようになったら（[ci-standard#2](https://github.com/sinoda1114/ci-standard/issues/2)）、**`ci-skip-e2e` を削除**して標準の `ci / e2e` に寄せ、固有 `e2e.yml` を退役する
 - ローカル / Cursor Cloud では secrets を読んで `pnpm test:e2e` を回す（エージェント検証に含める）
 
 ## 4. エージェントの検証ゲート（更新）

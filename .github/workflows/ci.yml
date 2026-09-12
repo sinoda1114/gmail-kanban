@@ -16,6 +16,9 @@ permissions:
 
 jobs:
   ci:
-    uses: sinoda1114/ci-standard/.github/workflows/node-ci.yml@main
-    secrets: inherit
-# re-run: 標準CI(Node22/pnpm対応)取り込み
+    # ci-standard#6 が main に入るまで、Clerk secrets を workflow_call で受け取る SHA に固定する。
+    # 未宣言の secrets を @main に渡すと reusable workflow が即失敗する。マージ後は @main に戻す。
+    uses: sinoda1114/ci-standard/.github/workflows/node-ci.yml@2d8bea49bd8bb010c670c26f69c42a7701d43137
+    secrets:
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
