@@ -77,6 +77,7 @@ Doctor はシェルの preflight だ。対象プロセスの中身は見ない�
 | カンバン見出し | `getByRole("heading", { name: "案件カンバン" })` |
 | ヘッダーのホーム | `getByRole("link", { name: "ダッシュボードへ移動" })` |
 | 設定 | `getByRole("link", { name: "設定" })` |
+| プラン | `getByRole("link", { name: "プラン" })` |
 | 要対応（ヘッダー） | `getByRole("link", { name: "要対応" })` |
 | 案件登録 | `getByRole("link", { name: "案件登録" })` |
 | キャンセル（案件登録） | `getByRole("link", { name: "キャンセル" })`（ボタンではない） |
