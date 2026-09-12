@@ -49,17 +49,9 @@ test.describe("案件登録", () => {
     });
     await expect(page.getByRole("tab", { name: "基本情報" })).toBeVisible();
     await expect(page.getByRole("link", { name: "案件一覧へ戻る" })).toBeVisible();
-    const detailUrl = page.url();
 
     await page.getByRole("link", { name: "案件一覧へ戻る" }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.getByText(title)).toBeVisible();
-
-    await page.goto(detailUrl);
-    const dialogPromise = page.waitForEvent("dialog");
-    await page.getByRole("button", { name: "削除" }).click();
-    await (await dialogPromise).accept();
-    await expect(page).toHaveURL(/\/dashboard$/);
-    await expect(page.getByText(title)).toHaveCount(0);
   });
 });

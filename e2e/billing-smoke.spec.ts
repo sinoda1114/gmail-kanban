@@ -31,7 +31,7 @@ test.describe("プラン画面", () => {
 
     await page.getByRole("link", { name: "プラン" }).click();
     await expect(page).toHaveURL(/\/dashboard\/billing/);
-    await expect(page.getByRole("heading", { name: "プラン" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "プラン", exact: true })).toBeVisible({
       timeout: 15_000,
     });
     await expect(

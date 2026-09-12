@@ -23,7 +23,7 @@ Preconditions:
 - Dedicated spec: `e2e/billing-smoke.spec.ts`.
 - Do not complete a real Stripe Checkout in CI.
 
-- **Open billing.** Choose `getByRole("link", { name: "プラン" })`. URL is `/dashboard/billing`. Status is 200. Heading `プラン` is visible. If the document is a Next error overlay (`This page couldn’t load` / status 500), stop.
+- **Open billing.** Choose `getByRole("link", { name: "プラン" })`. URL is `/dashboard/billing`. Status is 200. Heading `プラン` (`exact: true`, not `現在のプラン`) is visible. If the document is a Next error overlay (`This page couldn’t load` / status 500), stop.
 - **Plan block.** Heading `現在のプラン` is visible. Badge text `Free` or `Pro` is visible. Text matching `案件数:` is visible.
 - **Upgrade block.** Heading `アップグレード` is visible. Either `課金はまだ設定されていません` or the button `Pro にアップグレード` is visible. Do not click through to Stripe unless the change under test is Checkout itself.
 - **Proof.** Screenshot heading `プラン` with both Papers. Save under `verify-artifacts/<run-id>/billing/`.
