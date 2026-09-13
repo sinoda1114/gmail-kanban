@@ -68,6 +68,12 @@ export function normalizePracticeTurn(raw: PracticeTurnAi): PracticeTurn {
 export const PRACTICE_SESSION_STATUSES = ["active", "completed"] as const;
 export type PracticeSessionStatus = (typeof PRACTICE_SESSION_STATUSES)[number];
 
+export const PRACTICE_ENDED_MESSAGE = "この練習は終了しています";
+
+export function canSubmitPracticeReply(status: string): boolean {
+  return status === "active";
+}
+
 export const MAX_PRACTICE_INTERVIEWER_TURNS = 6;
 
 export function countInterviewerTurns(messages: PracticeMessage[]): number {

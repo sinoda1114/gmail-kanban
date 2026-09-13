@@ -195,8 +195,12 @@ export const calendarEvents = sqliteTable("calendar_events", {
 
 export const interviewResearchPacks = sqliteTable("interview_research_packs", {
   id: text("id").primaryKey(),
-  projectId: text("project_id").notNull().references(() => projects.id),
-  userId: text("user_id").notNull().references(() => users.id),
+  projectId: text("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   pack: text("pack", { mode: "json" }).$type<InterviewResearchPack>().notNull(),
   sources: text("sources", { mode: "json" }).$type<string[] | null>(),
   model: text("model"),
@@ -208,8 +212,12 @@ export const interviewPracticeSessions = sqliteTable(
   "interview_practice_sessions",
   {
     id: text("id").primaryKey(),
-    projectId: text("project_id").notNull().references(() => projects.id),
-    userId: text("user_id").notNull().references(() => users.id),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     status: text("status").$type<PracticeSessionStatus>().notNull().default("active"),
     messages: text("messages", { mode: "json" })
       .$type<PracticeMessage[]>()

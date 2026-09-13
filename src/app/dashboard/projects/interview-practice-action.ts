@@ -26,6 +26,8 @@ import {
   type PracticeTurn,
   shouldWrapUpPractice,
   normalizePracticeTurn,
+  PRACTICE_ENDED_MESSAGE,
+  canSubmitPracticeReply,
 } from "@/types/interview-practice";
 import type { RehearsalFeedback } from "@/types/interview-prep";
 import { parseStoredResearchPack } from "@/lib/interview-research";
@@ -43,6 +45,13 @@ async function getAuthedUser() {
 async function getOwnedProject(projectId: string, userId: string) {
   return db.query.projects.findFirst({
     where: and(eq(projects.id, projectId), eq(projects.userId, userId)),
+  });
+}
+
+function logAiFailure(taskType: string, error: unknown) {
+  console.error(`${taskType} failed`, {
+    taskType,
+    message: error instanceof Error ? error.message : "unknown error",
   });
 }
 
@@ -133,8 +142,6 @@ export async function startInterviewPractice(projectId: string): Promise<{
   const ctx = await loadPracticeContext(projectId, user.id);
   if (!ctx) return { success: false, error: "Project not found" };
 
-  const now = new Date().toISOString();
-
   try {
     const turn = await generateTurn({
       ...ctx,
@@ -145,17 +152,31 @@ export async function startInterviewPractice(projectId: string): Promise<{
     ];
     const sessionId = randomUUID();
     const completed = turn.kind === "wrap_up";
+    const now = new Date().toISOString();
 
-    await db.insert(interviewPracticeSessions).values({
-      id: sessionId,
-      projectId,
-      userId: user.id,
-      status: completed ? "completed" : "active",
-      messages,
-      feedback: completed && turn.kind === "wrap_up" ? turn.feedback : null,
-      model: GEMINI_RESEARCH_MODEL_ID,
-      createdAt: now,
-      updatedAt: now,
+    await db.transaction(async (tx) => {
+      await tx
+        .update(interviewPracticeSessions)
+        .set({ status: "completed" })
+        .where(
+          and(
+            eq(interviewPracticeSessions.projectId, projectId),
+            eq(interviewPracticeSessions.userId, user.id),
+            eq(interviewPracticeSessions.status, "active")
+          )
+        );
+
+      await tx.insert(interviewPracticeSessions).values({
+        id: sessionId,
+        projectId,
+        userId: user.id,
+        status: completed ? "completed" : "active",
+        messages,
+        feedback: completed && turn.kind === "wrap_up" ? turn.feedback : null,
+        model: GEMINI_RESEARCH_MODEL_ID,
+        createdAt: now,
+        updatedAt: now,
+      });
     });
 
     await db.insert(aiExtractionLogs).values({
@@ -169,7 +190,8 @@ export async function startInterviewPractice(projectId: string): Promise<{
 
     revalidatePath(`/dashboard/projects/${projectId}`);
     return { success: true, sessionId };
-  } catch {
+  } catch (error) {
+    logAiFailure("interview_practice_start", error);
     return { success: false, error: "AI処理に失敗しました" };
   }
 }
@@ -189,8 +211,8 @@ export async function submitPracticeReply(
   });
   if (!session) return { success: false, error: "セッションが見つかりません" };
   if (session.userId !== user.id) return { success: false, error: "Unauthorized" };
-  if (session.status !== "active") {
-    return { success: false, error: "この練習は終了しています" };
+  if (!canSubmitPracticeReply(session.status)) {
+    return { success: false, error: PRACTICE_ENDED_MESSAGE };
   }
 
   const ctx = await loadPracticeContext(session.projectId, user.id);
@@ -211,7 +233,7 @@ export async function submitPracticeReply(
     const feedback: RehearsalFeedback | null =
       turn.kind === "wrap_up" ? turn.feedback : null;
 
-    await db
+    const updated = await db
       .update(interviewPracticeSessions)
       .set({
         messages: nextMessages,
@@ -219,7 +241,17 @@ export async function submitPracticeReply(
         feedback,
         updatedAt: now,
       })
-      .where(eq(interviewPracticeSessions.id, sessionId));
+      .where(
+        and(
+          eq(interviewPracticeSessions.id, sessionId),
+          eq(interviewPracticeSessions.status, "active")
+        )
+      )
+      .returning({ id: interviewPracticeSessions.id });
+
+    if (updated.length === 0) {
+      return { success: false, error: PRACTICE_ENDED_MESSAGE };
+    }
 
     await db.insert(aiExtractionLogs).values({
       id: randomUUID(),
@@ -232,7 +264,8 @@ export async function submitPracticeReply(
 
     revalidatePath(`/dashboard/projects/${session.projectId}`);
     return { success: true };
-  } catch {
+  } catch (error) {
+    logAiFailure("interview_practice_reply", error);
     return { success: false, error: "AI処理に失敗しました" };
   }
 }

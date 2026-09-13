@@ -6,6 +6,7 @@ import {
   shouldWrapUpPractice,
   MAX_PRACTICE_INTERVIEWER_TURNS,
   normalizePracticeTurn,
+  canSubmitPracticeReply,
 } from "../interview-practice";
 
 describe("PracticeTurnSchema", () => {
@@ -77,5 +78,12 @@ describe("normalizePracticeTurn", () => {
     if (turn.kind === "wrap_up") {
       expect(turn.feedback.summary.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("canSubmitPracticeReply", () => {
+  it("active だけ書き込める", () => {
+    expect(canSubmitPracticeReply("active")).toBe(true);
+    expect(canSubmitPracticeReply("completed")).toBe(false);
   });
 });

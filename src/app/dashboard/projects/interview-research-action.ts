@@ -25,6 +25,13 @@ import {
 } from "@/lib/interview-research";
 import { parseJsonWithSchema } from "@/lib/ai-json";
 
+function logAiFailure(taskType: string, error: unknown) {
+  console.error(`${taskType} failed`, {
+    taskType,
+    message: error instanceof Error ? error.message : "unknown error",
+  });
+}
+
 async function getAuthedUser() {
   const { userId: clerkUserId } = await auth();
   if (!clerkUserId) return null;
@@ -76,7 +83,8 @@ async function generateResearchPack(
       pack: result.output,
       sources: collectSourceUrls(result.sources),
     };
-  } catch {
+  } catch (error) {
+    logAiFailure("interview_research_structured_output", error);
     const result = await generateText({
       model: google(modelId),
       tools,
@@ -146,7 +154,8 @@ export async function generateInterviewResearch(
 
     revalidatePath(`/dashboard/projects/${projectId}`);
     return { success: true };
-  } catch {
+  } catch (error) {
+    logAiFailure("interview_research", error);
     return { success: false, error: "AI処理に失敗しました" };
   }
 }
