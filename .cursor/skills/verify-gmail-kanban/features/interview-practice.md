@@ -25,6 +25,6 @@ Preconditions:
 
 ## Gotchas
 
-- Counterpart model is `gemini-3.8-flash` for turn-based practice. Live mode uses Gemini Live API (`gemini-3.1-flash-live-preview`) with an ephemeral token; the browser streams audio over WebSocket. Voice (turn-based) still uses Web Speech. Live shows a 2D counterpart, turn banners (`相手役が話しています` / `あなたの番です` / `入力中`), and a mic meter. No 3D avatar.
+- Counterpart model is `gemini-3.8-flash` for turn-based practice. Live mode uses Gemini Live API (`gemini-3.1-flash-live-preview`) with an ephemeral token; the browser streams audio over WebSocket. Voice (turn-based) still uses Web Speech. Live shows a 2D counterpart, turn banners (`相手役が話しています` / `あなたの番です` / `入力中`), and a mic meter docked below the chat so it stays visible. Chat is LINE-style (partner left, you right, newest at the bottom). No 3D avatar.
 - The 1-question rehearsal lives here, not on the 面談準備 tab.
 - A completed session keeps messages and feedback until the user starts over.

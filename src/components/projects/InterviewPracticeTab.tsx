@@ -40,6 +40,7 @@ import {
   PracticeLiveUnsupported,
 } from "./PracticeLiveSession";
 import { PracticeLivePresence } from "./PracticeLivePresence";
+import { PracticeChatThread } from "./PracticeChatThread";
 import { canUsePracticeLive } from "@/lib/practice-live-audio";
 
 interface QuestionWithAnswer extends InterviewQuestion {
@@ -201,25 +202,10 @@ export function InterviewPracticeTab({
             starting={starting}
           />
           {mode === "live" && !liveCapable && <PracticeLiveUnsupported />}
-          {mode === "live" && !liveAuth && (
-            <PracticeLivePresence stage="idle" level={0} />
-          )}
-          {liveAuth && (
-            <PracticeLiveSession
-              key={liveAuth.token}
-              token={liveAuth.token}
-              setup={liveAuth.setup}
-              onMessages={setLiveMessages}
-              onEnded={(messages) => {
-                void handleLiveEnded(messages);
-              }}
-              onFailed={(message) => setError(message)}
-            />
-          )}
         </Stack>
         <Text size="sm" c="dimmed" mb="sm">
           {mode === "live"
-            ? "テキスト／音声の通し練習はそのまま使えます。ライブでは相手役の表情と入力メーターで、今しゃべってよいかが分かります。"
+            ? "テキスト／音声の通し練習はそのまま使えます。相手役とメーターは会話の下に固定するので、入力中でも見失いません。"
             : "相手役が連続で質問し、回答を深掘りします。最後に短いフィードバックが出ます。入力はテキストと音声を途中で切り替えられます。"}
         </Text>
         <Button
@@ -245,27 +231,7 @@ export function InterviewPracticeTab({
       {(session || liveMessages) && (
         <Paper withBorder p="md" radius="md">
           <Stack gap="sm">
-            {displayMessages.map((m, i) => (
-              <Paper
-                key={`${m.role}-${i}`}
-                withBorder
-                p="sm"
-                radius="sm"
-                bg={m.role === "interviewer" ? "gray.0" : undefined}
-                style={
-                  m.role === "candidate"
-                    ? { borderColor: "var(--mantine-color-teal-3)" }
-                    : undefined
-                }
-              >
-                <Text size="xs" fw={600} c="dimmed" mb={4}>
-                  {m.role === "interviewer" ? "相手役" : "あなた"}
-                </Text>
-                <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>
-                  {m.content}
-                </Text>
-              </Paper>
-            ))}
+            <PracticeChatThread messages={displayMessages} />
 
             {strandedLive && (
               <Alert color="yellow" title="ライブ面談が途中です">
@@ -335,6 +301,38 @@ export function InterviewPracticeTab({
             )}
           </Stack>
         </Paper>
+      )}
+
+      {mode === "live" && liveCapable && (
+        <div
+          style={
+            liveActive
+              ? {
+                  position: "sticky",
+                  bottom: 0,
+                  zIndex: 5,
+                  paddingTop: 8,
+                  paddingBottom: 8,
+                  background: "var(--mantine-color-body)",
+                }
+              : undefined
+          }
+        >
+          {liveAuth ? (
+            <PracticeLiveSession
+              key={liveAuth.token}
+              token={liveAuth.token}
+              setup={liveAuth.setup}
+              onMessages={setLiveMessages}
+              onEnded={(messages) => {
+                void handleLiveEnded(messages);
+              }}
+              onFailed={(message) => setError(message)}
+            />
+          ) : (
+            <PracticeLivePresence stage="idle" level={0} />
+          )}
+        </div>
       )}
 
       <Divider label="1問だけの練習" labelPosition="left" />
