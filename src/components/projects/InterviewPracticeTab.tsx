@@ -125,8 +125,10 @@ export function InterviewPracticeTab({
             draft={draft}
             onDraftChange={setDraft}
             lastInterviewer={lastInterviewer}
+            sessionId={session?.id ?? null}
             active={Boolean(active)}
             sending={sending}
+            starting={starting}
           />
         </Stack>
         <Text size="sm" c="dimmed" mb="sm">

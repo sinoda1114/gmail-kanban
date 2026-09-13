@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
-  parsePracticeInputMode,
   lastInterviewerContent,
+  parsePracticeInputMode,
+  spokenUtteranceKey,
 } from "../practice-input-mode";
 
 describe("parsePracticeInputMode", () => {
@@ -28,5 +29,12 @@ describe("lastInterviewerContent", () => {
     expect(
       lastInterviewerContent([{ role: "candidate", content: "はい" }])
     ).toBeNull();
+  });
+});
+
+describe("spokenUtteranceKey", () => {
+  it("セッションと本文を組にする", () => {
+    expect(spokenUtteranceKey("s1", "自己紹介を")).toBe("s1:自己紹介を");
+    expect(spokenUtteranceKey(null, "自己紹介を")).toBeNull();
   });
 });

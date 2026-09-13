@@ -6,6 +6,7 @@ import { notifications } from "@mantine/notifications";
 import { IconMicrophone, IconPlayerStop, IconVolume } from "@tabler/icons-react";
 import {
   parsePracticeInputMode,
+  spokenUtteranceKey,
   type PracticeInputMode,
 } from "@/lib/practice-input-mode";
 import {
@@ -25,26 +26,13 @@ interface PracticeInputControlsProps {
   draft: string;
   onDraftChange: (value: string) => void;
   lastInterviewer: string | null;
+  sessionId: string | null;
   active: boolean;
   sending?: boolean;
+  starting?: boolean;
 }
 
-function speakJapanese(text: string) {
-  if (!text.trim() || typeof window === "undefined" || !window.speechSynthesis) {
-    return;
-  }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = PRACTICE_SPEECH_LANG;
-  const picked = pickJapaneseVoice(window.speechSynthesis.getVoices());
-  if (picked) {
-    const voice = window.speechSynthesis
-      .getVoices()
-      .find((item) => item.name === picked.name && item.lang === picked.lang);
-    if (voice) utterance.voice = voice;
-  }
-  window.speechSynthesis.speak(utterance);
-}
+const SPEAK_DELAY_MS = 50;
 
 function subscribeNever() {
   return () => {};
@@ -56,8 +44,10 @@ export function PracticeInputControls({
   draft,
   onDraftChange,
   lastInterviewer,
+  sessionId,
   active,
   sending = false,
+  starting = false,
 }: PracticeInputControlsProps) {
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
   const capability = mounted
@@ -67,6 +57,41 @@ export function PracticeInputControls({
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const draftBaseRef = useRef("");
   const spokenRef = useRef<string | null>(null);
+  const speakTimerRef = useRef<number | null>(null);
+  const busy = sending || starting;
+
+  function abortListening() {
+    recognitionRef.current?.abort();
+  }
+
+  function cancelSpeech() {
+    if (speakTimerRef.current != null) {
+      window.clearTimeout(speakTimerRef.current);
+      speakTimerRef.current = null;
+    }
+    window.speechSynthesis?.cancel();
+  }
+
+  function speakJapanese(text: string) {
+    if (!text.trim() || typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
+    abortListening();
+    cancelSpeech();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = PRACTICE_SPEECH_LANG;
+    const picked = pickJapaneseVoice(window.speechSynthesis.getVoices());
+    if (picked) {
+      const voice = window.speechSynthesis
+        .getVoices()
+        .find((item) => item.name === picked.name && item.lang === picked.lang);
+      if (voice) utterance.voice = voice;
+    }
+    speakTimerRef.current = window.setTimeout(() => {
+      speakTimerRef.current = null;
+      window.speechSynthesis.speak(utterance);
+    }, SPEAK_DELAY_MS);
+  }
 
   useEffect(() => {
     const refreshVoices = () => {
@@ -75,32 +100,35 @@ export function PracticeInputControls({
     window.speechSynthesis?.addEventListener("voiceschanged", refreshVoices);
     return () => {
       window.speechSynthesis?.removeEventListener("voiceschanged", refreshVoices);
-      window.speechSynthesis?.cancel();
-      recognitionRef.current?.abort();
+      cancelSpeech();
+      abortListening();
     };
   }, []);
 
   useEffect(() => {
     if (mode !== "voice") {
-      window.speechSynthesis?.cancel();
-      recognitionRef.current?.abort();
+      cancelSpeech();
+      abortListening();
       spokenRef.current = null;
       return;
     }
-    if (!lastInterviewer || spokenRef.current === lastInterviewer) return;
-    spokenRef.current = lastInterviewer;
-    speakJapanese(lastInterviewer);
-  }, [mode, lastInterviewer]);
+    const key = spokenUtteranceKey(sessionId, lastInterviewer);
+    if (!key || spokenRef.current === key) return;
+    spokenRef.current = key;
+    speakJapanese(lastInterviewer ?? "");
+    // speakJapanese is a render helper; the utterance key is the real trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, lastInterviewer, sessionId]);
 
   useEffect(() => {
-    if (!sending) return;
-    recognitionRef.current?.abort();
-  }, [sending]);
+    if (!busy) return;
+    abortListening();
+  }, [busy]);
 
   function handleModeChange(next: PracticeInputMode) {
     if (next !== "voice") {
-      window.speechSynthesis?.cancel();
-      recognitionRef.current?.abort();
+      cancelSpeech();
+      abortListening();
       setListening(false);
     }
     onModeChange(next);
@@ -112,6 +140,7 @@ export function PracticeInputControls({
   }
 
   function startListening() {
+    if (busy) return;
     const Ctor = getSpeechRecognitionConstructor();
     if (!Ctor) {
       notifications.show({
@@ -120,8 +149,8 @@ export function PracticeInputControls({
       });
       return;
     }
-    window.speechSynthesis?.cancel();
-    recognitionRef.current?.abort();
+    cancelSpeech();
+    abortListening();
     const recognition = new Ctor();
     recognition.lang = PRACTICE_SPEECH_LANG;
     recognition.continuous = true;
@@ -198,7 +227,7 @@ export function PracticeInputControls({
           <Button
             variant="light"
             leftSection={<IconVolume size={16} />}
-            disabled={!lastInterviewer || !capability.tts}
+            disabled={!lastInterviewer || !capability.tts || busy}
             onClick={() => {
               if (lastInterviewer) speakJapanese(lastInterviewer);
             }}
@@ -219,7 +248,7 @@ export function PracticeInputControls({
               variant="light"
               color="teal"
               leftSection={<IconMicrophone size={16} />}
-              disabled={!capability.stt}
+              disabled={!capability.stt || busy}
               onClick={startListening}
             >
               マイクで話す

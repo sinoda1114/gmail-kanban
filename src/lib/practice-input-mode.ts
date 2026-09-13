@@ -16,3 +16,11 @@ export function lastInterviewerContent(
   }
   return null;
 }
+
+export function spokenUtteranceKey(
+  sessionId: string | null,
+  content: string | null
+): string | null {
+  if (!sessionId || !content?.trim()) return null;
+  return `${sessionId}:${content}`;
+}
