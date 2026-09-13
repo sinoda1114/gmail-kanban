@@ -69,6 +69,8 @@ export const PRACTICE_SESSION_STATUSES = ["active", "completed"] as const;
 export type PracticeSessionStatus = (typeof PRACTICE_SESSION_STATUSES)[number];
 
 export const PRACTICE_ENDED_MESSAGE = "この練習は終了しています";
+export const PRACTICE_STALE_MESSAGE =
+  "対話が更新されています。画面を再読み込みしてから答えてください。";
 
 export function canSubmitPracticeReply(status: string): boolean {
   return status === "active";

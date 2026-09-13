@@ -26,6 +26,7 @@ import {
   type PracticeTurn,
   normalizePracticeTurn,
   PRACTICE_ENDED_MESSAGE,
+  PRACTICE_STALE_MESSAGE,
   canSubmitPracticeReply,
   coercePracticeWrapUp,
 } from "@/types/interview-practice";
@@ -235,13 +236,14 @@ export async function submitPracticeReply(
       .where(
         and(
           eq(interviewPracticeSessions.id, sessionId),
-          eq(interviewPracticeSessions.status, "active")
+          eq(interviewPracticeSessions.status, "active"),
+          eq(interviewPracticeSessions.updatedAt, session.updatedAt)
         )
       )
       .returning({ id: interviewPracticeSessions.id });
 
     if (updated.length === 0) {
-      return { success: false, error: PRACTICE_ENDED_MESSAGE };
+      return { success: false, error: PRACTICE_STALE_MESSAGE };
     }
 
     await db.insert(aiExtractionLogs).values({
