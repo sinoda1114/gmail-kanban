@@ -61,7 +61,6 @@ import {
 } from "@/lib/interview-prep-prompt";
 import { formatCheatSheetForCopy } from "@/lib/interview-prep-format";
 import { InterviewCareerMemoSection } from "./InterviewCareerMemoSection";
-import { InterviewRehearsalSection } from "./InterviewRehearsalSection";
 
 interface QuestionWithAnswer extends InterviewQuestion {
   answer: InterviewAnswer | null;
@@ -74,6 +73,7 @@ interface InterviewPrepTabProps {
   reverseQuestions: InterviewReverseQuestion[];
   calendarUrl: string | null;
   hasPriorRetrospective?: boolean;
+  hasResearchPack?: boolean;
 }
 
 type InfoForm = {
@@ -95,6 +95,7 @@ export function InterviewPrepTab({
   reverseQuestions: initialReverseQs,
   calendarUrl,
   hasPriorRetrospective = false,
+  hasResearchPack = false,
 }: InterviewPrepTabProps) {
   const router = useRouter();
   const initialPartner = resolveInterviewPartner(prep?.interviewPartner);
@@ -329,6 +330,12 @@ export function InterviewPrepTab({
           </Group>
         </Stack>
       </Paper>
+
+      {hasResearchPack && (
+        <Text size="sm" c="dimmed">
+          この案件の面談対策パックを、準備の生成に反映します。内容の確認は面談対策タブから。
+        </Text>
+      )}
 
       {hasPriorRetrospective && (
         <Text size="sm" c="dimmed">
@@ -672,8 +679,6 @@ export function InterviewPrepTab({
               setUserAnswers((prev) => ({ ...prev, ...updated }))
             }
           />
-
-          <InterviewRehearsalSection questions={initialQuestions} />
         </>
       )}
     </Stack>

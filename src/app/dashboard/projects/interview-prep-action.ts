@@ -12,9 +12,10 @@ import {
   interviewAnswers,
   interviewReverseQuestions,
   interviewNotes,
+  interviewResearchPacks,
   aiExtractionLogs,
 } from "@/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import { GEMINI_MODEL_ID } from "@/lib/ai-model";
@@ -25,6 +26,11 @@ import {
   parseStoredRetrospective,
 } from "@/lib/retrospective";
 import type { InterviewRetrospective } from "@/types/retrospective";
+import {
+  buildResearchPromptGuidance,
+  parseStoredResearchPack,
+} from "@/lib/interview-research";
+import type { InterviewResearchPack } from "@/types/interview-research";
 
 export type SaveInterviewInfoInput = {
   interviewAt?: string;
@@ -64,7 +70,8 @@ function buildInterviewPrepPrompt(
   },
   interviewType: string | null | undefined,
   interviewPartner: string | null | undefined,
-  retrospective?: InterviewRetrospective | null
+  retrospective?: InterviewRetrospective | null,
+  researchPack?: InterviewResearchPack | null
 ): string {
   const techStack = Array.isArray(project.techStack)
     ? project.techStack.join(", ")
@@ -72,6 +79,7 @@ function buildInterviewPrepPrompt(
   const partnerGuidance = buildPartnerPromptGuidance(interviewPartner);
   const retrospectiveGuidance =
     buildRetrospectivePromptGuidance(retrospective);
+  const researchGuidance = buildResearchPromptGuidance(researchPack);
 
   return `
 フリーランスの面談準備をしてください。以下の案件情報を参考にしてください。
@@ -92,6 +100,7 @@ ${project.sourceText || "（なし）"}
 
 ${partnerGuidance}
 ${retrospectiveGuidance ? `\n${retrospectiveGuidance}\n` : ""}
+${researchGuidance ? `\n${researchGuidance}\n` : ""}
 以下を生成してください:
 1. questions: 面接でよく聞かれる想定質問（最大15件）とAI回答案。カテゴリはtechnical/pm/condition/experienceのいずれか。priorityはhigh/medium/lowで。面談相手の種別に合わせて質問の比重を調整。
 2. reverseQuestions: 自分から聞く逆質問（各カテゴリ2〜3件）。面談相手に応じた確認事項を含める。
@@ -202,12 +211,21 @@ export async function generateInterviewPrep(
     ),
   });
   const retrospective = parseStoredRetrospective(note?.retrospective);
+  const researchRow = await db.query.interviewResearchPacks.findFirst({
+    where: and(
+      eq(interviewResearchPacks.projectId, projectId),
+      eq(interviewResearchPacks.userId, user.id)
+    ),
+    orderBy: desc(interviewResearchPacks.updatedAt),
+  });
+  const researchPack = parseStoredResearchPack(researchRow?.pack);
 
   const prompt = buildInterviewPrepPrompt(
     project,
     prep?.interviewType,
     prep?.interviewPartner ?? "general",
-    retrospective
+    retrospective,
+    researchPack
   );
 
   try {

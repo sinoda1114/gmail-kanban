@@ -12,6 +12,7 @@ import type {
   InterviewReverseQuestion,
   InterviewNote,
   CalendarEvent,
+  InterviewPracticeSession,
 } from "@/db/schema";
 import {
   STATUS_LABELS,
@@ -20,9 +21,12 @@ import {
 } from "@/types/project";
 import { BasicInfoTab } from "./BasicInfoTab";
 import { InterviewPrepTab } from "./InterviewPrepTab";
+import { InterviewResearchTab } from "./InterviewResearchTab";
+import { InterviewPracticeTab } from "./InterviewPracticeTab";
 import { InterviewNoteTab } from "./InterviewNoteTab";
 import { resolveProjectDetailTab } from "@/lib/project-detail";
 import { parseStoredRetrospective } from "@/lib/retrospective";
+import type { InterviewResearchPack } from "@/types/interview-research";
 
 type QuestionWithAnswer = InterviewQuestion & {
   answer: InterviewAnswer | null;
@@ -36,6 +40,10 @@ interface ProjectDetailViewProps {
   reverseQuestions: InterviewReverseQuestion[];
   interviewNote: InterviewNote | null;
   calendarEvent: CalendarEvent | null;
+  researchPack: InterviewResearchPack | null;
+  researchSources: string[];
+  researchUpdatedAt: string | null;
+  practiceSession: InterviewPracticeSession | null;
   initialTab?: string;
 }
 
@@ -47,6 +55,10 @@ export function ProjectDetailView({
   reverseQuestions,
   interviewNote,
   calendarEvent,
+  researchPack,
+  researchSources,
+  researchUpdatedAt,
+  practiceSession,
   initialTab,
 }: ProjectDetailViewProps) {
   const tab = resolveProjectDetailTab(initialTab);
@@ -66,13 +78,24 @@ export function ProjectDetailView({
       <Tabs defaultValue={tab} key={tab}>
         <Tabs.List>
           <Tabs.Tab value="basic">基本情報</Tabs.Tab>
+          <Tabs.Tab value="interview_research">面談対策</Tabs.Tab>
           <Tabs.Tab value="interview_prep">面談準備</Tabs.Tab>
+          <Tabs.Tab value="interview_practice">面談練習</Tabs.Tab>
           <Tabs.Tab value="interview_note">面談メモ</Tabs.Tab>
           <Tabs.Tab value="history">履歴</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="basic">
           <BasicInfoTab project={project} />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="interview_research">
+          <InterviewResearchTab
+            project={project}
+            pack={researchPack}
+            sources={researchSources}
+            updatedAt={researchUpdatedAt}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="interview_prep">
@@ -85,6 +108,15 @@ export function ProjectDetailView({
             hasPriorRetrospective={
               parseStoredRetrospective(interviewNote?.retrospective) !== null
             }
+            hasResearchPack={researchPack !== null}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="interview_practice">
+          <InterviewPracticeTab
+            projectId={project.id}
+            questions={interviewQuestions}
+            session={practiceSession}
           />
         </Tabs.Panel>
 
