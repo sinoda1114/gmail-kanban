@@ -17,17 +17,15 @@ export function formatPracticeHistory(messages: PracticeMessage[]): string {
     .join("\n");
 }
 
-export function buildPracticeTurnPrompt(input: {
+export function formatPracticeCaseBrief(input: {
   project: ProjectForPractice;
   careerMemo?: string | null;
   research?: InterviewResearchPack | null;
   prepQuestions?: string[];
-  messages: PracticeMessage[];
 }): string {
   const techStack = Array.isArray(input.project.techStack)
     ? input.project.techStack.join(", ")
     : "";
-  const wrapUp = shouldWrapUpPractice(input.messages);
   const questions = (input.prepQuestions ?? []).slice(0, 8).join("\n- ");
   const researchBits = input.research
     ? [
@@ -39,18 +37,30 @@ export function buildPracticeTurnPrompt(input: {
       ].join("\n")
     : "（対策パックなし）";
 
-  return `
-あなたはフリーランス案件の面談相手役です。テキストのみ。音声は不要です。
-日本語で、1回につき質問は1つだけ。候補者の回答を受けて深掘りし、最後に短いフィードバックを出します。
-
-案件: ${input.project.title}
+  return `案件: ${input.project.title}
 技術: ${techStack || "（記載なし）"}
 サマリー: ${input.project.summary || "（なし）"}
 経歴メモ: ${input.careerMemo?.trim() || "（なし）"}
 対策パック:
 ${researchBits}
 準備済み想定質問:
-${questions ? `- ${questions}` : "（なし）"}
+${questions ? `- ${questions}` : "（なし）"}`;
+}
+
+export function buildPracticeTurnPrompt(input: {
+  project: ProjectForPractice;
+  careerMemo?: string | null;
+  research?: InterviewResearchPack | null;
+  prepQuestions?: string[];
+  messages: PracticeMessage[];
+}): string {
+  const wrapUp = shouldWrapUpPractice(input.messages);
+
+  return `
+あなたはフリーランス案件の面談相手役です。テキストのみ。音声は不要です。
+日本語で、1回につき質問は1つだけ。候補者の回答を受けて深掘りし、最後に短いフィードバックを出します。
+
+${formatPracticeCaseBrief(input)}
 
 これまでの対話:
 ${formatPracticeHistory(input.messages)}
@@ -62,5 +72,32 @@ ${formatPracticeHistory(input.messages)}
 - ${wrapUp ? "すでに十分なターン数です。必ず kind=wrap_up にし、feedback を付けてください。" : "まだ続けてよいですが、自然な区切りなら wrap_up でも構いません。"}
 - wrap_up のとき feedback は specificity / length / weaknesses / summary。
 - kind が question または follow_up のときは feedback を付けない。
+  `.trim();
+}
+
+export function buildLivePracticePrompt(input: {
+  project: ProjectForPractice;
+  careerMemo?: string | null;
+  research?: InterviewResearchPack | null;
+  prepQuestions?: string[];
+}): string {
+  return `
+あなたはフリーランス案件の面談相手役です。Gemini Live の音声会話で、今この場の面接官として振る舞います。
+日本語だけで自然に話してください。英語は使わないでください。
+1回の発話では質問を1つだけ。候補者の回答を聞いて短く相槌し、具体例や数字が薄ければ深掘りします。
+自己紹介か、募集に即した経験確認から始めてください。およそ6往復したらお礼を言って面談を締めます。
+テキストの読み上げではなく、あなた自身の声で話してください。
+
+${formatPracticeCaseBrief(input)}
+  `.trim();
+}
+
+export function buildLiveFeedbackPrompt(messages: PracticeMessage[]): string {
+  return `
+次のフリーランス案件の模擬面談の文字起こしを読み、短いフィードバックを JSON で出してください。
+評価軸は specificity / length / weaknesses / summary です。日本語。
+
+対話:
+${formatPracticeHistory(messages)}
   `.trim();
 }

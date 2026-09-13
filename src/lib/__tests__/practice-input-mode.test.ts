@@ -6,8 +6,9 @@ import {
 } from "../practice-input-mode";
 
 describe("parsePracticeInputMode", () => {
-  it("voice 以外は text", () => {
+  it("voice / live 以外は text", () => {
     expect(parsePracticeInputMode("voice")).toBe("voice");
+    expect(parsePracticeInputMode("live")).toBe("live");
     expect(parsePracticeInputMode("text")).toBe("text");
     expect(parsePracticeInputMode(null)).toBe("text");
     expect(parsePracticeInputMode("other")).toBe("text");

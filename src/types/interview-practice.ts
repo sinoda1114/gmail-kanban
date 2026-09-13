@@ -43,12 +43,14 @@ export const PracticeTurnAiSchema = z.object({
 
 export type PracticeTurnAi = z.infer<typeof PracticeTurnAiSchema>;
 
-const FALLBACK_FEEDBACK = {
+export const PRACTICE_FALLBACK_FEEDBACK = {
   specificity: "具体例の有無を見直してください。",
   length: "面談で話す長さに整えてください。",
   weaknesses: ["数字や事例を足す"],
   summary: "練習はここまで。指摘を次の準備に活かしてください。",
 };
+
+const FALLBACK_FEEDBACK = PRACTICE_FALLBACK_FEEDBACK;
 
 export function normalizePracticeTurn(raw: PracticeTurnAi): PracticeTurn {
   const parsed = PracticeTurnSchema.safeParse(raw);
