@@ -136,7 +136,7 @@ flowchart TD
     B --> C["3. 整理(背景・対象・Done条件)<br/>列: Ready 着手可"]
     C --> D["4. 実装<br/>worktree→2段ゲート / 列: Doing"]
     D --> E["5. PR 作成<br/>本文に Refs/Closes #N / 列: PR"]
-    E --> F["6. マージ→本番自動デプロイ<br/>番人: CI緑→merge→反映確認"]
+    E --> F["6. マージ→本番自動デプロイ<br/>実装エージェント: CI緑→squash merge→反映確認"]
     F -->|"Closes #N"| G["Done<br/>Issue 自動 close"]
     F -->|"Refs #N（要確認）"| H["Prod Check<br/>本番確認待ち"]
     H -->|確認OK→コメント→close| G

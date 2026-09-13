@@ -9,7 +9,7 @@ MatchFav（wc-tournament-tracker）で確立した運用を、新規プロジェ
 
 - **マルチエージェント開発フロー** — 1 エージェント = 1 worktree = 1 ブランチ。本体 repo は統合＋デプロイ専用。
 - **2 段ゲート** — `/ai-review` → コミット → `/security-review` を push 前に通す。
-- **PR ベース・マージは番人専権** — `main` 直 push 禁止／自分の PR を自分でマージしない。
+- **PR ベース** — `main` 直 push 禁止。自分の PR は必須 CI 成功後に squash マージしてよい（`--admin` は使わない）。
 - **git 駆動デプロイ** — feature push = Preview 自動／main マージ = Production 自動（手動デプロイ原則禁止）。
 - **「GitHub が正本」** — PR 状態・タスク状態は記憶や伝聞でなく GitHub を正とする。
 - **タスク管理は GitHub Issue / Project** — 単一巨大 Markdown の並行編集クロバーを構造的に回避。
