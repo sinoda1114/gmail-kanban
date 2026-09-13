@@ -59,3 +59,6 @@ git worktree remove ../gmail-kanban-<topic>   # マージ後に撤去
 - マージ依頼・状態言及の前に `gh pr list --state open` を実行し、その出力を正とする。
 - 番人はマージ前に `gh pr view <N> --json state,mergedAt` で確認（MERGED なら何もしない）。
 - 依頼側も「PR #N マージして」の前に `gh pr list` で番号と未マージを確認する。
+- **実装エージェントは、自分が出した PR で必須 CI が全部成功したら、確認を待たずに squash マージしてよい**（`--admin` は使わない。`--delete-branch` は可）。
+- 未解決レビュースレッドが `BLOCKED` のときは、すでに直した指摘を Resolve してからマージする。意図的に残す指摘は Resolve せず、マージしない。
+- マージ後は Production の発火を確認する。

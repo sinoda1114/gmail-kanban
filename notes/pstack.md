@@ -1,6 +1,6 @@
 # pstack（このプロジェクト）
 
-Gmail Kanban の実装作業は Cursor の pstack プラグインを入口にする。`/poteto-mode` が既定。git / PR / デプロイの運用は `notes/dev-workflow-multiagent.md` が正本のまま。pstack の Shipping プレイブックはマージしない。マージは番人だけ。
+Gmail Kanban の実装作業は Cursor の pstack プラグインを入口にする。`/poteto-mode` が既定。git / PR / デプロイの運用は `notes/dev-workflow-multiagent.md` が正本のまま。pstack の Shipping プレイブックはマージしない。自分の PR は必須 CI が全部成功したら squash マージしてよい（詳細は同ファイル §6）。
 
 ## モデル割当
 
@@ -34,6 +34,6 @@ pstack のスキルは `~/.cursor/rules/pstack-models.mdc` を読む。リポの
 |---|---|
 | 実装の進め方（playbook / 原則 / モデル） | pstack（`/poteto-mode`） |
 | モデルのコスト上限 | `.cursor/rules/pstack-cost.mdc` |
-| worktree / 2 段ゲート / 番人マージ / git 駆動デプロイ | `notes/dev-workflow-multiagent.md` |
+| worktree / 2 段ゲート / CI 緑で squash マージ / git 駆動デプロイ | `notes/dev-workflow-multiagent.md` |
 | Issue / Project | `notes/task-management-issue-workflow.md` |
 | テストコマンドと回帰対象 | `notes/testing-discipline.md` |
