@@ -208,12 +208,19 @@ export function PracticeInputControls({
           data={[
             { label: "テキスト", value: "text" },
             { label: "音声", value: "voice" },
+            { label: "ライブ", value: "live" },
           ]}
         />
       </div>
       {mode === "voice" && (
         <Text size="sm" c="dimmed">
           相手役の質問を読み上げ、マイクで答えます。途中でテキストに戻しても同じ練習です。聞き取り結果は下の欄で直せます。
+        </Text>
+      )}
+      {mode === "live" && (
+        <Text size="sm" c="dimmed">
+          Gemini Live
+          で相手役とリアルタイムに会話します。マイクを通しっぱなしで、話の途中で割り込めます。
         </Text>
       )}
       {mode === "voice" && !capability.stt && (

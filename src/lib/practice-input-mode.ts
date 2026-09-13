@@ -1,8 +1,9 @@
-export const PRACTICE_INPUT_MODES = ["text", "voice"] as const;
+export const PRACTICE_INPUT_MODES = ["text", "voice", "live"] as const;
 export type PracticeInputMode = (typeof PRACTICE_INPUT_MODES)[number];
 
 export function parsePracticeInputMode(value: unknown): PracticeInputMode {
-  return value === "voice" ? "voice" : "text";
+  if (value === "voice" || value === "live") return value;
+  return "text";
 }
 
 export function lastInterviewerContent(

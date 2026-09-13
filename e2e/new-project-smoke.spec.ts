@@ -63,12 +63,17 @@ test.describe("案件登録", () => {
     await expect(modeGroup).toBeVisible();
     await expect(modeGroup.getByText("テキスト", { exact: true })).toBeVisible();
     await expect(modeGroup.getByText("音声", { exact: true })).toBeVisible();
+    await expect(modeGroup.getByText("ライブ", { exact: true })).toBeVisible();
     await modeGroup.getByText("音声", { exact: true }).click();
     await expect(
       page.getByText("相手役の質問を読み上げ、マイクで答えます")
     ).toBeVisible();
+    await modeGroup.getByText("ライブ", { exact: true }).click();
     await expect(
-      page.getByRole("button", { name: "通し練習を開始" })
+      page.getByText(/Gemini Live/)
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "ライブ面談を開始" })
     ).toBeVisible();
 
     await page.getByRole("link", { name: "案件一覧へ戻る" }).click();

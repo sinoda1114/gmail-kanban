@@ -18,22 +18,33 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import {
   GEMINI_RESEARCH_MODEL_ID,
+  GEMINI_LIVE_MODEL_ID,
   GEMINI_JSON_PROVIDER_OPTIONS,
 } from "@/lib/ai-model";
 import {
   PracticeTurnAiSchema,
+  PracticeMessageSchema,
   type PracticeMessage,
   type PracticeTurn,
   normalizePracticeTurn,
   PRACTICE_ENDED_MESSAGE,
   PRACTICE_STALE_MESSAGE,
+  PRACTICE_FALLBACK_FEEDBACK,
   MAX_PRACTICE_MESSAGE_CHARS,
   canSubmitPracticeReply,
   coercePracticeWrapUp,
 } from "@/types/interview-practice";
-import type { RehearsalFeedback } from "@/types/interview-prep";
+import { RehearsalFeedbackSchema, type RehearsalFeedback } from "@/types/interview-prep";
 import { parseStoredResearchPack } from "@/lib/interview-research";
-import { buildPracticeTurnPrompt } from "@/lib/interview-practice";
+import {
+  buildPracticeTurnPrompt,
+  buildLivePracticePrompt,
+  buildLiveFeedbackPrompt,
+} from "@/lib/interview-practice";
+import { clipPracticeTranscript } from "@/lib/practice-speech";
+import type { LiveConnectSetup } from "@/lib/practice-live";
+import { mintLiveEphemeralToken, liveSetupFromInstruction } from "@/lib/practice-live-token";
+import { z } from "zod";
 
 async function getAuthedUser() {
   const { userId: clerkUserId } = await auth();
@@ -268,4 +279,150 @@ export async function submitPracticeReply(
     logAiFailure("interview_practice_reply", error);
     return { success: false, error: "AI処理に失敗しました" };
   }
+}
+
+const LiveMessagesSchema = z.array(PracticeMessageSchema).max(40);
+
+async function completeActiveSessions(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  projectId: string,
+  userId: string
+) {
+  await tx
+    .update(interviewPracticeSessions)
+    .set({ status: "completed" })
+    .where(
+      and(
+        eq(interviewPracticeSessions.projectId, projectId),
+        eq(interviewPracticeSessions.userId, userId),
+        eq(interviewPracticeSessions.status, "active")
+      )
+    );
+}
+
+export async function startLiveInterviewPractice(projectId: string): Promise<{
+  success: boolean;
+  error?: string;
+  sessionId?: string;
+  token?: string;
+  setup?: LiveConnectSetup;
+}> {
+  const user = await getAuthedUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const ctx = await loadPracticeContext(projectId, user.id);
+  if (!ctx) return { success: false, error: "Project not found" };
+
+  const setup = liveSetupFromInstruction(buildLivePracticePrompt(ctx));
+  try {
+    const token = await mintLiveEphemeralToken(setup);
+    const sessionId = randomUUID();
+    const now = new Date().toISOString();
+
+    await db.transaction(async (tx) => {
+      await completeActiveSessions(tx, projectId, user.id);
+      await tx.insert(interviewPracticeSessions).values({
+        id: sessionId,
+        projectId,
+        userId: user.id,
+        status: "active",
+        messages: [],
+        feedback: null,
+        model: GEMINI_LIVE_MODEL_ID,
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    await db.insert(aiExtractionLogs).values({
+      id: randomUUID(),
+      userId: user.id,
+      projectId,
+      taskType: "interview_practice_live",
+      model: GEMINI_LIVE_MODEL_ID,
+      createdAt: now,
+    });
+
+    return { success: true, sessionId, token, setup };
+  } catch (error) {
+    logAiFailure("interview_practice_live_start", error);
+    return { success: false, error: "ライブ面談を開始できませんでした" };
+  }
+}
+
+function sanitizeLiveMessages(raw: unknown): PracticeMessage[] | null {
+  const parsed = LiveMessagesSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  return parsed.data.map((message) => ({
+    role: message.role,
+    content: clipPracticeTranscript(message.content, MAX_PRACTICE_MESSAGE_CHARS),
+  }));
+}
+
+export async function finishLiveInterviewPractice(
+  sessionId: string,
+  rawMessages: unknown
+): Promise<{ success: boolean; error?: string }> {
+  const user = await getAuthedUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const messages = sanitizeLiveMessages(rawMessages);
+  if (!messages) return { success: false, error: "対話の保存に失敗しました" };
+
+  const session = await db.query.interviewPracticeSessions.findFirst({
+    where: eq(interviewPracticeSessions.id, sessionId),
+  });
+  if (!session) return { success: false, error: "セッションが見つかりません" };
+  if (session.userId !== user.id) return { success: false, error: "Unauthorized" };
+  if (!canSubmitPracticeReply(session.status)) {
+    return { success: false, error: PRACTICE_ENDED_MESSAGE };
+  }
+
+  const now = new Date().toISOString();
+  let feedback: RehearsalFeedback = PRACTICE_FALLBACK_FEEDBACK;
+  try {
+    if (messages.length > 0) {
+      const { object } = await generateObject({
+        model: google(GEMINI_RESEARCH_MODEL_ID),
+        schema: RehearsalFeedbackSchema,
+        providerOptions: GEMINI_JSON_PROVIDER_OPTIONS,
+        prompt: buildLiveFeedbackPrompt(messages),
+      });
+      feedback = object;
+    }
+  } catch (error) {
+    logAiFailure("interview_practice_live_feedback", error);
+  }
+
+  const updated = await db
+    .update(interviewPracticeSessions)
+    .set({
+      messages,
+      status: "completed",
+      feedback,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(interviewPracticeSessions.id, sessionId),
+        eq(interviewPracticeSessions.status, "active")
+      )
+    )
+    .returning({ id: interviewPracticeSessions.id });
+
+  if (updated.length === 0) {
+    return { success: false, error: PRACTICE_STALE_MESSAGE };
+  }
+
+  await db.insert(aiExtractionLogs).values({
+    id: randomUUID(),
+    userId: user.id,
+    projectId: session.projectId,
+    taskType: "interview_practice_live_feedback",
+    model: GEMINI_RESEARCH_MODEL_ID,
+    createdAt: now,
+  });
+
+  revalidatePath(`/dashboard/projects/${session.projectId}`);
+  return { success: true };
 }

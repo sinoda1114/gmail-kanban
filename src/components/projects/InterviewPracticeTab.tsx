@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import {
   Stack,
@@ -16,24 +16,33 @@ import {
   Alert,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconPlayerPlay, IconSend } from "@tabler/icons-react";
+import { IconBroadcast, IconPlayerPlay, IconSend } from "@tabler/icons-react";
 import type {
   InterviewQuestion,
   InterviewAnswer,
   InterviewPracticeSession,
 } from "@/db/schema";
 import type { RehearsalFeedback } from "@/types/interview-prep";
+import type { PracticeMessage } from "@/types/interview-practice";
 import { MAX_PRACTICE_MESSAGE_CHARS } from "@/types/interview-practice";
 import {
   startInterviewPractice,
   submitPracticeReply,
+  startLiveInterviewPractice,
+  finishLiveInterviewPractice,
 } from "@/app/dashboard/projects/interview-practice-action";
 import {
   lastInterviewerContent,
   type PracticeInputMode,
 } from "@/lib/practice-input-mode";
+import type { LiveConnectSetup } from "@/lib/practice-live";
 import { InterviewRehearsalSection } from "./InterviewRehearsalSection";
 import { PracticeInputControls } from "./PracticeInputControls";
+import {
+  PracticeLiveSession,
+  PracticeLiveUnsupported,
+} from "./PracticeLiveSession";
+import { canUsePracticeLive } from "@/lib/practice-live-audio";
 
 interface QuestionWithAnswer extends InterviewQuestion {
   answer: InterviewAnswer | null;
@@ -43,6 +52,10 @@ interface InterviewPracticeTabProps {
   projectId: string;
   questions: QuestionWithAnswer[];
   session: InterviewPracticeSession | null;
+}
+
+function subscribeNever() {
+  return () => {};
 }
 
 export function InterviewPracticeTab({
@@ -56,15 +69,27 @@ export function InterviewPracticeTab({
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<PracticeInputMode>("text");
+  const [liveAuth, setLiveAuth] = useState<{
+    sessionId: string;
+    token: string;
+    setup: LiveConnectSetup;
+  } | null>(null);
+  const [liveMessages, setLiveMessages] = useState<PracticeMessage[] | null>(null);
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  const liveCapable = mounted && canUsePracticeLive();
 
   const active = session?.status === "active";
   const completed = session?.status === "completed";
   const feedback = session?.feedback as RehearsalFeedback | null;
-  const lastInterviewer = session
-    ? lastInterviewerContent(session.messages)
-    : null;
+  const displayMessages = liveMessages ?? session?.messages ?? [];
+  const lastInterviewer = lastInterviewerContent(displayMessages);
+  const liveActive = Boolean(liveAuth);
 
   async function handleStart() {
+    if (mode === "live") {
+      await handleStartLive();
+      return;
+    }
     setStarting(true);
     setError(null);
     const result = await startInterviewPractice(projectId);
@@ -79,6 +104,50 @@ export function InterviewPracticeTab({
     } else {
       setError(result.error ?? "開始に失敗しました");
     }
+  }
+
+  async function handleStartLive() {
+    if (!liveCapable) {
+      setError("このブラウザではライブ面談を始められません。");
+      return;
+    }
+    setStarting(true);
+    setError(null);
+    const result = await startLiveInterviewPractice(projectId);
+    setStarting(false);
+    if (result.success && result.sessionId && result.token && result.setup) {
+      setDraft("");
+      setLiveMessages([]);
+      setLiveAuth({
+        sessionId: result.sessionId,
+        token: result.token,
+        setup: result.setup,
+      });
+      notifications.show({
+        color: "teal",
+        message: "ライブ面談を開始します。マイクの許可を出してください。",
+      });
+    } else {
+      setError(result.error ?? "開始に失敗しました");
+    }
+  }
+
+  async function handleLiveEnded(messages: PracticeMessage[]) {
+    const sessionId = liveAuth?.sessionId;
+    setLiveAuth(null);
+    if (!sessionId) return;
+    const result = await finishLiveInterviewPractice(sessionId, messages);
+    if (!result.success) {
+      setError(result.error ?? "ライブ面談の保存に失敗しました");
+      setLiveMessages(messages);
+      return;
+    }
+    setLiveMessages(null);
+    router.refresh();
+    notifications.show({
+      color: "teal",
+      message: "ライブ面談を終了しました。",
+    });
   }
 
   async function handleReply() {
@@ -130,25 +199,48 @@ export function InterviewPracticeTab({
             sending={sending}
             starting={starting}
           />
+          {mode === "live" && !liveCapable && <PracticeLiveUnsupported />}
+          {liveAuth && (
+            <PracticeLiveSession
+              token={liveAuth.token}
+              setup={liveAuth.setup}
+              onMessages={setLiveMessages}
+              onEnded={(messages) => {
+                void handleLiveEnded(messages);
+              }}
+              onFailed={(message) => setError(message)}
+            />
+          )}
         </Stack>
         <Text size="sm" c="dimmed" mb="sm">
-          相手役が連続で質問し、回答を深掘りします。最後に短いフィードバックが出ます。入力はテキストと音声を途中で切り替えられます。
+          {mode === "live"
+            ? "Gemini Live の双方向音声で相手役と会話します。テキスト／音声の通し練習はそのまま使えます。"
+            : "相手役が連続で質問し、回答を深掘りします。最後に短いフィードバックが出ます。入力はテキストと音声を途中で切り替えられます。"}
         </Text>
         <Button
           variant="light"
-          color="violet"
-          leftSection={<IconPlayerPlay size={16} />}
+          color={mode === "live" ? "teal" : "violet"}
+          leftSection={
+            mode === "live" ? <IconBroadcast size={16} /> : <IconPlayerPlay size={16} />
+          }
           loading={starting}
+          disabled={liveActive}
           onClick={handleStart}
         >
-          {session ? "通し練習をやり直す" : "通し練習を開始"}
+          {mode === "live"
+            ? session || liveAuth
+              ? "ライブ面談をやり直す"
+              : "ライブ面談を開始"
+            : session
+              ? "通し練習をやり直す"
+              : "通し練習を開始"}
         </Button>
       </Paper>
 
-      {session && (
+      {(session || liveMessages) && (
         <Paper withBorder p="md" radius="md">
           <Stack gap="sm">
-            {session.messages.map((m, i) => (
+            {displayMessages.map((m, i) => (
               <Paper
                 key={`${m.role}-${i}`}
                 withBorder
@@ -170,7 +262,7 @@ export function InterviewPracticeTab({
               </Paper>
             ))}
 
-            {active && (
+            {active && !liveActive && (
               <>
                 <Textarea
                   label="あなたの回答"
