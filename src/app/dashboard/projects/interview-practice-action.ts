@@ -383,13 +383,17 @@ export async function savePracticeStreamedReply(
     return { success: false, error: PRACTICE_ENDED_MESSAGE };
   }
 
-  const nextMessages: PracticeMessage[] = [
+  const messagesBeforeAiReply: PracticeMessage[] = [
     ...session.messages,
     { role: "candidate", content: trimmedAnswer },
-    { role: "interviewer", content: trimmedAi },
   ];
 
-  const shouldComplete = shouldWrapUpPractice(nextMessages);
+  const shouldComplete = shouldWrapUpPractice(messagesBeforeAiReply);
+
+  const nextMessages: PracticeMessage[] = [
+    ...messagesBeforeAiReply,
+    { role: "interviewer", content: trimmedAi },
+  ];
   const now = new Date().toISOString();
 
   let feedback: RehearsalFeedback | null = null;

@@ -196,20 +196,10 @@ export function InterviewPracticeTab({
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
-          if (line.startsWith("0:")) {
-            const text = line.slice(2).trim();
-            if (text) {
-              accumulated += text;
-              setStreamingText(accumulated);
-            }
-          }
-        }
+        accumulated += chunk;
+        setStreamingText(accumulated);
       }
 
-      setIsStreaming(false);
       setSending(true);
 
       const saveResult = await savePracticeStreamedReply(
@@ -221,6 +211,7 @@ export function InterviewPracticeTab({
       if (saveResult.success) {
         setDraft("");
         setStreamingText("");
+        setIsStreaming(false);
         router.refresh();
       } else {
         setError(saveResult.error ?? "保存に失敗しました");
@@ -230,7 +221,6 @@ export function InterviewPracticeTab({
     } finally {
       setSending(false);
       setIsStreaming(false);
-      setStreamingText("");
     }
   }
 
