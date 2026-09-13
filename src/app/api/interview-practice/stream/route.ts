@@ -15,7 +15,6 @@ import { GEMINI_RESEARCH_MODEL_ID } from "@/lib/ai-model";
 import { parseStoredResearchPack } from "@/lib/interview-research";
 import { buildPracticeStreamPrompt } from "@/lib/interview-practice";
 import type { PracticeMessage } from "@/types/interview-practice";
-import { MAX_PRACTICE_MESSAGE_CHARS } from "@/types/interview-practice";
 
 async function getAuthedUser() {
   const { userId: clerkUserId } = await auth();
@@ -131,11 +130,10 @@ export async function POST(request: Request) {
     const result = streamText({
       model: google(GEMINI_RESEARCH_MODEL_ID),
       prompt,
-      maxTokens: MAX_PRACTICE_MESSAGE_CHARS * 2,
       temperature: 0.7,
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Stream error:", error);
     return new Response(

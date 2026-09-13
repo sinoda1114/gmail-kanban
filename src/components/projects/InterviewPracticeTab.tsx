@@ -27,7 +27,6 @@ import type { PracticeMessage } from "@/types/interview-practice";
 import { MAX_PRACTICE_MESSAGE_CHARS } from "@/types/interview-practice";
 import {
   startInterviewPractice,
-  submitPracticeReply,
   startLiveInterviewPractice,
   finishLiveInterviewPractice,
   savePracticeStreamedReply,
