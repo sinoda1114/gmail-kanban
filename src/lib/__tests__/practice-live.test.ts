@@ -9,12 +9,17 @@ import {
   INITIAL_LIVE_CONVERSATION,
   liveConstrainedWsUrl,
   liveAuthTokenPayload,
+  liveMeterBars,
   liveModelResource,
+  liveStageCopy,
   isLivePracticeModel,
   parseLiveAuthTokenResponse,
   parseLiveServerMessage,
   pcm16ToBase64,
   reduceLiveConversation,
+  resolveLiveStage,
+  isLiveUserSpeaking,
+  rmsLevel,
 } from "../practice-live";
 import { buildLiveFeedbackPrompt, buildLivePracticePrompt } from "../interview-practice";
 
@@ -163,3 +168,81 @@ describe("buildLiveFeedbackPrompt", () => {
     ).toContain("面接官: 自己紹介を");
   });
 });
+
+describe("rmsLevel", () => {
+  it("無音は 0、大きい波は上がる", () => {
+    expect(rmsLevel([0, 0, 0, 0])).toBe(0);
+    expect(rmsLevel([1, -1, 1, -1])).toBe(1);
+    expect(rmsLevel([0.05, -0.05, 0.05, -0.05])).toBeGreaterThan(0);
+  });
+});
+
+describe("liveMeterBars", () => {
+  it("レベルに応じて棒が立つ", () => {
+    const low = liveMeterBars(0.1, 4);
+    const high = liveMeterBars(1, 4);
+    expect(low[0]).toBeGreaterThan(0.12);
+    expect(high.every((bar) => bar === 1)).toBe(true);
+  });
+});
+
+describe("resolveLiveStage", () => {
+  it("相手役・自分・番を切り替える", () => {
+    expect(
+      resolveLiveStage({
+        preview: true,
+        connected: false,
+        partnerSpeaking: false,
+        userSpeaking: false,
+      })
+    ).toBe("idle");
+    expect(liveStageCopy("idle").title).toBe("相手役");
+    expect(
+      resolveLiveStage({
+        connected: false,
+        partnerSpeaking: false,
+        userSpeaking: false,
+      })
+    ).toBe("connecting");
+    expect(
+      resolveLiveStage({
+        connected: true,
+        partnerSpeaking: true,
+        userSpeaking: false,
+      })
+    ).toBe("partner");
+    expect(
+      resolveLiveStage({
+        connected: true,
+        partnerSpeaking: false,
+        userSpeaking: true,
+      })
+    ).toBe("user");
+    expect(
+      resolveLiveStage({
+        connected: true,
+        partnerSpeaking: false,
+        userSpeaking: false,
+      })
+    ).toBe("your_turn");
+    expect(
+      resolveLiveStage({
+        connected: true,
+        partnerSpeaking: true,
+        userSpeaking: true,
+      })
+    ).toBe("barge_in");
+    expect(liveStageCopy("your_turn").title).toBe("あなたの番です");
+    expect(liveStageCopy("user").title).toBe("入力中");
+  });
+});
+
+describe("isLiveUserSpeaking", () => {
+  it("入力中は閾値より少し下がっても維持する", () => {
+    expect(isLiveUserSpeaking(0.05, false)).toBe(false);
+    expect(isLiveUserSpeaking(0.05, true)).toBe(true);
+    expect(isLiveUserSpeaking(0.02, true)).toBe(false);
+    expect(isLiveUserSpeaking(0.09, false)).toBe(true);
+  });
+});
+

@@ -307,3 +307,94 @@ export function liveAuthTokenPayload(setup: LiveConnectSetup) {
     bidiGenerateContentSetup: setup,
   };
 }
+
+export const LIVE_USER_LEVEL_THRESHOLD = 0.08;
+export const LIVE_USER_LEVEL_RELEASE = 0.04;
+
+export function rmsLevel(samples: ArrayLike<number>): number {
+  const n = samples.length;
+  if (n === 0) return 0;
+  let sum = 0;
+  for (let i = 0; i < n; i++) {
+    const v = samples[i] ?? 0;
+    sum += v * v;
+  }
+  return Math.min(1, Math.sqrt(sum / n) * 4);
+}
+
+export function liveMeterBars(level: number, count = 12): number[] {
+  const clamped = Math.max(0, Math.min(1, level));
+  const bars: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const start = i / count;
+    const end = (i + 1) / count;
+    if (clamped >= end) bars.push(1);
+    else if (clamped <= start) bars.push(0.12);
+    else bars.push(0.12 + 0.88 * ((clamped - start) / (1 / count)));
+  }
+  return bars;
+}
+
+export const LIVE_STAGE_IDS = [
+  "idle",
+  "connecting",
+  "partner",
+  "your_turn",
+  "user",
+  "barge_in",
+] as const;
+export type LiveStageId = (typeof LIVE_STAGE_IDS)[number];
+
+export function isLiveUserSpeaking(level: number, held: boolean): boolean {
+  return level >= (held ? LIVE_USER_LEVEL_RELEASE : LIVE_USER_LEVEL_THRESHOLD);
+}
+
+export function resolveLiveStage(input: {
+  preview?: boolean;
+  connected: boolean;
+  partnerSpeaking: boolean;
+  userSpeaking: boolean;
+}): LiveStageId {
+  if (input.preview) return "idle";
+  if (!input.connected) return "connecting";
+  if (input.partnerSpeaking && input.userSpeaking) return "barge_in";
+  if (input.partnerSpeaking) return "partner";
+  if (input.userSpeaking) return "user";
+  return "your_turn";
+}
+
+export function liveStageCopy(stage: LiveStageId): { title: string; hint: string } {
+  switch (stage) {
+    case "idle":
+      return {
+        title: "相手役",
+        hint: "開始すると、話す番と音声入力がここで分かります。",
+      };
+    case "connecting":
+      return {
+        title: "接続中",
+        hint: "マイクの許可を出すと面談が始まります。",
+      };
+    case "partner":
+      return {
+        title: "相手役が話しています",
+        hint: "今は聞く番です。途中で割り込むこともできます。",
+      };
+    case "your_turn":
+      return {
+        title: "あなたの番です",
+        hint: "どうぞ話してください。",
+      };
+    case "user":
+      return {
+        title: "入力中",
+        hint: "声が乗っています。",
+      };
+    case "barge_in":
+      return {
+        title: "入力中（割り込み）",
+        hint: "相手役の話に声を被せています。",
+      };
+  }
+}
+

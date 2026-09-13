@@ -39,6 +39,7 @@ import {
   PracticeLiveSession,
   PracticeLiveUnsupported,
 } from "./PracticeLiveSession";
+import { PracticeLivePresence } from "./PracticeLivePresence";
 import { canUsePracticeLive } from "@/lib/practice-live-audio";
 
 interface QuestionWithAnswer extends InterviewQuestion {
@@ -200,8 +201,12 @@ export function InterviewPracticeTab({
             starting={starting}
           />
           {mode === "live" && !liveCapable && <PracticeLiveUnsupported />}
+          {mode === "live" && !liveAuth && (
+            <PracticeLivePresence stage="idle" level={0} />
+          )}
           {liveAuth && (
             <PracticeLiveSession
+              key={liveAuth.token}
               token={liveAuth.token}
               setup={liveAuth.setup}
               onMessages={setLiveMessages}
@@ -214,7 +219,7 @@ export function InterviewPracticeTab({
         </Stack>
         <Text size="sm" c="dimmed" mb="sm">
           {mode === "live"
-            ? "テキスト／音声の通し練習はそのまま使えます。ライブは相手役と同時双方向の音声です。"
+            ? "テキスト／音声の通し練習はそのまま使えます。ライブでは相手役の表情と入力メーターで、今しゃべってよいかが分かります。"
             : "相手役が連続で質問し、回答を深掘りします。最後に短いフィードバックが出ます。入力はテキストと音声を途中で切り替えられます。"}
         </Text>
         <Button

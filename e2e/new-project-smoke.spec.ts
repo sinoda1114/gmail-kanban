@@ -70,7 +70,11 @@ test.describe("案件登録", () => {
     ).toBeVisible();
     await modeGroup.getByText("ライブ", { exact: true }).click();
     await expect(
-      page.getByText("マイクを通しっぱなしで、話の途中で割り込めます")
+      page.getByText("話す番と入力中は下の相手役とメーターで分かります")
+    ).toBeVisible();
+    await expect(page.getByText("相手役", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("meter", { name: "音声入力メーター" })
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "ライブ面談を開始" })
