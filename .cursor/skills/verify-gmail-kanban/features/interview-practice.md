@@ -20,7 +20,7 @@ Preconditions:
 - E2E user is present. Otherwise skip.
 - Do **not** start a session in CI unless the run is meant to spend Gemini quota.
 
-- **Open tab.** After creating or opening a project, `getByRole("tab", { name: "面談練習" })`. Radios `テキスト` / `音声` and button `通し練習を開始` are visible.
+- **Open tab.** After creating or opening a project, `getByRole("tab", { name: "面談練習" })`. Group `入力モード` (`テキスト` / `音声`) and button `通し練習を開始` are visible.
 - Covered by `e2e/new-project-smoke.spec.ts` (tab + start button, no Gemini call).
 
 ## Gotchas
