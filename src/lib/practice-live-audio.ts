@@ -67,8 +67,11 @@ export class PracticeLiveAudio {
       try {
         const blob = new Blob([CAPTURE_WORKLET], { type: "application/javascript" });
         const url = URL.createObjectURL(blob);
-        await this.captureCtx.audioWorklet.addModule(url);
-        URL.revokeObjectURL(url);
+        try {
+          await this.captureCtx.audioWorklet.addModule(url);
+        } finally {
+          URL.revokeObjectURL(url);
+        }
         this.workletNode = new AudioWorkletNode(this.captureCtx, "pcm-capture");
         this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
           if (event.data?.length) handleSamples(event.data);

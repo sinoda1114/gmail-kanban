@@ -206,6 +206,7 @@ export function InterviewPracticeTab({
           )}
           {liveAuth && (
             <PracticeLiveSession
+              key={liveAuth.token}
               token={liveAuth.token}
               setup={liveAuth.setup}
               onMessages={setLiveMessages}

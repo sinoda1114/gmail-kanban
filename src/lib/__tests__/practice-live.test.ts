@@ -18,6 +18,7 @@ import {
   pcm16ToBase64,
   reduceLiveConversation,
   resolveLiveStage,
+  isLiveUserSpeaking,
   rmsLevel,
 } from "../practice-live";
 import { buildLiveFeedbackPrompt, buildLivePracticePrompt } from "../interview-practice";
@@ -192,7 +193,7 @@ describe("resolveLiveStage", () => {
         preview: true,
         connected: false,
         partnerSpeaking: false,
-        userLevel: 0,
+        userSpeaking: false,
       })
     ).toBe("idle");
     expect(liveStageCopy("idle").title).toBe("相手役");
@@ -200,39 +201,48 @@ describe("resolveLiveStage", () => {
       resolveLiveStage({
         connected: false,
         partnerSpeaking: false,
-        userLevel: 0,
+        userSpeaking: false,
       })
     ).toBe("connecting");
     expect(
       resolveLiveStage({
         connected: true,
         partnerSpeaking: true,
-        userLevel: 0,
+        userSpeaking: false,
       })
     ).toBe("partner");
     expect(
       resolveLiveStage({
         connected: true,
         partnerSpeaking: false,
-        userLevel: 0.5,
+        userSpeaking: true,
       })
     ).toBe("user");
     expect(
       resolveLiveStage({
         connected: true,
         partnerSpeaking: false,
-        userLevel: 0,
+        userSpeaking: false,
       })
     ).toBe("your_turn");
     expect(
       resolveLiveStage({
         connected: true,
         partnerSpeaking: true,
-        userLevel: 0.5,
+        userSpeaking: true,
       })
     ).toBe("barge_in");
     expect(liveStageCopy("your_turn").title).toBe("あなたの番です");
     expect(liveStageCopy("user").title).toBe("入力中");
+  });
+});
+
+describe("isLiveUserSpeaking", () => {
+  it("入力中は閾値より少し下がっても維持する", () => {
+    expect(isLiveUserSpeaking(0.05, false)).toBe(false);
+    expect(isLiveUserSpeaking(0.05, true)).toBe(true);
+    expect(isLiveUserSpeaking(0.02, true)).toBe(false);
+    expect(isLiveUserSpeaking(0.09, false)).toBe(true);
   });
 });
 

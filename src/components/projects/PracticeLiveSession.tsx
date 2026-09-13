@@ -13,6 +13,7 @@ import {
   parseLiveServerMessage,
   reduceLiveConversation,
   resolveLiveStage,
+  isLiveUserSpeaking,
   type LiveConnectSetup,
   type LiveConversationState,
 } from "@/lib/practice-live";
@@ -47,6 +48,7 @@ export function PracticeLiveSession({
   const [partnerPlayback, setPartnerPlayback] = useState(false);
   const [partnerTranscriptSpeaking, setPartnerTranscriptSpeaking] = useState(false);
   const [userLevel, setUserLevel] = useState(0);
+  const [userSpeaking, setUserSpeaking] = useState(false);
   const [partnerCaption, setPartnerCaption] = useState("");
   const [userCaption, setUserCaption] = useState("");
   const conversationRef = useRef<LiveConversationState>(INITIAL_LIVE_CONVERSATION);
@@ -118,7 +120,11 @@ export function PracticeLiveSession({
               if (levelRaf) return;
               levelRaf = requestAnimationFrame(() => {
                 levelRaf = 0;
-                if (!stoppedRef.current) setUserLevel(pendingLevel);
+                if (stoppedRef.current) return;
+                setUserLevel(pendingLevel);
+                setUserSpeaking((held) =>
+                  isLiveUserSpeaking(pendingLevel, held)
+                );
               });
             },
             onPlayback: (active) => {
@@ -180,7 +186,7 @@ export function PracticeLiveSession({
   const stage = resolveLiveStage({
     connected,
     partnerSpeaking,
-    userLevel,
+    userSpeaking,
   });
 
   return (

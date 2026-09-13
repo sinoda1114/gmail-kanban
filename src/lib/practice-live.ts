@@ -309,6 +309,7 @@ export function liveAuthTokenPayload(setup: LiveConnectSetup) {
 }
 
 export const LIVE_USER_LEVEL_THRESHOLD = 0.08;
+export const LIVE_USER_LEVEL_RELEASE = 0.04;
 
 export function rmsLevel(samples: ArrayLike<number>): number {
   const n = samples.length;
@@ -344,18 +345,21 @@ export const LIVE_STAGE_IDS = [
 ] as const;
 export type LiveStageId = (typeof LIVE_STAGE_IDS)[number];
 
+export function isLiveUserSpeaking(level: number, held: boolean): boolean {
+  return level >= (held ? LIVE_USER_LEVEL_RELEASE : LIVE_USER_LEVEL_THRESHOLD);
+}
+
 export function resolveLiveStage(input: {
   preview?: boolean;
   connected: boolean;
   partnerSpeaking: boolean;
-  userLevel: number;
+  userSpeaking: boolean;
 }): LiveStageId {
   if (input.preview) return "idle";
   if (!input.connected) return "connecting";
-  const user = input.userLevel >= LIVE_USER_LEVEL_THRESHOLD;
-  if (input.partnerSpeaking && user) return "barge_in";
+  if (input.partnerSpeaking && input.userSpeaking) return "barge_in";
   if (input.partnerSpeaking) return "partner";
-  if (user) return "user";
+  if (input.userSpeaking) return "user";
   return "your_turn";
 }
 

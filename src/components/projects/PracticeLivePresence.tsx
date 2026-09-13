@@ -60,7 +60,7 @@ export function PracticeLivePresence({
           : "gray";
 
   return (
-    <Paper withBorder p="md" radius="md" aria-live="polite">
+    <Paper withBorder p="md" radius="md">
       <Group align="flex-start" gap="lg" wrap="nowrap">
         <div
           aria-hidden
@@ -107,12 +107,14 @@ export function PracticeLivePresence({
           </svg>
         </div>
         <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
-          <Text fw={700} size="lg" c={color}>
-            {copy.title}
-          </Text>
-          <Text size="sm" c="dimmed">
-            {copy.hint}
-          </Text>
+          <div aria-live="polite">
+            <Text fw={700} size="lg" c={color}>
+              {copy.title}
+            </Text>
+            <Text size="sm" c="dimmed">
+              {copy.hint}
+            </Text>
+          </div>
           <div>
             <Text size="xs" c="dimmed" mb={4}>
               音声入力
