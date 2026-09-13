@@ -59,6 +59,13 @@ test.describe("案件登録", () => {
     ).toBeVisible();
 
     await page.getByRole("tab", { name: "面談練習" }).click();
+    await expect(page.getByRole("group", { name: "入力モード" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "テキスト" })).toBeVisible();
+    await expect(page.getByRole("radio", { name: "音声" })).toBeVisible();
+    await page.getByRole("radio", { name: "音声" }).click();
+    await expect(
+      page.getByText("相手役の質問を読み上げ、マイクで答えます")
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "通し練習を開始" })
     ).toBeVisible();
