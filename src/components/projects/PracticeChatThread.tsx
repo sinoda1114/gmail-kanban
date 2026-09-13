@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Box, Stack, Text } from "@mantine/core";
+import { Box, Text } from "@mantine/core";
 import type { PracticeMessage } from "@/types/interview-practice";
 
 interface PracticeChatThreadProps {
@@ -24,7 +24,14 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
         padding: "4px 2px",
       }}
     >
-      <Stack gap={8} align="stretch">
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          width: "100%",
+        }}
+      >
         {messages.map((m, i) => {
           const mine = m.role === "candidate";
           return (
@@ -32,6 +39,7 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
               key={`${m.role}-${i}`}
               style={{
                 display: "flex",
+                flexDirection: "row",
                 justifyContent: mine ? "flex-end" : "flex-start",
                 width: "100%",
               }}
@@ -40,7 +48,9 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
                 style={{
                   maxWidth: "80%",
                   padding: "8px 12px",
-                  borderRadius: mine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                  borderRadius: mine
+                    ? "16px 16px 4px 16px"
+                    : "16px 16px 16px 4px",
                   background: mine
                     ? "var(--mantine-color-teal-1)"
                     : "var(--mantine-color-gray-1)",
@@ -57,7 +67,7 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
           );
         })}
         <div ref={endRef} />
-      </Stack>
+      </div>
     </Box>
   );
 }
