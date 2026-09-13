@@ -30,6 +30,7 @@ import {
   submitPracticeReply,
   startLiveInterviewPractice,
   finishLiveInterviewPractice,
+  savePracticeStreamedReply,
 } from "@/app/dashboard/projects/interview-practice-action";
 import { lastInterviewerContent, type PracticeInputMode } from "@/lib/practice-input-mode";
 import { isLivePracticeModel, type LiveConnectSetup } from "@/lib/practice-live";
@@ -66,6 +67,8 @@ export function InterviewPracticeTab({
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<PracticeInputMode>("text");
+  const [streamingText, setStreamingText] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const [liveAuth, setLiveAuth] = useState<{
     sessionId: string;
     token: string;
@@ -158,13 +161,77 @@ export function InterviewPracticeTab({
     }
     setSending(true);
     setError(null);
-    const result = await submitPracticeReply(session.id, draft);
-    setSending(false);
-    if (result.success) {
-      setDraft("");
-      router.refresh();
-    } else {
-      setError(result.error ?? "送信に失敗しました");
+    setIsStreaming(true);
+    setStreamingText("");
+
+    const userAnswer = draft;
+    const currentMessages: PracticeMessage[] = [
+      ...session.messages,
+      { role: "candidate", content: userAnswer },
+    ];
+
+    try {
+      const response = await fetch("/api/interview-practice/stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId: session.id,
+          messages: currentMessages,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("ストリーミングに失敗しました");
+      }
+
+      if (!response.body) {
+        throw new Error("レスポンスボディがありません");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("0:")) {
+            const text = line.slice(2).trim();
+            if (text) {
+              accumulated += text;
+              setStreamingText(accumulated);
+            }
+          }
+        }
+      }
+
+      setIsStreaming(false);
+      setSending(true);
+
+      const saveResult = await savePracticeStreamedReply(
+        session.id,
+        userAnswer,
+        accumulated
+      );
+
+      if (saveResult.success) {
+        setDraft("");
+        setStreamingText("");
+        router.refresh();
+      } else {
+        setError(saveResult.error ?? "保存に失敗しました");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "送信に失敗しました");
+    } finally {
+      setSending(false);
+      setIsStreaming(false);
+      setStreamingText("");
     }
   }
 
@@ -261,6 +328,22 @@ export function InterviewPracticeTab({
                 </Text>
               </Paper>
             ))}
+
+            {isStreaming && streamingText && (
+              <Paper
+                withBorder
+                p="sm"
+                radius="sm"
+                bg="gray.0"
+              >
+                <Text size="xs" fw={600} c="dimmed" mb={4}>
+                  相手役（生成中...）
+                </Text>
+                <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>
+                  {streamingText}
+                </Text>
+              </Paper>
+            )}
 
             {strandedLive && (
               <Alert color="yellow" title="ライブ面談が途中です">
