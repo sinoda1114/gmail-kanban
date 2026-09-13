@@ -28,6 +28,10 @@ export type LiveConnectSetup = {
   sessionResumption: Record<string, never>;
 };
 
+export function isLivePracticeModel(model: string | null | undefined): boolean {
+  return Boolean(model && model.includes("live"));
+}
+
 export function liveModelResource(modelId = GEMINI_LIVE_MODEL_ID): string {
   return modelId.startsWith("models/") ? modelId : `models/${modelId}`;
 }

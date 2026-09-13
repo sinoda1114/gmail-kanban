@@ -30,6 +30,7 @@ export class PracticeLiveAudio {
   private processor: ScriptProcessorNode | null = null;
   private nextPlayTime = 0;
   private sources: AudioBufferSourceNode[] = [];
+  private queuedPlayback: string[] = [];
 
   async start(onChunk: (base64: string) => void): Promise<void> {
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -44,6 +45,7 @@ export class PracticeLiveAudio {
     this.playbackCtx = new Ctor({ sampleRate: LIVE_OUTPUT_SAMPLE_RATE });
     await this.captureCtx.resume();
     await this.playbackCtx.resume();
+    this.flushQueuedPlayback();
 
     const source = this.captureCtx.createMediaStreamSource(this.stream);
     const mute = this.captureCtx.createGain();
@@ -75,6 +77,22 @@ export class PracticeLiveAudio {
   }
 
   playPcmBase64(data: string): void {
+    if (!this.playbackCtx) {
+      this.queuedPlayback.push(data);
+      return;
+    }
+    this.flushQueuedPlayback();
+    this.enqueuePlayback(data);
+  }
+
+  private flushQueuedPlayback(): void {
+    if (!this.playbackCtx || this.queuedPlayback.length === 0) return;
+    const queued = this.queuedPlayback;
+    this.queuedPlayback = [];
+    for (const data of queued) this.enqueuePlayback(data);
+  }
+
+  private enqueuePlayback(data: string): void {
     if (!this.playbackCtx) return;
     const pcm = base64ToPcm16(data);
     if (pcm.length === 0) return;
@@ -115,6 +133,7 @@ export class PracticeLiveAudio {
 
   stop(): void {
     this.interruptPlayback();
+    this.queuedPlayback = [];
     this.workletNode?.disconnect();
     this.processor?.disconnect();
     this.workletNode = null;

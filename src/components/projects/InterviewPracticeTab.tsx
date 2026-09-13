@@ -31,11 +31,8 @@ import {
   startLiveInterviewPractice,
   finishLiveInterviewPractice,
 } from "@/app/dashboard/projects/interview-practice-action";
-import {
-  lastInterviewerContent,
-  type PracticeInputMode,
-} from "@/lib/practice-input-mode";
-import type { LiveConnectSetup } from "@/lib/practice-live";
+import { lastInterviewerContent, type PracticeInputMode } from "@/lib/practice-input-mode";
+import { isLivePracticeModel, type LiveConnectSetup } from "@/lib/practice-live";
 import { InterviewRehearsalSection } from "./InterviewRehearsalSection";
 import { PracticeInputControls } from "./PracticeInputControls";
 import {
@@ -84,6 +81,9 @@ export function InterviewPracticeTab({
   const displayMessages = liveMessages ?? session?.messages ?? [];
   const lastInterviewer = lastInterviewerContent(displayMessages);
   const liveActive = Boolean(liveAuth);
+  const strandedLive = Boolean(
+    session && active && isLivePracticeModel(session.model) && !liveAuth
+  );
 
   async function handleStart() {
     if (mode === "live") {
@@ -262,7 +262,12 @@ export function InterviewPracticeTab({
               </Paper>
             ))}
 
-            {active && !liveActive && (
+            {strandedLive && (
+              <Alert color="yellow" title="ライブ面談が途中です">
+                接続は切れているので、テキストでは続きを書けません。「ライブ面談をやり直す」から再開してください。
+              </Alert>
+            )}
+            {active && !liveActive && !strandedLive && (
               <>
                 <Textarea
                   label="あなたの回答"

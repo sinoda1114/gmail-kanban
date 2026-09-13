@@ -96,7 +96,6 @@ export function PracticeLiveSession({
       const events = parseLiveServerMessage(payload);
       if (events.some((item) => item.type === "setupComplete") && !micStarted) {
         micStarted = true;
-        sendJson({ realtimeInput: { text: LIVE_KICKOFF_TEXT } });
         try {
           await audio.start((chunk) => {
             sendJson({
@@ -105,7 +104,9 @@ export function PracticeLiveSession({
               },
             });
           });
-          if (!stoppedRef.current) setStatus("listening");
+          if (stoppedRef.current) return;
+          sendJson({ realtimeInput: { text: LIVE_KICKOFF_TEXT } });
+          setStatus("listening");
         } catch {
           onFailedRef.current("マイクを開始できませんでした。ブラウザの許可を確認してください。");
         }
@@ -131,7 +132,13 @@ export function PracticeLiveSession({
       }
     };
 
+    function onPageHide() {
+      stopAndEmit();
+    }
+    window.addEventListener("pagehide", onPageHide);
+
     return () => {
+      window.removeEventListener("pagehide", onPageHide);
       stoppedRef.current = true;
       audio.stop();
       if (socket.readyState === WebSocket.OPEN) socket.close();

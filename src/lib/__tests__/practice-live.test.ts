@@ -10,12 +10,21 @@ import {
   liveConstrainedWsUrl,
   liveAuthTokenPayload,
   liveModelResource,
+  isLivePracticeModel,
   parseLiveAuthTokenResponse,
   parseLiveServerMessage,
   pcm16ToBase64,
   reduceLiveConversation,
 } from "../practice-live";
 import { buildLiveFeedbackPrompt, buildLivePracticePrompt } from "../interview-practice";
+
+describe("isLivePracticeModel", () => {
+  it("live モデルだけ真", () => {
+    expect(isLivePracticeModel("gemini-3.1-flash-live-preview")).toBe(true);
+    expect(isLivePracticeModel("gemini-3.8-flash")).toBe(false);
+    expect(isLivePracticeModel(null)).toBe(false);
+  });
+});
 
 describe("liveModelResource", () => {
   it("models/ を付ける", () => {
