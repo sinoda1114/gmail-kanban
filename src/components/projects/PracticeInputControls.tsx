@@ -32,7 +32,7 @@ interface PracticeInputControlsProps {
   starting?: boolean;
 }
 
-const SPEAK_DELAY_MS = 50;
+const SPEAK_DELAY_MS = 100;
 
 function subscribeNever() {
   return () => {};
@@ -157,6 +157,7 @@ export function PracticeInputControls({
     recognition.interimResults = true;
     draftBaseRef.current = draft.trim() ? `${draft.trim()}\n` : "";
     recognition.onresult = (event) => {
+      if (recognitionRef.current !== recognition) return;
       const spoken = joinRecognitionTranscript(event.results);
       onDraftChange(
         clipPracticeTranscript(
@@ -166,6 +167,7 @@ export function PracticeInputControls({
       );
     };
     recognition.onerror = (event) => {
+      if (recognitionRef.current !== recognition) return;
       if (event.error === "not-allowed") {
         notifications.show({
           color: "red",
@@ -180,6 +182,7 @@ export function PracticeInputControls({
       setListening(false);
     };
     recognition.onend = () => {
+      if (recognitionRef.current !== recognition) return;
       setListening(false);
     };
     try {
@@ -219,6 +222,11 @@ export function PracticeInputControls({
           など対応ブラウザを使うか、テキストモードで入力してください。
         </Alert>
       )}
+      {mode === "voice" && !capability.tts && (
+        <Alert color="yellow" title="読み上げが使えません">
+          このブラウザは音声合成に対応していません。テキストモードに切り替えるか、対応ブラウザを使ってください。
+        </Alert>
+      )}
       {voiceUnsupported && (
         <Alert color="gray">読み上げも聞き取りも使えません。</Alert>
       )}
@@ -227,7 +235,7 @@ export function PracticeInputControls({
           <Button
             variant="light"
             leftSection={<IconVolume size={16} />}
-            disabled={!lastInterviewer || !capability.tts || busy}
+            disabled={!lastInterviewer || !capability.tts || busy || listening}
             onClick={() => {
               if (lastInterviewer) speakJapanese(lastInterviewer);
             }}
