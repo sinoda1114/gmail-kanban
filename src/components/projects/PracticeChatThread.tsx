@@ -24,7 +24,7 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
         padding: "4px 2px",
       }}
     >
-      <Stack gap={8}>
+      <Stack gap={8} align="stretch">
         {messages.map((m, i) => {
           const mine = m.role === "candidate";
           return (
@@ -33,6 +33,7 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
               style={{
                 display: "flex",
                 justifyContent: mine ? "flex-end" : "flex-start",
+                width: "100%",
               }}
             >
               <div
