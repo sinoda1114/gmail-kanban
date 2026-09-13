@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Box, Text } from "@mantine/core";
+import { Text } from "@mantine/core";
 import type { PracticeMessage } from "@/types/interview-practice";
 
 interface PracticeChatThreadProps {
@@ -16,7 +16,7 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
   }, [messages]);
 
   return (
-    <Box
+    <div
       aria-label="会話"
       style={{
         maxHeight: 360,
@@ -24,50 +24,41 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
         padding: "4px 2px",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-          width: "100%",
-        }}
-      >
-        {messages.map((m, i) => {
-          const mine = m.role === "candidate";
-          return (
+      {messages.map((m, i) => {
+        const mine = m.role === "candidate";
+        return (
+          <div
+            key={`${m.role}-${i}`}
+            style={{
+              overflow: "hidden",
+              marginBottom: 8,
+            }}
+          >
             <div
-              key={`${m.role}-${i}`}
               style={{
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: mine ? "flex-end" : "flex-start",
-                width: "100%",
+                float: mine ? "right" : "left",
+                clear: "both",
+                maxWidth: "80%",
+                padding: "8px 12px",
+                borderRadius: mine
+                  ? "16px 16px 4px 16px"
+                  : "16px 16px 16px 4px",
+                background: mine
+                  ? "var(--mantine-color-teal-1)"
+                  : "var(--mantine-color-gray-1)",
               }}
             >
-              <div
-                style={{
-                  maxWidth: "80%",
-                  padding: "8px 12px",
-                  borderRadius: mine
-                    ? "16px 16px 4px 16px"
-                    : "16px 16px 16px 4px",
-                  background: mine
-                    ? "var(--mantine-color-teal-1)"
-                    : "var(--mantine-color-gray-1)",
-                }}
-              >
-                <Text size="xs" fw={600} c={mine ? "teal.8" : "dimmed"} mb={2}>
-                  {mine ? "あなた" : "相手役"}
-                </Text>
-                <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>
-                  {m.content}
-                </Text>
-              </div>
+              <Text size="xs" fw={600} c={mine ? "teal.8" : "dimmed"} mb={2}>
+                {mine ? "あなた" : "相手役"}
+              </Text>
+              <Text size="sm" style={{ whiteSpace: "pre-wrap" }}>
+                {m.content}
+              </Text>
             </div>
-          );
-        })}
-        <div ref={endRef} />
-      </div>
-    </Box>
+          </div>
+        );
+      })}
+      <div ref={endRef} />
+    </div>
   );
 }
