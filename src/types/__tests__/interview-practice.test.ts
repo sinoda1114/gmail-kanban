@@ -49,6 +49,15 @@ describe("PracticeMessageSchema", () => {
       PracticeMessageSchema.safeParse({ role: "system", content: "x" }).success
     ).toBe(false);
   });
+
+  it("2000文字超は落とす", () => {
+    expect(
+      PracticeMessageSchema.safeParse({
+        role: "candidate",
+        content: "あ".repeat(2001),
+      }).success
+    ).toBe(false);
+  });
 });
 
 describe("shouldWrapUpPractice", () => {

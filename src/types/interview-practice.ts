@@ -3,10 +3,11 @@ import { RehearsalFeedbackSchema } from "./interview-prep";
 
 export const PRACTICE_MESSAGE_ROLES = ["interviewer", "candidate"] as const;
 export type PracticeMessageRole = (typeof PRACTICE_MESSAGE_ROLES)[number];
+export const MAX_PRACTICE_MESSAGE_CHARS = 2000;
 
 export const PracticeMessageSchema = z.object({
   role: z.enum(PRACTICE_MESSAGE_ROLES),
-  content: z.string().max(2000),
+  content: z.string().max(MAX_PRACTICE_MESSAGE_CHARS),
 });
 
 export type PracticeMessage = z.infer<typeof PracticeMessageSchema>;

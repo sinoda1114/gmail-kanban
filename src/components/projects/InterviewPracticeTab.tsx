@@ -23,6 +23,7 @@ import type {
   InterviewPracticeSession,
 } from "@/db/schema";
 import type { RehearsalFeedback } from "@/types/interview-prep";
+import { MAX_PRACTICE_MESSAGE_CHARS } from "@/types/interview-practice";
 import {
   startInterviewPractice,
   submitPracticeReply,
@@ -154,6 +155,7 @@ export function InterviewPracticeTab({
                   label="あなたの回答"
                   placeholder="面談で話すつもりで書いてください..."
                   rows={4}
+                  maxLength={MAX_PRACTICE_MESSAGE_CHARS}
                   value={draft}
                   onChange={(e) => setDraft(e.target.value)}
                 />

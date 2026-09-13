@@ -58,6 +58,8 @@ describe("buildResearchPromptGuidance", () => {
     expect(g).toContain("東証上場");
     expect(g).toContain("障害対応は？");
     expect(g).toContain("companyBrief");
+    expect(g).toContain("配送最適化");
+    expect(g).toContain("未公表のM&A");
   });
 });
 

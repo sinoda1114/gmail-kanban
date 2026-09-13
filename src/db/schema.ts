@@ -3,6 +3,7 @@ import {
   text,
   integer,
   sqliteTable,
+  unique,
 } from "drizzle-orm/sqlite-core";
 import type { InterviewRetrospective } from "@/types/retrospective";
 import type { InterviewResearchPack } from "@/types/interview-research";
@@ -193,20 +194,29 @@ export const calendarEvents = sqliteTable("calendar_events", {
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
-export const interviewResearchPacks = sqliteTable("interview_research_packs", {
-  id: text("id").primaryKey(),
-  projectId: text("project_id")
-    .notNull()
-    .references(() => projects.id, { onDelete: "cascade" }),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  pack: text("pack", { mode: "json" }).$type<InterviewResearchPack>().notNull(),
-  sources: text("sources", { mode: "json" }).$type<string[] | null>(),
-  model: text("model"),
-  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
-  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
-});
+export const interviewResearchPacks = sqliteTable(
+  "interview_research_packs",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    pack: text("pack", { mode: "json" }).$type<InterviewResearchPack>().notNull(),
+    sources: text("sources", { mode: "json" }).$type<string[] | null>(),
+    model: text("model"),
+    createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+    updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+  },
+  (table) => [
+    unique("interview_research_packs_project_user").on(
+      table.projectId,
+      table.userId
+    ),
+  ]
+);
 
 export const interviewPracticeSessions = sqliteTable(
   "interview_practice_sessions",

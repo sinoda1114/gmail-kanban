@@ -88,6 +88,14 @@ export function buildResearchPromptGuidance(
     .slice(0, 8)
     .map((q) => `- (${q.category}) ${q.question}`)
     .join("\n");
+  const talkingPoints = pack.companyPack.talkingPoints
+    .slice(0, 8)
+    .map((item) => `- ${item}`)
+    .join("\n");
+  const topicsToAvoid = pack.companyPack.topicsToAvoid
+    .slice(0, 6)
+    .map((item) => `- ${item}`)
+    .join("\n");
 
   return `
 【面談対策パック（検索グラウンディング済み。ここに無い事実は作らない）】
@@ -95,6 +103,10 @@ export function buildResearchPromptGuidance(
 ドメイン: ${pack.companyPack.domain}
 事実・仮説:
 ${facts || "（なし）"}
+話すべきトピック:
+${talkingPoints || "（なし）"}
+避ける話題:
+${topicsToAvoid || "（なし）"}
 起きやすい面談:
 ${interviews || "（なし）"}
 想定質問の種:

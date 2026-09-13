@@ -10,7 +10,7 @@ import {
   interviewResearchPacks,
   aiExtractionLogs,
 } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import {
@@ -112,26 +112,9 @@ export async function generateInterviewResearch(
   try {
     const { pack, sources } = await generateResearchPack(project);
 
-    const existing = await db.query.interviewResearchPacks.findFirst({
-      where: and(
-        eq(interviewResearchPacks.projectId, projectId),
-        eq(interviewResearchPacks.userId, user.id)
-      ),
-      orderBy: desc(interviewResearchPacks.updatedAt),
-    });
-
-    if (existing) {
-      await db
-        .update(interviewResearchPacks)
-        .set({
-          pack,
-          sources,
-          model: GEMINI_RESEARCH_MODEL_ID,
-          updatedAt: now,
-        })
-        .where(eq(interviewResearchPacks.id, existing.id));
-    } else {
-      await db.insert(interviewResearchPacks).values({
+    await db
+      .insert(interviewResearchPacks)
+      .values({
         id: randomUUID(),
         projectId,
         userId: user.id,
@@ -140,8 +123,19 @@ export async function generateInterviewResearch(
         model: GEMINI_RESEARCH_MODEL_ID,
         createdAt: now,
         updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [
+          interviewResearchPacks.projectId,
+          interviewResearchPacks.userId,
+        ],
+        set: {
+          pack,
+          sources,
+          model: GEMINI_RESEARCH_MODEL_ID,
+          updatedAt: now,
+        },
       });
-    }
 
     await db.insert(aiExtractionLogs).values({
       id: randomUUID(),

@@ -27,6 +27,7 @@ import {
   normalizePracticeTurn,
   PRACTICE_ENDED_MESSAGE,
   PRACTICE_STALE_MESSAGE,
+  MAX_PRACTICE_MESSAGE_CHARS,
   canSubmitPracticeReply,
   coercePracticeWrapUp,
 } from "@/types/interview-practice";
@@ -197,6 +198,12 @@ export async function submitPracticeReply(
 
   const trimmed = answer.trim();
   if (!trimmed) return { success: false, error: "回答を入力してください" };
+  if (trimmed.length > MAX_PRACTICE_MESSAGE_CHARS) {
+    return {
+      success: false,
+      error: `回答は${MAX_PRACTICE_MESSAGE_CHARS}文字以内にしてください`,
+    };
+  }
 
   const session = await db.query.interviewPracticeSessions.findFirst({
     where: eq(interviewPracticeSessions.id, sessionId),
