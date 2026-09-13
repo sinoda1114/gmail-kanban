@@ -6,21 +6,22 @@ alwaysApply: true
 # `inherit-parent` or `auto` as a value: the role runs on the parent chat model (omit Task `model`). Alias entries in a panel list still count toward its fan-out.
 # Cost cap: no slug containing `fast`, `xhigh`, or `max` unless the user asked for that tier this turn.
 # Default ceiling is `high`. Plugin default `grok-4.6-fast-xhigh` is not a Task slug here.
+# Default family is Cursor Grok 4.6 (Cursor Models pool), not API-billed Claude/GPT.
 feature, refactoring: cursor-grok-4.6-high
-bug-fix: claude-fable-5-1-thinking-high
-perf-issue: claude-fable-5-1-thinking-high
-hillclimb: claude-fable-5-1-thinking-high
-judgment and prose: claude-fable-5-1-thinking-high
-hardest tasks: claude-fable-5-1-thinking-high
+bug-fix: cursor-grok-4.6-high
+perf-issue: cursor-grok-4.6-high
+hillclimb: cursor-grok-4.6-high
+judgment and prose: cursor-grok-4.6-high
+hardest tasks: cursor-grok-4.6-high
 how explorer: cursor-grok-4.6-high
-how explainer: claude-fable-5-1-thinking-high
-how critics: claude-fable-5-1-thinking-high, gpt-5.6-sol-high, cursor-grok-4.6-high, claude-opus-5-thinking-high
+how explainer: cursor-grok-4.6-high
+how critics: cursor-grok-4.6-high
 why investigators: cursor-grok-4.6-high
-why synthesizer: claude-fable-5-1-thinking-high
-reflect tooling: gpt-5.6-sol-high
-reflect judgment, divergent, synthesizer: claude-fable-5-1-thinking-high
-arena runners: claude-fable-5-1-thinking-high, gpt-5.6-sol-high, cursor-grok-4.6-high, claude-opus-5-thinking-high
-arena cross-judge pool: claude-fable-5-1-thinking-high, gpt-5.6-sol-high, cursor-grok-4.6-high, claude-opus-5-thinking-high
+why synthesizer: cursor-grok-4.6-high
+reflect tooling: cursor-grok-4.6-high
+reflect judgment, divergent, synthesizer: cursor-grok-4.6-high
+arena runners: cursor-grok-4.6-high
+arena cross-judge pool: cursor-grok-4.6-high
 swarm workers: cursor-grok-4.6-high
-architect runners: claude-fable-5-1-thinking-high, gpt-5.6-sol-high, cursor-grok-4.6-high, claude-opus-5-thinking-high
-interrogate reviewers: claude-fable-5-1-thinking-high, gpt-5.6-sol-high, cursor-grok-4.6-high, claude-opus-5-thinking-high
+architect runners: cursor-grok-4.6-high
+interrogate reviewers: cursor-grok-4.6-high
