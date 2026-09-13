@@ -1,7 +1,7 @@
 # Gmail Kanban — Claude 用プロジェクト指示
 
 このプロジェクトの**運用ルール正本は [`AGENTS.md`](./AGENTS.md)**。Claude Code も毎回 `AGENTS.md` に従うこと
-（worktree フロー／2 段ゲート／PR は番人がマージ／GitHub が正本／Issue・Project タスク管理／供給網デフォルト）。
+（worktree フロー／2 段ゲート／CI 緑なら squash マージ／GitHub が正本／Issue・Project タスク管理／供給網デフォルト）。
 
 ここには Claude 固有の補足だけを置く。AGENTS.md と重複する内容は AGENTS.md を正とする（ドリフト防止）。
 
