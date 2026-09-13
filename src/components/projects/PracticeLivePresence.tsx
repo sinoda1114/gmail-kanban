@@ -118,26 +118,38 @@ export function PracticeLivePresence({
               音声入力
             </Text>
             <Group
-              gap={3}
+              gap={4}
               align="flex-end"
-              h={28}
+              h={40}
+              px={8}
+              py={6}
               role="meter"
               aria-label="音声入力メーター"
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={Math.round(Math.max(0, Math.min(1, level)) * 100)}
+              aria-valuetext={
+                inputting ? "声が乗っています" : "待機中"
+              }
+              style={{
+                background: "var(--mantine-color-gray-1)",
+                border: "1px solid var(--mantine-color-gray-3)",
+                borderRadius: 8,
+                width: "100%",
+                maxWidth: 220,
+              }}
             >
               {bars.map((bar, i) => (
                 <div
                   key={i}
                   style={{
-                    width: 8,
-                    height: Math.max(4, bar * 28),
-                    borderRadius: 2,
+                    width: 10,
+                    height: Math.max(10, bar * 28),
+                    borderRadius: 3,
                     background: inputting
                       ? "var(--mantine-color-orange-5)"
-                      : "var(--mantine-color-gray-4)",
-                    opacity: bar > 0.2 ? 1 : 0.45,
+                      : "var(--mantine-color-gray-5)",
+                    opacity: bar > 0.2 ? 1 : 0.7,
                   }}
                 />
               ))}
