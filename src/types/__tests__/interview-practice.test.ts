@@ -7,6 +7,8 @@ import {
   MAX_PRACTICE_INTERVIEWER_TURNS,
   normalizePracticeTurn,
   canSubmitPracticeReply,
+  coercePracticeWrapUp,
+  PRACTICE_WRAP_UP_MESSAGE,
 } from "../interview-practice";
 
 describe("PracticeTurnSchema", () => {
@@ -85,5 +87,28 @@ describe("canSubmitPracticeReply", () => {
   it("active だけ書き込める", () => {
     expect(canSubmitPracticeReply("active")).toBe(true);
     expect(canSubmitPracticeReply("completed")).toBe(false);
+  });
+});
+
+describe("coercePracticeWrapUp", () => {
+  it("上限未満ならそのまま", () => {
+    const turn = { kind: "question" as const, message: "次の質問です" };
+    expect(coercePracticeWrapUp(turn, [])).toEqual(turn);
+  });
+
+  it("上限で question が来たら締めの文言に差し替える", () => {
+    const messages = Array.from({ length: MAX_PRACTICE_INTERVIEWER_TURNS }, () => ({
+      role: "interviewer" as const,
+      content: "q",
+    }));
+    const coerced = coercePracticeWrapUp(
+      { kind: "question", message: "もう一問いいですか？" },
+      messages
+    );
+    expect(coerced.kind).toBe("wrap_up");
+    if (coerced.kind === "wrap_up") {
+      expect(coerced.message).toBe(PRACTICE_WRAP_UP_MESSAGE);
+      expect(coerced.message).not.toContain("もう一問");
+    }
   });
 });

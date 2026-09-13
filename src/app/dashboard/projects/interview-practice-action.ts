@@ -24,10 +24,10 @@ import {
   PracticeTurnAiSchema,
   type PracticeMessage,
   type PracticeTurn,
-  shouldWrapUpPractice,
   normalizePracticeTurn,
   PRACTICE_ENDED_MESSAGE,
   canSubmitPracticeReply,
+  coercePracticeWrapUp,
 } from "@/types/interview-practice";
 import type { RehearsalFeedback } from "@/types/interview-prep";
 import { parseStoredResearchPack } from "@/lib/interview-research";
@@ -115,19 +115,10 @@ async function generateTurn(input: {
     providerOptions: GEMINI_JSON_PROVIDER_OPTIONS,
     prompt,
   });
-  const turn = normalizePracticeTurn(object);
-  if (shouldWrapUpPractice(input.messages) && turn.kind !== "wrap_up") {
-    return {
-      kind: "wrap_up",
-      message: turn.message,
-      feedback: {
-        specificity: "通しの分量は十分です。具体例の有無を見直してください。",
-        length: "回答の長さは面談想定で調整してください。",
-        weaknesses: ["深掘りへの準備を厚くする"],
-        summary: "練習はここまで。指摘を次の準備に活かしてください。",
-      },
-    };
-  }
+  const turn = coercePracticeWrapUp(
+    normalizePracticeTurn(object),
+    input.messages
+  );
   return turn;
 }
 

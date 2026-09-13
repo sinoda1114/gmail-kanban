@@ -83,3 +83,20 @@ export function countInterviewerTurns(messages: PracticeMessage[]): number {
 export function shouldWrapUpPractice(messages: PracticeMessage[]): boolean {
   return countInterviewerTurns(messages) >= MAX_PRACTICE_INTERVIEWER_TURNS;
 }
+
+export const PRACTICE_WRAP_UP_MESSAGE =
+  "ありがとうございました。通し練習はここまでです。下のフィードバックを次の準備に使ってください。";
+
+export function coercePracticeWrapUp(
+  turn: PracticeTurn,
+  messages: PracticeMessage[]
+): PracticeTurn {
+  if (!shouldWrapUpPractice(messages) || turn.kind === "wrap_up") {
+    return turn;
+  }
+  return {
+    kind: "wrap_up",
+    message: PRACTICE_WRAP_UP_MESSAGE,
+    feedback: FALLBACK_FEEDBACK,
+  };
+}
