@@ -59,6 +59,14 @@ test.describe("案件登録", () => {
     ).toBeVisible();
 
     await page.getByRole("tab", { name: "面談練習" }).click();
+    const modeGroup = page.getByRole("group", { name: "入力モード" });
+    await expect(modeGroup).toBeVisible();
+    await expect(modeGroup.getByText("テキスト", { exact: true })).toBeVisible();
+    await expect(modeGroup.getByText("音声", { exact: true })).toBeVisible();
+    await modeGroup.getByText("音声", { exact: true }).click();
+    await expect(
+      page.getByText("相手役の質問を読み上げ、マイクで答えます")
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "通し練習を開始" })
     ).toBeVisible();

@@ -28,7 +28,12 @@ import {
   startInterviewPractice,
   submitPracticeReply,
 } from "@/app/dashboard/projects/interview-practice-action";
+import {
+  lastInterviewerContent,
+  type PracticeInputMode,
+} from "@/lib/practice-input-mode";
 import { InterviewRehearsalSection } from "./InterviewRehearsalSection";
+import { PracticeInputControls } from "./PracticeInputControls";
 
 interface QuestionWithAnswer extends InterviewQuestion {
   answer: InterviewAnswer | null;
@@ -50,10 +55,14 @@ export function InterviewPracticeTab({
   const [sending, setSending] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<PracticeInputMode>("text");
 
   const active = session?.status === "active";
   const completed = session?.status === "completed";
   const feedback = session?.feedback as RehearsalFeedback | null;
+  const lastInterviewer = session
+    ? lastInterviewerContent(session.messages)
+    : null;
 
   async function handleStart() {
     setStarting(true);
@@ -99,19 +108,31 @@ export function InterviewPracticeTab({
       )}
 
       <Paper withBorder p="md" radius="md">
-        <Group justify="space-between" mb="sm">
+        <Group justify="space-between" mb="sm" align="flex-start">
           <Title order={5}>通し練習</Title>
-          {session && (
-            <Badge
-              variant="light"
-              color={completed ? "gray" : "teal"}
-            >
-              {completed ? "終了" : "進行中"}
-            </Badge>
-          )}
+          <Group gap="sm">
+            {session && (
+              <Badge variant="light" color={completed ? "gray" : "teal"}>
+                {completed ? "終了" : "進行中"}
+              </Badge>
+            )}
+          </Group>
         </Group>
+        <Stack gap="sm" mb="sm">
+          <PracticeInputControls
+            mode={mode}
+            onModeChange={setMode}
+            draft={draft}
+            onDraftChange={setDraft}
+            lastInterviewer={lastInterviewer}
+            sessionId={session?.id ?? null}
+            active={Boolean(active)}
+            sending={sending}
+            starting={starting}
+          />
+        </Stack>
         <Text size="sm" c="dimmed" mb="sm">
-          相手役が連続で質問し、回答を深掘りします。最後に短いフィードバックが出ます（テキストのみ）。
+          相手役が連続で質問し、回答を深掘りします。最後に短いフィードバックが出ます。入力はテキストと音声を途中で切り替えられます。
         </Text>
         <Button
           variant="light"
@@ -153,7 +174,11 @@ export function InterviewPracticeTab({
               <>
                 <Textarea
                   label="あなたの回答"
-                  placeholder="面談で話すつもりで書いてください..."
+                  placeholder={
+                    mode === "voice"
+                      ? "マイクで話すか、ここに直してから回答する..."
+                      : "面談で話すつもりで書いてください..."
+                  }
                   rows={4}
                   maxLength={MAX_PRACTICE_MESSAGE_CHARS}
                   value={draft}
