@@ -336,14 +336,18 @@ export function InterviewPracticeTab({
         </div>
       )}
 
-      <Divider label="1問だけの練習" labelPosition="left" />
+      {!liveActive && (
+        <>
+          <Divider label="1問だけの練習" labelPosition="left" />
 
-      {questions.length > 0 ? (
-        <InterviewRehearsalSection questions={questions} />
-      ) : (
-        <Text size="sm" c="dimmed">
-          1問練習は、面談準備で想定質問を作ったあとに使えます。通し練習は対策パックだけでも開始できます。
-        </Text>
+          {questions.length > 0 ? (
+            <InterviewRehearsalSection questions={questions} />
+          ) : (
+            <Text size="sm" c="dimmed">
+              1問練習は、面談準備で想定質問を作ったあとに使えます。通し練習は対策パックだけでも開始できます。
+            </Text>
+          )}
+        </>
       )}
     </Stack>
   );
