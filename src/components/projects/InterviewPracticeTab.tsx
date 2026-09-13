@@ -200,6 +200,7 @@ export function InterviewPracticeTab({
             active={Boolean(active)}
             sending={sending}
             starting={starting}
+            modeDisabled={liveActive}
           />
           {mode === "live" && !liveCapable && <PracticeLiveUnsupported />}
         </Stack>
@@ -303,7 +304,7 @@ export function InterviewPracticeTab({
         </Paper>
       )}
 
-      {mode === "live" && liveCapable && (
+      {(liveAuth || (mode === "live" && liveCapable)) && (
         <div
           style={
             liveActive

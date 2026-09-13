@@ -30,6 +30,7 @@ interface PracticeInputControlsProps {
   active: boolean;
   sending?: boolean;
   starting?: boolean;
+  modeDisabled?: boolean;
 }
 
 const SPEAK_DELAY_MS = 100;
@@ -48,6 +49,7 @@ export function PracticeInputControls({
   active,
   sending = false,
   starting = false,
+  modeDisabled = false,
 }: PracticeInputControlsProps) {
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
   const capability = mounted
@@ -205,6 +207,7 @@ export function PracticeInputControls({
         <SegmentedControl
           value={mode}
           onChange={(value) => handleModeChange(parsePracticeInputMode(value))}
+          disabled={modeDisabled}
           data={[
             { label: "テキスト", value: "text" },
             { label: "音声", value: "voice" },
