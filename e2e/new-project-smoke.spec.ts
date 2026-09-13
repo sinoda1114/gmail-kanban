@@ -70,7 +70,7 @@ test.describe("案件登録", () => {
     ).toBeVisible();
     await modeGroup.getByText("ライブ", { exact: true }).click();
     await expect(
-      page.getByText(/Gemini Live/)
+      page.getByText("マイクを通しっぱなしで、話の途中で割り込めます")
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "ライブ面談を開始" })

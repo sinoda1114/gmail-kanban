@@ -214,7 +214,7 @@ export function InterviewPracticeTab({
         </Stack>
         <Text size="sm" c="dimmed" mb="sm">
           {mode === "live"
-            ? "Gemini Live の双方向音声で相手役と会話します。テキスト／音声の通し練習はそのまま使えます。"
+            ? "テキスト／音声の通し練習はそのまま使えます。ライブは相手役と同時双方向の音声です。"
             : "相手役が連続で質問し、回答を深掘りします。最後に短いフィードバックが出ます。入力はテキストと音声を途中で切り替えられます。"}
         </Text>
         <Button
