@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Alert, Badge, Button, Group, Text } from "@mantine/core";
+import { Alert, Button, Group, Stack } from "@mantine/core";
 import { IconPlayerStop } from "@tabler/icons-react";
 import type { PracticeMessage } from "@/types/interview-practice";
 import {
@@ -12,12 +12,12 @@ import {
   liveConstrainedWsUrl,
   parseLiveServerMessage,
   reduceLiveConversation,
+  resolveLiveStage,
   type LiveConnectSetup,
   type LiveConversationState,
 } from "@/lib/practice-live";
 import { PracticeLiveAudio } from "@/lib/practice-live-audio";
-
-type LiveStatus = "connecting" | "listening" | "speaking";
+import { PracticeLivePresence } from "./PracticeLivePresence";
 
 interface PracticeLiveSessionProps {
   token: string;
@@ -43,7 +43,12 @@ export function PracticeLiveSession({
   onEnded,
   onFailed,
 }: PracticeLiveSessionProps) {
-  const [status, setStatus] = useState<LiveStatus>("connecting");
+  const [connected, setConnected] = useState(false);
+  const [partnerPlayback, setPartnerPlayback] = useState(false);
+  const [partnerTranscriptSpeaking, setPartnerTranscriptSpeaking] = useState(false);
+  const [userLevel, setUserLevel] = useState(0);
+  const [partnerCaption, setPartnerCaption] = useState("");
+  const [userCaption, setUserCaption] = useState("");
   const conversationRef = useRef<LiveConversationState>(INITIAL_LIVE_CONVERSATION);
   const audioRef = useRef<PracticeLiveAudio | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -81,6 +86,8 @@ export function PracticeLiveSession({
     }
 
     let micStarted = false;
+    let levelRaf = 0;
+    let pendingLevel = 0;
     socket.onopen = () => {
       sendJson({ setup });
     };
@@ -97,16 +104,31 @@ export function PracticeLiveSession({
       if (events.some((item) => item.type === "setupComplete") && !micStarted) {
         micStarted = true;
         try {
-          await audio.start((chunk) => {
-            sendJson({
-              realtimeInput: {
-                audio: { data: chunk, mimeType: LIVE_PCM_MIME },
-              },
-            });
+          await audio.start({
+            onChunk: (chunk) => {
+              sendJson({
+                realtimeInput: {
+                  audio: { data: chunk, mimeType: LIVE_PCM_MIME },
+                },
+              });
+            },
+            onLevel: (level) => {
+              if (stoppedRef.current) return;
+              pendingLevel = level;
+              if (levelRaf) return;
+              levelRaf = requestAnimationFrame(() => {
+                levelRaf = 0;
+                if (!stoppedRef.current) setUserLevel(pendingLevel);
+              });
+            },
+            onPlayback: (active) => {
+              if (stoppedRef.current) return;
+              setPartnerPlayback(active);
+            },
           });
           if (stoppedRef.current) return;
           sendJson({ realtimeInput: { text: LIVE_KICKOFF_TEXT } });
-          setStatus("listening");
+          setConnected(true);
         } catch {
           onFailedRef.current("マイクを開始できませんでした。ブラウザの許可を確認してください。");
         }
@@ -119,8 +141,9 @@ export function PracticeLiveSession({
       }
       conversationRef.current = reduceLiveConversation(conversationRef.current, events);
       onMessagesRef.current(conversationRef.current.messages);
-      if (conversationRef.current.speaking) setStatus("speaking");
-      else if (socket.readyState === WebSocket.OPEN) setStatus("listening");
+      setPartnerCaption(conversationRef.current.outputBuf);
+      setUserCaption(conversationRef.current.inputBuf);
+      setPartnerTranscriptSpeaking(conversationRef.current.speaking);
       if (events.some((item) => item.type === "goAway") && !stoppedRef.current) {
         stopAndEmit();
       }
@@ -140,6 +163,7 @@ export function PracticeLiveSession({
     return () => {
       window.removeEventListener("pagehide", onPageHide);
       stoppedRef.current = true;
+      if (levelRaf) cancelAnimationFrame(levelRaf);
       audio.stop();
       if (socket.readyState === WebSocket.OPEN) socket.close();
       socketRef.current = null;
@@ -152,32 +176,32 @@ export function PracticeLiveSession({
     stopAndEmit();
   }
 
-  const label =
-    status === "connecting"
-      ? "接続中"
-      : status === "speaking"
-        ? "相手役が話しています"
-        : "聞いています。どうぞ話してください";
+  const partnerSpeaking = partnerPlayback || partnerTranscriptSpeaking;
+  const stage = resolveLiveStage({
+    connected,
+    partnerSpeaking,
+    userLevel,
+  });
 
   return (
-    <Group justify="space-between" align="center">
-      <Group gap="sm">
-        <Badge color={status === "speaking" ? "violet" : "teal"} variant="light">
-          {label}
-        </Badge>
-        <Text size="sm" c="dimmed">
-          途中で割り込めます。終わったら終了してください。
-        </Text>
+    <Stack gap="sm">
+      <PracticeLivePresence
+        stage={stage}
+        level={userLevel}
+        partnerCaption={partnerCaption}
+        userCaption={userCaption}
+      />
+      <Group justify="flex-end">
+        <Button
+          color="red"
+          variant="light"
+          leftSection={<IconPlayerStop size={16} />}
+          onClick={handleStop}
+        >
+          ライブ面談を終了
+        </Button>
       </Group>
-      <Button
-        color="red"
-        variant="light"
-        leftSection={<IconPlayerStop size={16} />}
-        onClick={handleStop}
-      >
-        ライブ面談を終了
-      </Button>
-    </Group>
+    </Stack>
   );
 }
 

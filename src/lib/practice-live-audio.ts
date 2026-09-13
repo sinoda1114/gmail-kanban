@@ -2,6 +2,7 @@ import {
   LIVE_OUTPUT_SAMPLE_RATE,
   base64ToPcm16,
   captureFloatToBase64,
+  rmsLevel,
 } from "@/lib/practice-live";
 
 const CAPTURE_WORKLET = `
@@ -31,8 +32,14 @@ export class PracticeLiveAudio {
   private nextPlayTime = 0;
   private sources: AudioBufferSourceNode[] = [];
   private queuedPlayback: string[] = [];
+  private onPlayback: ((active: boolean) => void) | null = null;
 
-  async start(onChunk: (base64: string) => void): Promise<void> {
+  async start(input: {
+    onChunk: (base64: string) => void;
+    onLevel?: (level: number) => void;
+    onPlayback?: (active: boolean) => void;
+  }): Promise<void> {
+    this.onPlayback = input.onPlayback ?? null;
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
@@ -40,39 +47,46 @@ export class PracticeLiveAudio {
         channelCount: 1,
       },
     });
-    const Ctor = audioContextCtor();
-    this.captureCtx = new Ctor();
-    this.playbackCtx = new Ctor({ sampleRate: LIVE_OUTPUT_SAMPLE_RATE });
-    await this.captureCtx.resume();
-    await this.playbackCtx.resume();
-    this.flushQueuedPlayback();
-
-    const source = this.captureCtx.createMediaStreamSource(this.stream);
-    const mute = this.captureCtx.createGain();
-    mute.gain.value = 0;
-    mute.connect(this.captureCtx.destination);
-    const inputRate = this.captureCtx.sampleRate;
     try {
-      const blob = new Blob([CAPTURE_WORKLET], { type: "application/javascript" });
-      const url = URL.createObjectURL(blob);
-      await this.captureCtx.audioWorklet.addModule(url);
-      URL.revokeObjectURL(url);
-      this.workletNode = new AudioWorkletNode(this.captureCtx, "pcm-capture");
-      this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
-        if (event.data?.length) {
-          onChunk(captureFloatToBase64(event.data, inputRate));
-        }
+      const Ctor = audioContextCtor();
+      this.captureCtx = new Ctor();
+      this.playbackCtx = new Ctor({ sampleRate: LIVE_OUTPUT_SAMPLE_RATE });
+      await this.captureCtx.resume();
+      await this.playbackCtx.resume();
+      this.flushQueuedPlayback();
+
+      const source = this.captureCtx.createMediaStreamSource(this.stream);
+      const mute = this.captureCtx.createGain();
+      mute.gain.value = 0;
+      mute.connect(this.captureCtx.destination);
+      const inputRate = this.captureCtx.sampleRate;
+      const handleSamples = (samples: Float32Array) => {
+        input.onLevel?.(rmsLevel(samples));
+        input.onChunk(captureFloatToBase64(samples, inputRate));
       };
-      source.connect(this.workletNode);
-      this.workletNode.connect(mute);
-    } catch {
-      this.processor = this.captureCtx.createScriptProcessor(4096, 1, 1);
-      this.processor.onaudioprocess = (event) => {
-        const channel = event.inputBuffer.getChannelData(0);
-        onChunk(captureFloatToBase64(channel, inputRate));
-      };
-      source.connect(this.processor);
-      this.processor.connect(mute);
+      try {
+        const blob = new Blob([CAPTURE_WORKLET], { type: "application/javascript" });
+        const url = URL.createObjectURL(blob);
+        await this.captureCtx.audioWorklet.addModule(url);
+        URL.revokeObjectURL(url);
+        this.workletNode = new AudioWorkletNode(this.captureCtx, "pcm-capture");
+        this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
+          if (event.data?.length) handleSamples(event.data);
+        };
+        source.connect(this.workletNode);
+        this.workletNode.connect(mute);
+      } catch {
+        this.processor = this.captureCtx.createScriptProcessor(4096, 1, 1);
+        this.processor.onaudioprocess = (event) => {
+          const channel = event.inputBuffer.getChannelData(0);
+          handleSamples(channel);
+        };
+        source.connect(this.processor);
+        this.processor.connect(mute);
+      }
+    } catch (error) {
+      this.stop();
+      throw error;
     }
   }
 
@@ -114,9 +128,15 @@ export class PracticeLiveAudio {
     src.start(this.nextPlayTime);
     this.nextPlayTime += buffer.duration;
     this.sources.push(src);
+    this.emitPlayback();
     src.onended = () => {
       this.sources = this.sources.filter((item) => item !== src);
+      this.emitPlayback();
     };
+  }
+
+  private emitPlayback(): void {
+    this.onPlayback?.(this.sources.length > 0);
   }
 
   interruptPlayback(): void {
@@ -128,6 +148,7 @@ export class PracticeLiveAudio {
       }
     }
     this.sources = [];
+    this.emitPlayback();
     if (this.playbackCtx) this.nextPlayTime = this.playbackCtx.currentTime;
   }
 
@@ -144,6 +165,7 @@ export class PracticeLiveAudio {
     void this.playbackCtx?.close();
     this.captureCtx = null;
     this.playbackCtx = null;
+    this.onPlayback = null;
   }
 }
 

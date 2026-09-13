@@ -220,7 +220,7 @@ export function PracticeInputControls({
       {mode === "live" && (
         <Text size="sm" c="dimmed">
           Gemini Live
-          で相手役とリアルタイムに会話します。マイクを通しっぱなしで、話の途中で割り込めます。
+          で相手役とリアルタイムに会話します。話す番と入力中は下の相手役とメーターで分かります。
         </Text>
       )}
       {mode === "voice" && !capability.stt && (
