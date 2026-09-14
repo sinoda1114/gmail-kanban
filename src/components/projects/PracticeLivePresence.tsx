@@ -7,7 +7,7 @@ import {
   liveStageCopy,
   type LiveStageId,
 } from "@/lib/practice-live";
-import { Live2DAvatar } from "./Live2DAvatar";
+import { VRMAvatar } from "./VRMAvatar";
 
 interface PracticeLivePresenceProps {
   stage: LiveStageId;
@@ -63,21 +63,21 @@ export function PracticeLivePresence({
           ? "orange"
           : "gray";
 
-  const [useLive2D, setUseLive2D] = useState(false);
+  const [useVRM, setUseVRM] = useState(false);
   const [modelAvailable, setModelAvailable] = useState(false);
 
   useEffect(() => {
     async function checkModelAvailability() {
       try {
         const response = await fetch(
-          "/live2d-models/Hiyori/Hiyori.model3.json",
+          "/vrm-models/sendagaya-shino.vrm",
           { method: "HEAD" }
         );
         setModelAvailable(response.ok);
-        setUseLive2D(response.ok);
+        setUseVRM(response.ok);
       } catch {
         setModelAvailable(false);
-        setUseLive2D(false);
+        setUseVRM(false);
       }
     }
     void checkModelAvailability();
@@ -92,14 +92,14 @@ export function PracticeLivePresence({
         <div
           aria-hidden
           style={{
-            width: useLive2D ? avatarWidth : 120,
-            flex: useLive2D ? `0 0 ${avatarWidth}px` : "0 0 120px",
+            width: useVRM ? avatarWidth : 120,
+            flex: useVRM ? `0 0 ${avatarWidth}px` : "0 0 120px",
             transform: talking ? "translateY(-2px)" : undefined,
             transition: "transform 120ms ease",
           }}
         >
-          {useLive2D && modelAvailable ? (
-            <Live2DAvatar
+          {useVRM && modelAvailable ? (
+            <VRMAvatar
               audioLevel={talking ? playbackLevel : 0}
               width={avatarWidth}
               height={avatarHeight}
