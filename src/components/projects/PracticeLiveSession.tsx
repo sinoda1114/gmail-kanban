@@ -51,6 +51,7 @@ export function PracticeLiveSession({
   const [userSpeaking, setUserSpeaking] = useState(false);
   const [partnerCaption, setPartnerCaption] = useState("");
   const [userCaption, setUserCaption] = useState("");
+  const [playbackLevel, setPlaybackLevel] = useState(0);
   const conversationRef = useRef<LiveConversationState>(INITIAL_LIVE_CONVERSATION);
   const audioRef = useRef<PracticeLiveAudio | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -131,6 +132,10 @@ export function PracticeLiveSession({
               if (stoppedRef.current) return;
               setPartnerPlayback(active);
             },
+            onPlaybackLevel: (level) => {
+              if (stoppedRef.current) return;
+              setPlaybackLevel(level);
+            },
           });
           if (stoppedRef.current) return;
           sendJson({ realtimeInput: { text: LIVE_KICKOFF_TEXT } });
@@ -196,6 +201,7 @@ export function PracticeLiveSession({
         level={userLevel}
         partnerCaption={partnerCaption}
         userCaption={userCaption}
+        playbackLevel={playbackLevel}
       />
       <Group justify="flex-end">
         <Button

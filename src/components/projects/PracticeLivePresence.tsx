@@ -1,17 +1,20 @@
 "use client";
 
 import { Group, Paper, Stack, Text } from "@mantine/core";
+import { useState, useEffect } from "react";
 import {
   liveMeterBars,
   liveStageCopy,
   type LiveStageId,
 } from "@/lib/practice-live";
+import { Live2DAvatar } from "./Live2DAvatar";
 
 interface PracticeLivePresenceProps {
   stage: LiveStageId;
   level: number;
   partnerCaption?: string;
   userCaption?: string;
+  playbackLevel?: number;
 }
 
 function mouthFor(stage: LiveStageId) {
@@ -45,6 +48,7 @@ export function PracticeLivePresence({
   level,
   partnerCaption,
   userCaption,
+  playbackLevel = 0,
 }: PracticeLivePresenceProps) {
   const copy = liveStageCopy(stage);
   const talking = stage === "partner" || stage === "barge_in";
@@ -59,52 +63,83 @@ export function PracticeLivePresence({
           ? "orange"
           : "gray";
 
+  const [useLive2D, setUseLive2D] = useState(false);
+  const [modelAvailable, setModelAvailable] = useState(false);
+
+  useEffect(() => {
+    async function checkModelAvailability() {
+      try {
+        const response = await fetch(
+          "/live2d-models/Hiyori/Hiyori.model3.json",
+          { method: "HEAD" }
+        );
+        setModelAvailable(response.ok);
+        setUseLive2D(response.ok);
+      } catch {
+        setModelAvailable(false);
+        setUseLive2D(false);
+      }
+    }
+    void checkModelAvailability();
+  }, []);
+
+  const avatarWidth = 200;
+  const avatarHeight = 260;
+
   return (
     <Paper withBorder p="md" radius="md">
       <Group align="flex-start" gap="lg" wrap="nowrap">
         <div
           aria-hidden
           style={{
-            width: 120,
-            flex: "0 0 120px",
+            width: useLive2D ? avatarWidth : 120,
+            flex: useLive2D ? `0 0 ${avatarWidth}px` : "0 0 120px",
             transform: talking ? "translateY(-2px)" : undefined,
             transition: "transform 120ms ease",
           }}
         >
-          <svg viewBox="0 0 120 120" width="120" height="120">
-            <circle
-              cx="60"
-              cy="60"
-              r="52"
-              fill={talking ? "#eee9ff" : inputting ? "#fff4e6" : "#e7f5ff"}
-              stroke={
-                talking ? "#7950f2" : inputting ? "#f08c00" : "#15aabf"
-              }
-              strokeWidth="3"
+          {useLive2D && modelAvailable ? (
+            <Live2DAvatar
+              audioLevel={talking ? playbackLevel : 0}
+              width={avatarWidth}
+              height={avatarHeight}
             />
-            <circle cx="44" cy="52" r="5" fill="#1f1f1f" />
-            <circle cx="76" cy="52" r="5" fill="#1f1f1f" />
-            {mouthFor(stage)}
-            {talking ? (
-              <>
-                <path
-                  d="M100 44 Q112 60 100 76"
-                  fill="none"
-                  stroke="#7950f2"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M108 38 Q124 60 108 82"
-                  fill="none"
-                  stroke="#7950f2"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  opacity="0.7"
-                />
-              </>
-            ) : null}
-          </svg>
+          ) : (
+            <svg viewBox="0 0 120 120" width="120" height="120">
+              <circle
+                cx="60"
+                cy="60"
+                r="52"
+                fill={talking ? "#eee9ff" : inputting ? "#fff4e6" : "#e7f5ff"}
+                stroke={
+                  talking ? "#7950f2" : inputting ? "#f08c00" : "#15aabf"
+                }
+                strokeWidth="3"
+              />
+              <circle cx="44" cy="52" r="5" fill="#1f1f1f" />
+              <circle cx="76" cy="52" r="5" fill="#1f1f1f" />
+              {mouthFor(stage)}
+              {talking ? (
+                <>
+                  <path
+                    d="M100 44 Q112 60 100 76"
+                    fill="none"
+                    stroke="#7950f2"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M108 38 Q124 60 108 82"
+                    fill="none"
+                    stroke="#7950f2"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    opacity="0.7"
+                  />
+                </>
+              ) : null}
+            </svg>
+          )}
         </div>
         <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
           <div aria-live="polite">
