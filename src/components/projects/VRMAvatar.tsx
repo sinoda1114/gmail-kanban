@@ -138,6 +138,7 @@ export function VRMAvatar({
         const gltf = await loader.loadAsync(modelPath);
         const vrm = gltf.userData.vrm as VRM | undefined;
         if (!vrm) {
+          VRMUtils.deepDispose(gltf.scene);
           throw new Error("VRM data missing from loaded GLTF");
         }
 

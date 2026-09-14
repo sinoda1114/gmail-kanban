@@ -66,12 +66,23 @@ export function PracticeLiveSession({
     onFailedRef.current = onFailed;
   }, [onMessages, onEnded, onFailed]);
 
+  function stopResources() {
+    audioRef.current?.stop();
+    socketRef.current?.close();
+  }
+
   function stopAndEmit() {
     if (stoppedRef.current) return;
     stoppedRef.current = true;
-    audioRef.current?.stop();
-    socketRef.current?.close();
+    stopResources();
     onEndedRef.current(flushLiveConversation(conversationRef.current));
+  }
+
+  function failAndStop(message: string) {
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+    stopResources();
+    onFailedRef.current(message);
   }
 
   useEffect(() => {
@@ -137,11 +148,16 @@ export function PracticeLiveSession({
               playbackLevelRef.current = level;
             },
           });
-          if (stoppedRef.current) return;
+          if (stoppedRef.current) {
+            audio.stop();
+            return;
+          }
           sendJson({ realtimeInput: { text: LIVE_KICKOFF_TEXT } });
           setConnected(true);
         } catch {
-          onFailedRef.current("マイクを開始できませんでした。ブラウザの許可を確認してください。");
+          failAndStop(
+            "マイクを開始できませんでした。ブラウザの許可を確認してください。"
+          );
         }
       }
       if (events.some((item) => item.type === "interrupted")) {
@@ -161,9 +177,7 @@ export function PracticeLiveSession({
     };
 
     socket.onerror = () => {
-      if (!stoppedRef.current) {
-        onFailedRef.current("Gemini Live への接続に失敗しました。");
-      }
+      failAndStop("Gemini Live への接続に失敗しました。");
     };
 
     function onPageHide() {

@@ -36,6 +36,8 @@ export class PracticeLiveAudio {
   private analyser: AnalyserNode | null = null;
   private onPlaybackLevel: ((level: number) => void) | null = null;
   private playbackLevelRaf = 0;
+  /** Bumped by stop() so in-flight start() aborts after awaits. */
+  private startGeneration = 0;
 
   async start(input: {
     onChunk: (base64: string) => void;
@@ -43,6 +45,9 @@ export class PracticeLiveAudio {
     onPlayback?: (active: boolean) => void;
     onPlaybackLevel?: (level: number) => void;
   }): Promise<void> {
+    const generation = ++this.startGeneration;
+    const aborted = () => generation !== this.startGeneration;
+
     this.onPlayback = input.onPlayback ?? null;
     this.onPlaybackLevel = input.onPlaybackLevel ?? null;
     this.stream = await navigator.mediaDevices.getUserMedia({
@@ -52,12 +57,21 @@ export class PracticeLiveAudio {
         channelCount: 1,
       },
     });
+    if (aborted()) {
+      this.stream.getTracks().forEach((track) => track.stop());
+      this.stream = null;
+      return;
+    }
     try {
       const Ctor = audioContextCtor();
       this.captureCtx = new Ctor();
       this.playbackCtx = new Ctor({ sampleRate: LIVE_OUTPUT_SAMPLE_RATE });
       await this.captureCtx.resume();
       await this.playbackCtx.resume();
+      if (aborted()) {
+        this.stop();
+        return;
+      }
 
       if (this.onPlaybackLevel) {
         this.analyser = this.playbackCtx.createAnalyser();
@@ -86,6 +100,10 @@ export class PracticeLiveAudio {
         } finally {
           URL.revokeObjectURL(url);
         }
+        if (aborted()) {
+          this.stop();
+          return;
+        }
         this.workletNode = new AudioWorkletNode(this.captureCtx, "pcm-capture");
         this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
           if (event.data?.length) handleSamples(event.data);
@@ -93,6 +111,10 @@ export class PracticeLiveAudio {
         source.connect(this.workletNode);
         this.workletNode.connect(mute);
       } catch {
+        if (aborted()) {
+          this.stop();
+          return;
+        }
         this.processor = this.captureCtx.createScriptProcessor(4096, 1, 1);
         this.processor.onaudioprocess = (event) => {
           const channel = event.inputBuffer.getChannelData(0);
@@ -200,6 +222,7 @@ export class PracticeLiveAudio {
   }
 
   stop(): void {
+    this.startGeneration += 1;
     this.interruptPlayback();
     this.queuedPlayback = [];
     if (this.playbackLevelRaf) {

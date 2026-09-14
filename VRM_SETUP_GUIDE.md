@@ -6,7 +6,7 @@
 
 ## 前提条件
 
-- Node.js 18+ と pnpm がインストールされていること
+- Node.js 20.9+ と pnpm がインストールされていること（Next.js 16 の engines 要件）
 - Gmail Kanban リポジトリがクローンされていること
 
 ## セットアップ手順
