@@ -94,9 +94,11 @@ docs / ルール文言のみの変更はサーモス省略可。
 
 ```bash
 pnpm pr:conversations                 # 検査（未解決なら fail）
-pnpm pr:conversations:resolve         # outdated / 対応済み系を Resolve
-pnpm pr:conversations:resolve-all     # 残り全部（マージ直前）
+pnpm pr:conversations:resolve         # outdated / 対応済み「返信あり」を Resolve
+pnpm pr:conversations:resolve-all     # 対応後のマージ直前に残り全部
 ```
+
+`resolve-all` は **指摘を直したあと** のマージ直前用。未対応の指摘を黙って閉じる用途ではない。
 
 機構:
 

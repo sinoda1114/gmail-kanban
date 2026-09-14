@@ -32,9 +32,11 @@ pnpm pr:conversations
 4. 残りがあるとき:
 
 ```bash
-pnpm pr:conversations:resolve       # outdated + 対応済み系
-pnpm pr:conversations:resolve-all   # 全部（マージ直前）
+pnpm pr:conversations:resolve       # outdated + 対応済み「返信あり」
+pnpm pr:conversations:resolve-all   # 対応後のマージ直前に全部
 ```
+
+`resolve-all` は未対応指摘を黙って閉じる用途ではない。
 
 ## ルール要点
 
