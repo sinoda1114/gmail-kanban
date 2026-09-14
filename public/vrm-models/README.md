@@ -1,83 +1,26 @@
 # VRM Models
 
-このディレクトリには VRM アバターモデルを配置します。
+既定のライブ面談アバターは **CDN 上の Seed-san**（`DEFAULT_VRM_MODEL_PATH`）を使います。  
+Preview / Production でも 404 にならないよう、リポジトリへ大きな `.vrm` は同梱していません。
 
-## 使用可能なモデル
+## 既定モデル（デプロイ同梱不要）
 
-### 千駄ヶ谷しの（Sendagaya Shino）
+- **Seed-san**（VirtualCast）— [VRM Public License 1.0](https://vrm.dev/en/licenses/1.0/)
+- URL は `src/components/projects/VRMAvatar.tsx` の `DEFAULT_VRM_MODEL_PATH`（jsDelivr・コミット固定）
 
-VRoid Hub 公式サンプルモデル「千駄ヶ谷しの」を使用します。
+## 推奨の差し替え: 千駄ヶ谷しの（CC0）
 
-**ライセンス**: CC0 (パブリックドメイン)
-- 商用利用: ✅ 可能
-- 改変: ✅ 可能
-- クレジット表示: 不要（推奨）
-- 詳細: https://vroid.pixiv.help/hc/en-us/articles/360013482714-Sendagaya-Shino
+日本人向け見た目の公式サンプルです。
 
-**ダウンロード方法**:
+1. [VRoid Hub - Sendagaya Shino](https://hub.vroid.com/characters/1073405538936718994/models/5708407034098335138) から Download
+2. `public/vrm-models/sendagaya-shino.vrm` に配置
+3. `DEFAULT_VRM_MODEL_PATH` を `"/vrm-models/sendagaya-shino.vrm"` に変更
 
-1. [VRoid Hub - Sendagaya Shino](https://hub.vroid.com/characters/1073405538936718994/models/5708407034098335138) にアクセス
-2. 「Download」ボタンをクリック
-3. ダウンロードした `.vrm` ファイルを `sendagaya-shino.vrm` にリネーム
-4. `public/vrm-models/` に配置
+**ライセンス**: CC0 — 商用可・改変可・クレジット不要（詳細は VRoid ヘルプ）
 
-または、以下のコマンドで直接ダウンロード:
+## ランタイム
 
-```bash
-# VRoid Hub から直接ダウンロード（要認証）
-# または手動でダウンロードして配置
-cd public/vrm-models/
-# ダウンロードしたファイルを sendagaya-shino.vrm として配置
-```
+- `@pixiv/three-vrm` / `three` — MIT
+- リップシンクは再生 PCM レベル → VRM expression（Aa / Ih）。別 TTS なし
 
-最終的なディレクトリ構造:
-
-```
-public/vrm-models/
-└── sendagaya-shino.vrm
-```
-
-## 代替モデル
-
-他の VRM モデルを使用する場合:
-
-1. **CC0 または商用利用可能なライセンスのモデルを選択**
-   - [VRoid Hub](https://hub.vroid.com/) でライセンスを確認
-   - CC0 / MIT / Apache 2.0 などのオープンライセンス推奨
-
-2. モデルファイルを `public/vrm-models/<モデル名>.vrm` に配置
-
-3. `src/components/projects/VRMAvatar.tsx` の `DEFAULT_VRM_MODEL_PATH` を変更:
-   ```tsx
-   export const DEFAULT_VRM_MODEL_PATH = "/vrm-models/<モデル名>.vrm";
-   ```
-
-## ライセンス情報
-
-### ランタイムライブラリ
-
-- **@pixiv/three-vrm**: MIT License
-- **Three.js**: MIT License
-
-リップシンクは `three-vrm-lip-sync` ではなく、再生 PCM レベル → VRM expression（Aa / Ih）で実装しています。
-
-### 推奨モデル
-
-- **千駄ヶ谷しの (Sendagaya Shino)**: CC0 (パブリックドメイン)
-  - 作者: VRoid Project (Pixiv Inc.)
-  - 商用利用可能、クレジット表示不要
-
-## 注意事項
-
-- モデルファイルはリポジトリに含まれていません（サイズとライセンスの都合）
-- 本番環境で使用する場合は、必ずモデルのライセンスを確認してください
-- VRM モデルは VRoid Studio などで作成できます
-
-## カスタムモデルの作成
-
-VRoid Studio（無料）を使用して独自のモデルを作成できます:
-
-1. [VRoid Studio](https://vroid.com/studio) をダウンロード
-2. キャラクターを作成
-3. VRM 形式でエクスポート
-4. `public/vrm-models/` に配置
+詳細手順: [`VRM_SETUP_GUIDE.md`](../../VRM_SETUP_GUIDE.md)

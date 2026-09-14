@@ -4,7 +4,11 @@ import { useEffect, useRef, type RefObject } from "react";
 import type { Object3D, Scene, WebGLRenderer, PerspectiveCamera, Clock } from "three";
 import type { VRM } from "@pixiv/three-vrm";
 
-export const DEFAULT_VRM_MODEL_PATH = "/vrm-models/sendagaya-shino.vrm";
+export const DEFAULT_VRM_MODEL_PATH =
+  // Seed-san (VRM Public License 1.0 / VirtualCast). Pinned CDN so Preview/Production always resolve.
+  // To use Sendagaya Shino (CC0), place it at public/vrm-models/sendagaya-shino.vrm and change this to
+  // "/vrm-models/sendagaya-shino.vrm".
+  "https://cdn.jsdelivr.net/gh/vrm-c/vrm-specification@837f156dbce43ad69183ce1bdab549961ae1c1ee/samples/Seed-san/vrm/Seed-san.vrm";
 
 interface VRMAvatarProps {
   /** Written by the live audio monitor; read each frame (no React re-render). */

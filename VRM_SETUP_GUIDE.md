@@ -11,29 +11,22 @@
 
 ## セットアップ手順
 
-### 1. VRM モデルの取得
+### 1. VRM モデル（デフォルトは CDN）
 
-#### オプション A: 千駄ヶ谷しの（推奨・CC0）
+アプリは最初から **Seed-san**（jsDelivr CDN・VRM Public License 1.0）を読みます。  
+モデルファイルをリポジトリに置かなくても Preview / Production で VRM が表示されます。
 
-VRoid Hub 公式サンプルモデル「千駄ヶ谷しの」を使用します。
+パスの正本: `DEFAULT_VRM_MODEL_PATH`（`src/components/projects/VRMAvatar.tsx`）
 
-**ライセンス**: CC0 (パブリックドメイン)
-- ✅ 商用利用可能
-- ✅ 改変可能
-- ✅ クレジット表示不要（推奨）
+#### オプション A: 千駄ヶ谷しのに差し替え（推奨・CC0）
 
-**ダウンロード手順**:
+VRoid Hub 公式サンプル「千駄ヶ谷しの」:
 
-1. [VRoid Hub - Sendagaya Shino](https://hub.vroid.com/characters/1073405538936718994/models/5708407034098335138) にアクセス
-2. 「Download」ボタンをクリック（VRoid Hub アカウントが必要）
-3. ダウンロードした `.vrm` ファイルを `sendagaya-shino.vrm` にリネーム
-4. `public/vrm-models/` に配置
+1. [VRoid Hub - Sendagaya Shino](https://hub.vroid.com/characters/1073405538936718994/models/5708407034098335138) から Download
+2. `public/vrm-models/sendagaya-shino.vrm` に配置
+3. `DEFAULT_VRM_MODEL_PATH` を `"/vrm-models/sendagaya-shino.vrm"` に変更
 
-最終的なディレクトリ構造:
-```
-public/vrm-models/
-└── sendagaya-shino.vrm
-```
+**ライセンス**: CC0（商用可・改変可・クレジット不要）
 
 #### オプション B: 他の VRM モデル
 
@@ -107,8 +100,8 @@ pnpm dev
 **チェック項目:**
 
 1. **モデルファイルのパス**
-   - ブラウザの開発者ツール（F12）→ ネットワークタブで `sendagaya-shino.vrm` がロードされているか確認
-   - 404 エラーが出ている場合は、パスが間違っています
+   - ブラウザの開発者ツール（F12）→ ネットワークタブで `Seed-san.vrm`（CDN）または差し替え後のローカル `.vrm` がロードされているか確認
+   - 404 エラーが出ている場合は、`DEFAULT_VRM_MODEL_PATH` を確認
 
 2. **モデルファイルの破損**
    - コンソールに VRM 関連のエラーが出ていないか確認
@@ -184,13 +177,15 @@ const smoothedLevel = Math.max(0, Math.min(1, activeLevel * 1.8));
 
 ## 本番環境へのデプロイ
 
-1. VRM モデルファイルを `public/vrm-models/` に配置
-2. Git にコミット
-3. Vercel などのホスティングサービスにデプロイ
+既定は CDN（Seed-san）のため、モデルをリポジトリに置かなくても Preview / Production で表示されます。
+
+ローカル差し替えモデルを使う場合のみ:
+
+1. VRM を `public/vrm-models/` に配置し `DEFAULT_VRM_MODEL_PATH` を更新
+2. Git にコミットして Vercel へデプロイ
 
 **注意:**
-- VRM モデルファイルのサイズが大きい場合は、最適化を検討してください
-- VRoid Studio の「軽量化」オプションを使用すると、ファイルサイズを削減できます
+- 大きな `.vrm` は最適化（VRoid Studio の軽量化）を検討してください
 
 ## 参考リンク
 

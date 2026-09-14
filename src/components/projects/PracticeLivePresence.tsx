@@ -16,6 +16,8 @@ interface PracticeLivePresenceProps {
   userCaption?: string;
   /** Live playback level; Avatar reads this each frame (no React re-render). */
   playbackLevelRef?: RefObject<number>;
+  /** Mount WebGL VRM only during an active live session (not idle preview). */
+  enableVRM?: boolean;
 }
 
 function mouthFor(stage: LiveStageId) {
@@ -50,6 +52,7 @@ export function PracticeLivePresence({
   partnerCaption,
   userCaption,
   playbackLevelRef,
+  enableVRM = false,
 }: PracticeLivePresenceProps) {
   const copy = liveStageCopy(stage);
   const talking = stage === "partner" || stage === "barge_in";
@@ -64,9 +67,9 @@ export function PracticeLivePresence({
           ? "orange"
           : "gray";
 
-  // Try VRM first; fall back to SVG when load fails (no HEAD probe).
-  const [useVRM, setUseVRM] = useState(true);
-
+  // Only mount VRM while enableVRM; fall back to SVG on load failure.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const showVRM = enableVRM && !loadFailed;
   const avatarWidth = 200;
   const avatarHeight = 260;
 
@@ -76,20 +79,20 @@ export function PracticeLivePresence({
         <div
           aria-hidden
           style={{
-            width: useVRM ? avatarWidth : 120,
-            flex: useVRM ? `0 0 ${avatarWidth}px` : "0 0 120px",
+            width: showVRM ? avatarWidth : 120,
+            flex: showVRM ? `0 0 ${avatarWidth}px` : "0 0 120px",
             transform: talking ? "translateY(-2px)" : undefined,
             transition: "transform 120ms ease",
           }}
         >
-          {useVRM ? (
+          {showVRM ? (
             <VRMAvatar
               audioLevelRef={playbackLevelRef}
               lipSyncActive={talking}
               width={avatarWidth}
               height={avatarHeight}
               modelPath={DEFAULT_VRM_MODEL_PATH}
-              onLoadError={() => setUseVRM(false)}
+              onLoadError={() => setLoadFailed(true)}
             />
           ) : (
             <svg viewBox="0 0 120 120" width="120" height="120">
