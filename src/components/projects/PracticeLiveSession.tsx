@@ -51,7 +51,7 @@ export function PracticeLiveSession({
   const [userSpeaking, setUserSpeaking] = useState(false);
   const [partnerCaption, setPartnerCaption] = useState("");
   const [userCaption, setUserCaption] = useState("");
-  const [playbackLevel, setPlaybackLevel] = useState(0);
+  const playbackLevelRef = useRef(0);
   const conversationRef = useRef<LiveConversationState>(INITIAL_LIVE_CONVERSATION);
   const audioRef = useRef<PracticeLiveAudio | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -91,8 +91,6 @@ export function PracticeLiveSession({
     let micStarted = false;
     let levelRaf = 0;
     let pendingLevel = 0;
-    let playbackLevelRaf = 0;
-    let pendingPlaybackLevel = 0;
     socket.onopen = () => {
       sendJson({ setup });
     };
@@ -136,13 +134,7 @@ export function PracticeLiveSession({
             },
             onPlaybackLevel: (level) => {
               if (stoppedRef.current) return;
-              pendingPlaybackLevel = level;
-              if (playbackLevelRaf) return;
-              playbackLevelRaf = requestAnimationFrame(() => {
-                playbackLevelRaf = 0;
-                if (stoppedRef.current) return;
-                setPlaybackLevel(pendingPlaybackLevel);
-              });
+              playbackLevelRef.current = level;
             },
           });
           if (stoppedRef.current) return;
@@ -183,7 +175,6 @@ export function PracticeLiveSession({
       window.removeEventListener("pagehide", onPageHide);
       stoppedRef.current = true;
       if (levelRaf) cancelAnimationFrame(levelRaf);
-      if (playbackLevelRaf) cancelAnimationFrame(playbackLevelRaf);
       audio.stop();
       if (socket.readyState === WebSocket.OPEN) socket.close();
       socketRef.current = null;
@@ -210,7 +201,7 @@ export function PracticeLiveSession({
         level={userLevel}
         partnerCaption={partnerCaption}
         userCaption={userCaption}
-        playbackLevel={playbackLevel}
+        playbackLevelRef={playbackLevelRef}
       />
       <Group justify="flex-end">
         <Button

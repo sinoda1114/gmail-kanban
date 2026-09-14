@@ -1,5 +1,7 @@
 # VRM アバター セットアップガイド
 
+> 短い配置メモは [`public/vrm-models/README.md`](./public/vrm-models/README.md) も参照。モデルパスの正本は `DEFAULT_VRM_MODEL_PATH`（`src/components/projects/VRMAvatar.tsx`）。
+
 このガイドでは、Gmail Kanban の面談練習ライブモードで VRM アバターを有効にする方法を説明します。
 
 ## 前提条件
@@ -43,10 +45,11 @@ public/vrm-models/
    
 2. モデルファイルを `public/vrm-models/<モデル名>.vrm` に配置
 
-3. `src/components/projects/VRMAvatar.tsx` の `modelPath` を変更:
+3. `src/components/projects/VRMAvatar.tsx` の `DEFAULT_VRM_MODEL_PATH` を変更:
    ```tsx
-   modelPath="/vrm-models/<モデル名>.vrm"
+   export const DEFAULT_VRM_MODEL_PATH = "/vrm-models/<モデル名>.vrm";
    ```
+   Presence も同じ定数を参照する（HEAD による別 URL チェックはしない）。
 
 #### オプション C: カスタムモデルを作成
 
@@ -175,8 +178,8 @@ camera.lookAt(0, 1.3, 0);         // 注視点
 `src/components/projects/VRMAvatar.tsx` で調整:
 
 ```tsx
-// 音声レベルの増幅率（デフォルト: 1.5）
-const smoothedLevel = Math.max(0, Math.min(1, audioLevel * 1.5));
+// 音声レベルの増幅率（デフォルト: 1.8）
+const smoothedLevel = Math.max(0, Math.min(1, activeLevel * 1.8));
 ```
 
 ## 本番環境へのデプロイ

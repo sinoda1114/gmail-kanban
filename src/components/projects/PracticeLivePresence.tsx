@@ -1,20 +1,21 @@
 "use client";
 
 import { Group, Paper, Stack, Text } from "@mantine/core";
-import { useState, useEffect } from "react";
+import { useState, type RefObject } from "react";
 import {
   liveMeterBars,
   liveStageCopy,
   type LiveStageId,
 } from "@/lib/practice-live";
-import { VRMAvatar } from "./VRMAvatar";
+import { DEFAULT_VRM_MODEL_PATH, VRMAvatar } from "./VRMAvatar";
 
 interface PracticeLivePresenceProps {
   stage: LiveStageId;
   level: number;
   partnerCaption?: string;
   userCaption?: string;
-  playbackLevel?: number;
+  /** Live playback level; Avatar reads this each frame (no React re-render). */
+  playbackLevelRef?: RefObject<number>;
 }
 
 function mouthFor(stage: LiveStageId) {
@@ -48,7 +49,7 @@ export function PracticeLivePresence({
   level,
   partnerCaption,
   userCaption,
-  playbackLevel = 0,
+  playbackLevelRef,
 }: PracticeLivePresenceProps) {
   const copy = liveStageCopy(stage);
   const talking = stage === "partner" || stage === "barge_in";
@@ -63,25 +64,8 @@ export function PracticeLivePresence({
           ? "orange"
           : "gray";
 
-  const [useVRM, setUseVRM] = useState(false);
-  const [modelAvailable, setModelAvailable] = useState(false);
-
-  useEffect(() => {
-    async function checkModelAvailability() {
-      try {
-        const response = await fetch(
-          "/vrm-models/sendagaya-shino.vrm",
-          { method: "HEAD" }
-        );
-        setModelAvailable(response.ok);
-        setUseVRM(response.ok);
-      } catch {
-        setModelAvailable(false);
-        setUseVRM(false);
-      }
-    }
-    void checkModelAvailability();
-  }, []);
+  // Try VRM first; fall back to SVG when load fails (no HEAD probe).
+  const [useVRM, setUseVRM] = useState(true);
 
   const avatarWidth = 200;
   const avatarHeight = 260;
@@ -98,15 +82,14 @@ export function PracticeLivePresence({
             transition: "transform 120ms ease",
           }}
         >
-          {useVRM && modelAvailable ? (
+          {useVRM ? (
             <VRMAvatar
-              audioLevel={talking ? playbackLevel : 0}
+              audioLevelRef={playbackLevelRef}
+              lipSyncActive={talking}
               width={avatarWidth}
               height={avatarHeight}
-              onLoadError={() => {
-                setUseVRM(false);
-                setModelAvailable(false);
-              }}
+              modelPath={DEFAULT_VRM_MODEL_PATH}
+              onLoadError={() => setUseVRM(false)}
             />
           ) : (
             <svg viewBox="0 0 120 120" width="120" height="120">

@@ -47,9 +47,9 @@ public/vrm-models/
 
 2. モデルファイルを `public/vrm-models/<モデル名>.vrm` に配置
 
-3. `src/components/projects/VRMAvatar.tsx` の `modelPath` を変更:
+3. `src/components/projects/VRMAvatar.tsx` の `DEFAULT_VRM_MODEL_PATH` を変更:
    ```tsx
-   modelPath="/vrm-models/<モデル名>.vrm"
+   export const DEFAULT_VRM_MODEL_PATH = "/vrm-models/<モデル名>.vrm";
    ```
 
 ## ライセンス情報

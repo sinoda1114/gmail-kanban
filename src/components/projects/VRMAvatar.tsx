@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import type { Object3D, Scene, WebGLRenderer, PerspectiveCamera, Clock } from "three";
 import type { VRM } from "@pixiv/three-vrm";
 
+export const DEFAULT_VRM_MODEL_PATH = "/vrm-models/sendagaya-shino.vrm";
+
 interface VRMAvatarProps {
-  audioLevel?: number;
+  /** Written by the live audio monitor; read each frame (no React re-render). */
+  audioLevelRef?: RefObject<number>;
+  /** When false, mouth stays closed even if the level ref is non-zero. */
+  lipSyncActive?: boolean;
   width?: number;
   height?: number;
   modelPath?: string;
@@ -51,22 +56,24 @@ function disposeInstances(
 }
 
 export function VRMAvatar({
-  audioLevel = 0,
+  audioLevelRef,
+  lipSyncActive = false,
   width = 240,
   height = 320,
-  modelPath = "/vrm-models/sendagaya-shino.vrm",
+  modelPath = DEFAULT_VRM_MODEL_PATH,
   onLoadError,
 }: VRMAvatarProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const instancesRef = useRef<VRMInstances | null>(null);
-  const audioLevelRef = useRef(audioLevel);
+  const lipSyncActiveRef = useRef(lipSyncActive);
   const onLoadErrorRef = useRef(onLoadError);
   const expressionNamesRef = useRef<{ aa: string; ih: string } | null>(null);
+  const externalLevelRef = audioLevelRef;
 
   useEffect(() => {
-    audioLevelRef.current = audioLevel;
-  }, [audioLevel]);
+    lipSyncActiveRef.current = lipSyncActive;
+  }, [lipSyncActive]);
 
   useEffect(() => {
     onLoadErrorRef.current = onLoadError;
@@ -148,7 +155,6 @@ export function VRMAvatar({
           clock,
           deepDispose: VRMUtils.deepDispose,
         };
-        // Ownership transferred to instancesRef; avoid double-dispose in catch.
         renderer = null;
 
         function animate() {
@@ -168,10 +174,9 @@ export function VRMAvatar({
           const expressionManager = currentVrm.expressionManager;
           const names = expressionNamesRef.current;
           if (expressionManager && names) {
-            const smoothedLevel = Math.max(
-              0,
-              Math.min(1, audioLevelRef.current * 1.8)
-            );
+            const raw = externalLevelRef?.current ?? 0;
+            const activeLevel = lipSyncActiveRef.current ? raw : 0;
+            const smoothedLevel = Math.max(0, Math.min(1, activeLevel * 1.8));
             expressionManager.setValue(names.aa, smoothedLevel * 0.8);
             expressionManager.setValue(names.ih, smoothedLevel * 0.2);
           }
@@ -207,7 +212,7 @@ export function VRMAvatar({
         renderer = null;
       }
     };
-  }, [modelPath, width, height]);
+  }, [modelPath, width, height, externalLevelRef]);
 
   return (
     <div
