@@ -328,11 +328,11 @@ export function InterviewPracticeTab({
               onEnded={(messages) => {
                 void handleLiveEnded(messages);
               }}
-              onFailed={(message) => {
+              onFailed={(message, messages) => {
                 setError(message);
                 // Unmount so WebGL/audio cleanup runs; finish without a success toast.
+                // Prefer flushed session messages (includes in-progress buffers).
                 const sessionId = liveAuth?.sessionId;
-                const messages = liveMessages ?? [];
                 setLiveAuth(null);
                 if (!sessionId) return;
                 void finishLiveInterviewPractice(sessionId, messages).then(

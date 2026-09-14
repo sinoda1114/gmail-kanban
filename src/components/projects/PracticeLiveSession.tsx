@@ -25,7 +25,7 @@ interface PracticeLiveSessionProps {
   setup: LiveConnectSetup;
   onMessages: (messages: PracticeMessage[]) => void;
   onEnded: (messages: PracticeMessage[]) => void;
-  onFailed: (message: string) => void;
+  onFailed: (message: string, messages: PracticeMessage[]) => void;
 }
 
 async function readWsPayload(data: unknown): Promise<unknown> {
@@ -82,7 +82,8 @@ export function PracticeLiveSession({
     if (stoppedRef.current) return;
     stoppedRef.current = true;
     stopResources();
-    onFailedRef.current(message);
+    // Flush in-progress buffers so mid-turn transcripts are not dropped.
+    onFailedRef.current(message, flushLiveConversation(conversationRef.current));
   }
 
   useEffect(() => {
