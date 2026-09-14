@@ -25,7 +25,7 @@ interface PracticeLiveSessionProps {
   setup: LiveConnectSetup;
   onMessages: (messages: PracticeMessage[]) => void;
   onEnded: (messages: PracticeMessage[]) => void;
-  onFailed: (message: string) => void;
+  onFailed: (message: string, messages: PracticeMessage[]) => void;
 }
 
 async function readWsPayload(data: unknown): Promise<unknown> {
@@ -51,6 +51,7 @@ export function PracticeLiveSession({
   const [userSpeaking, setUserSpeaking] = useState(false);
   const [partnerCaption, setPartnerCaption] = useState("");
   const [userCaption, setUserCaption] = useState("");
+  const playbackLevelRef = useRef(0);
   const conversationRef = useRef<LiveConversationState>(INITIAL_LIVE_CONVERSATION);
   const audioRef = useRef<PracticeLiveAudio | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -65,12 +66,24 @@ export function PracticeLiveSession({
     onFailedRef.current = onFailed;
   }, [onMessages, onEnded, onFailed]);
 
+  function stopResources() {
+    audioRef.current?.stop();
+    socketRef.current?.close();
+  }
+
   function stopAndEmit() {
     if (stoppedRef.current) return;
     stoppedRef.current = true;
-    audioRef.current?.stop();
-    socketRef.current?.close();
+    stopResources();
     onEndedRef.current(flushLiveConversation(conversationRef.current));
+  }
+
+  function failAndStop(message: string) {
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+    stopResources();
+    // Flush in-progress buffers so mid-turn transcripts are not dropped.
+    onFailedRef.current(message, flushLiveConversation(conversationRef.current));
   }
 
   useEffect(() => {
@@ -131,12 +144,21 @@ export function PracticeLiveSession({
               if (stoppedRef.current) return;
               setPartnerPlayback(active);
             },
+            onPlaybackLevel: (level) => {
+              if (stoppedRef.current) return;
+              playbackLevelRef.current = level;
+            },
           });
-          if (stoppedRef.current) return;
+          if (stoppedRef.current) {
+            audio.stop();
+            return;
+          }
           sendJson({ realtimeInput: { text: LIVE_KICKOFF_TEXT } });
           setConnected(true);
         } catch {
-          onFailedRef.current("マイクを開始できませんでした。ブラウザの許可を確認してください。");
+          failAndStop(
+            "マイクを開始できませんでした。ブラウザの許可を確認してください。"
+          );
         }
       }
       if (events.some((item) => item.type === "interrupted")) {
@@ -156,9 +178,7 @@ export function PracticeLiveSession({
     };
 
     socket.onerror = () => {
-      if (!stoppedRef.current) {
-        onFailedRef.current("Gemini Live への接続に失敗しました。");
-      }
+      failAndStop("Gemini Live への接続に失敗しました。");
     };
 
     function onPageHide() {
@@ -196,6 +216,8 @@ export function PracticeLiveSession({
         level={userLevel}
         partnerCaption={partnerCaption}
         userCaption={userCaption}
+        playbackLevelRef={playbackLevelRef}
+        enableVRM
       />
       <Group justify="flex-end">
         <Button

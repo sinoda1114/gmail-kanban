@@ -33,13 +33,23 @@ export class PracticeLiveAudio {
   private sources: AudioBufferSourceNode[] = [];
   private queuedPlayback: string[] = [];
   private onPlayback: ((active: boolean) => void) | null = null;
+  private analyser: AnalyserNode | null = null;
+  private onPlaybackLevel: ((level: number) => void) | null = null;
+  private playbackLevelRaf = 0;
+  /** Bumped by stop() so in-flight start() aborts after awaits. */
+  private startGeneration = 0;
 
   async start(input: {
     onChunk: (base64: string) => void;
     onLevel?: (level: number) => void;
     onPlayback?: (active: boolean) => void;
+    onPlaybackLevel?: (level: number) => void;
   }): Promise<void> {
+    const generation = ++this.startGeneration;
+    const aborted = () => generation !== this.startGeneration;
+
     this.onPlayback = input.onPlayback ?? null;
+    this.onPlaybackLevel = input.onPlaybackLevel ?? null;
     this.stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
@@ -47,12 +57,30 @@ export class PracticeLiveAudio {
         channelCount: 1,
       },
     });
+    if (aborted()) {
+      this.stream.getTracks().forEach((track) => track.stop());
+      this.stream = null;
+      return;
+    }
     try {
       const Ctor = audioContextCtor();
       this.captureCtx = new Ctor();
       this.playbackCtx = new Ctor({ sampleRate: LIVE_OUTPUT_SAMPLE_RATE });
       await this.captureCtx.resume();
       await this.playbackCtx.resume();
+      if (aborted()) {
+        this.stop();
+        return;
+      }
+
+      if (this.onPlaybackLevel) {
+        this.analyser = this.playbackCtx.createAnalyser();
+        this.analyser.fftSize = 256;
+        this.analyser.smoothingTimeConstant = 0.8;
+        this.analyser.connect(this.playbackCtx.destination);
+        this.startPlaybackLevelMonitor();
+      }
+
       this.flushQueuedPlayback();
 
       const source = this.captureCtx.createMediaStreamSource(this.stream);
@@ -72,6 +100,10 @@ export class PracticeLiveAudio {
         } finally {
           URL.revokeObjectURL(url);
         }
+        if (aborted()) {
+          this.stop();
+          return;
+        }
         this.workletNode = new AudioWorkletNode(this.captureCtx, "pcm-capture");
         this.workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
           if (event.data?.length) handleSamples(event.data);
@@ -79,6 +111,10 @@ export class PracticeLiveAudio {
         source.connect(this.workletNode);
         this.workletNode.connect(mute);
       } catch {
+        if (aborted()) {
+          this.stop();
+          return;
+        }
         this.processor = this.captureCtx.createScriptProcessor(4096, 1, 1);
         this.processor.onaudioprocess = (event) => {
           const channel = event.inputBuffer.getChannelData(0);
@@ -125,7 +161,13 @@ export class PracticeLiveAudio {
     buffer.copyToChannel(f32, 0);
     const src = this.playbackCtx.createBufferSource();
     src.buffer = buffer;
-    src.connect(this.playbackCtx.destination);
+
+    if (this.analyser) {
+      src.connect(this.analyser);
+    } else {
+      src.connect(this.playbackCtx.destination);
+    }
+
     const now = this.playbackCtx.currentTime;
     if (this.nextPlayTime < now) this.nextPlayTime = now;
     src.start(this.nextPlayTime);
@@ -155,13 +197,44 @@ export class PracticeLiveAudio {
     if (this.playbackCtx) this.nextPlayTime = this.playbackCtx.currentTime;
   }
 
+  private startPlaybackLevelMonitor(): void {
+    if (!this.analyser || !this.onPlaybackLevel) return;
+
+    const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+
+    const updateLevel = () => {
+      if (!this.analyser || !this.onPlaybackLevel) return;
+
+      this.analyser.getByteFrequencyData(dataArray);
+
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        sum += (dataArray[i] ?? 0) / 255;
+      }
+      const average = sum / dataArray.length;
+
+      this.onPlaybackLevel(average);
+
+      this.playbackLevelRaf = requestAnimationFrame(updateLevel);
+    };
+
+    this.playbackLevelRaf = requestAnimationFrame(updateLevel);
+  }
+
   stop(): void {
+    this.startGeneration += 1;
     this.interruptPlayback();
     this.queuedPlayback = [];
+    if (this.playbackLevelRaf) {
+      cancelAnimationFrame(this.playbackLevelRaf);
+      this.playbackLevelRaf = 0;
+    }
     this.workletNode?.disconnect();
     this.processor?.disconnect();
+    this.analyser?.disconnect();
     this.workletNode = null;
     this.processor = null;
+    this.analyser = null;
     this.stream?.getTracks().forEach((track) => track.stop());
     this.stream = null;
     void this.captureCtx?.close();
@@ -169,6 +242,7 @@ export class PracticeLiveAudio {
     this.captureCtx = null;
     this.playbackCtx = null;
     this.onPlayback = null;
+    this.onPlaybackLevel = null;
   }
 }
 

@@ -328,7 +328,24 @@ export function InterviewPracticeTab({
               onEnded={(messages) => {
                 void handleLiveEnded(messages);
               }}
-              onFailed={(message) => setError(message)}
+              onFailed={(message, messages) => {
+                setError(message);
+                // Unmount so WebGL/audio cleanup runs; finish without a success toast.
+                // Prefer flushed session messages (includes in-progress buffers).
+                const sessionId = liveAuth?.sessionId;
+                setLiveAuth(null);
+                if (!sessionId) return;
+                void finishLiveInterviewPractice(sessionId, messages).then(
+                  (result) => {
+                    if (!result.success) {
+                      setLiveMessages(messages);
+                      return;
+                    }
+                    setLiveMessages(null);
+                    router.refresh();
+                  }
+                );
+              }}
             />
           ) : (
             <PracticeLivePresence stage="idle" level={0} />
