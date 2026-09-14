@@ -8,7 +8,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 同じ挙動規律は `~/.claude` グローバルにも既定として入っているため、自分の端末の全 PJ に自動適用される。
 **ここには挙動の再説明を書かない**（重複・ドリフト防止）。このファイルは**このプロジェクト固有の値だけ**を持つ。
 
-- 開発フロー詳細: `notes/dev-workflow-multiagent.md`
+- 開発フロー詳細: `notes/dev-workflow-multiagent.md`（§6.1: PR 未解決コメントでマージ不能になるのを防ぐ会話ゲート）
 - タスク管理詳細: `notes/task-management-issue-workflow.md`
 - テスト規律（選択的 TDD / Vitest / Playwright）: `notes/testing-discipline.md`
 - 課金方針（Stripe / RevenueCat）: `notes/billing-strategy.md`

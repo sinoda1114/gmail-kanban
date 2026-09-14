@@ -41,3 +41,4 @@ alwaysApply: true
 - `pnpm typecheck` / `pnpm lint` / `pnpm test`（該当時 `test:e2e` / `build`）
 - **サーモス実施済み**（結果の要約を PR 本文か最終返答に残す）
 - 必須 CI 緑
+- **未解決レビュー会話ゼロ**（`pnpm pr:conversations`。詳細は `.cursor/rules/pr-conversation-gate.mdc`）

@@ -16,7 +16,10 @@
     "db:migrate": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "test:e2e": "pnpm build && pnpm exec playwright test",
-    "test:e2e:ui": "pnpm exec playwright test --ui"
+    "test:e2e:ui": "pnpm exec playwright test --ui",
+    "pr:conversations": "bash scripts/pr-conversation-gate.sh",
+    "pr:conversations:resolve": "bash scripts/pr-conversation-gate.sh --resolve-safe",
+    "pr:conversations:resolve-all": "bash scripts/pr-conversation-gate.sh --resolve-all"
   },
   "dependencies": {
     "@ai-sdk/google": "4.0.36",

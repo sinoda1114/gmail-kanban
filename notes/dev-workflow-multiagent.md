@@ -82,3 +82,26 @@ docs / ルール文言のみの変更はサーモス省略可。
 - GitHub の `BLOCKED` が必須 CI 失敗ではなく未解決レビュー会話のときは、直した指摘を Resolve する。必須 CI が落ちているときはログを見て直す。
 - 意図的に残す指摘があるときだけマージしない。
 - マージ後は Production の発火を確認する。
+
+## 6.1 PR 会話ゲート（未解決コメントでマージ不能になるのを防ぐ）
+
+ブランチ保護の **All comments must be resolved** により、未解決のレビュー会話が1つでもあるとマージできない。エージェントが「対応済み」と返信だけして Resolve しないケースが典型原因。
+
+必須:
+
+1. 指摘を直したら **そのスレッドを Resolve**（返信だけで終わらせない）
+2. 「マージ可」宣言・squash 直前に:
+
+```bash
+pnpm pr:conversations                 # 検査（未解決なら fail）
+pnpm pr:conversations:resolve         # outdated / 対応済み「返信あり」を Resolve
+pnpm pr:conversations:resolve-all     # 対応後のマージ直前に残り全部
+```
+
+`resolve-all` は **指摘を直したあと** のマージ直前用。未対応の指摘を黙って閉じる用途ではない。
+
+機構:
+
+- 常時適用ルール: `.cursor/rules/pr-conversation-gate.mdc`
+- スクリプト: `scripts/pr-conversation-gate.sh`
+- スキル: `.cursor/skills/pr-conversation-gate/SKILL.md`
