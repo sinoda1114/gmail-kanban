@@ -91,6 +91,8 @@ export function PracticeLiveSession({
     let micStarted = false;
     let levelRaf = 0;
     let pendingLevel = 0;
+    let playbackLevelRaf = 0;
+    let pendingPlaybackLevel = 0;
     socket.onopen = () => {
       sendJson({ setup });
     };
@@ -134,7 +136,13 @@ export function PracticeLiveSession({
             },
             onPlaybackLevel: (level) => {
               if (stoppedRef.current) return;
-              setPlaybackLevel(level);
+              pendingPlaybackLevel = level;
+              if (playbackLevelRaf) return;
+              playbackLevelRaf = requestAnimationFrame(() => {
+                playbackLevelRaf = 0;
+                if (stoppedRef.current) return;
+                setPlaybackLevel(pendingPlaybackLevel);
+              });
             },
           });
           if (stoppedRef.current) return;
@@ -175,6 +183,7 @@ export function PracticeLiveSession({
       window.removeEventListener("pagehide", onPageHide);
       stoppedRef.current = true;
       if (levelRaf) cancelAnimationFrame(levelRaf);
+      if (playbackLevelRaf) cancelAnimationFrame(playbackLevelRaf);
       audio.stop();
       if (socket.readyState === WebSocket.OPEN) socket.close();
       socketRef.current = null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { Scene, WebGLRenderer, PerspectiveCamera, Clock } from "three";
+import type { Object3D, Scene, WebGLRenderer, PerspectiveCamera, Clock } from "three";
 import type { VRM } from "@pixiv/three-vrm";
 
 interface VRMAvatarProps {
@@ -18,25 +18,13 @@ type VRMInstances = {
   camera: PerspectiveCamera;
   vrm: VRM;
   clock: Clock;
+  deepDispose: (object3D: Object3D) => void;
 };
 
-function disposeInstances(instances: VRMInstances | null, container: HTMLDivElement | null) {
-  if (!instances) return;
-  const { renderer, vrm, scene } = instances;
-  try {
-    scene.remove(vrm.scene);
-    vrm.scene.traverse((obj) => {
-      const mesh = obj as { geometry?: { dispose: () => void }; material?: { dispose: () => void } | Array<{ dispose: () => void }> };
-      mesh.geometry?.dispose();
-      if (Array.isArray(mesh.material)) {
-        for (const mat of mesh.material) mat.dispose();
-      } else {
-        mesh.material?.dispose();
-      }
-    });
-  } catch {
-    /* already disposed */
-  }
+function disposeRenderer(
+  renderer: WebGLRenderer,
+  container: HTMLDivElement | null
+) {
   try {
     if (container && renderer.domElement.parentElement === container) {
       container.removeChild(renderer.domElement);
@@ -45,6 +33,21 @@ function disposeInstances(instances: VRMInstances | null, container: HTMLDivElem
   } catch {
     /* already disposed */
   }
+}
+
+function disposeInstances(
+  instances: VRMInstances | null,
+  container: HTMLDivElement | null
+) {
+  if (!instances) return;
+  const { renderer, vrm, scene, deepDispose } = instances;
+  try {
+    scene.remove(vrm.scene);
+    deepDispose(vrm.scene);
+  } catch {
+    /* already disposed */
+  }
+  disposeRenderer(renderer, container);
 }
 
 export function VRMAvatar({
@@ -74,6 +77,7 @@ export function VRMAvatar({
     if (!container) return;
 
     let mounted = true;
+    let renderer: WebGLRenderer | null = null;
 
     async function initVRM() {
       if (!container || !mounted) return;
@@ -106,7 +110,7 @@ export function VRMAvatar({
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
 
-        const renderer = new THREE.WebGLRenderer({
+        renderer = new THREE.WebGLRenderer({
           alpha: true,
           antialias: true,
         });
@@ -121,19 +125,31 @@ export function VRMAvatar({
         loader.register((parser) => new VRMLoaderPlugin(parser));
 
         const gltf = await loader.loadAsync(modelPath);
+        const vrm = gltf.userData.vrm as VRM | undefined;
+        if (!vrm) {
+          throw new Error("VRM data missing from loaded GLTF");
+        }
+
         if (!mounted) {
-          renderer.dispose();
-          if (renderer.domElement.parentElement === container) {
-            container.removeChild(renderer.domElement);
-          }
+          VRMUtils.deepDispose(vrm.scene);
+          if (renderer) disposeRenderer(renderer, container);
+          renderer = null;
           return;
         }
 
-        const vrm = gltf.userData.vrm as VRM;
         VRMUtils.rotateVRM0(vrm);
         scene.add(vrm.scene);
 
-        instancesRef.current = { scene, renderer, camera, vrm, clock };
+        instancesRef.current = {
+          scene,
+          renderer,
+          camera,
+          vrm,
+          clock,
+          deepDispose: VRMUtils.deepDispose,
+        };
+        // Ownership transferred to instancesRef; avoid double-dispose in catch.
+        renderer = null;
 
         function animate() {
           if (!mounted || !instancesRef.current) return;
@@ -167,6 +183,10 @@ export function VRMAvatar({
         rafRef.current = requestAnimationFrame(animate);
       } catch (error) {
         console.error("Failed to load VRM model:", error);
+        if (renderer) {
+          disposeRenderer(renderer, container);
+          renderer = null;
+        }
         if (mounted) onLoadErrorRef.current?.();
       }
     }
@@ -179,8 +199,13 @@ export function VRMAvatar({
         cancelAnimationFrame(rafRef.current);
         rafRef.current = 0;
       }
-      disposeInstances(instancesRef.current, container);
-      instancesRef.current = null;
+      if (instancesRef.current) {
+        disposeInstances(instancesRef.current, container);
+        instancesRef.current = null;
+      } else if (renderer) {
+        disposeRenderer(renderer, container);
+        renderer = null;
+      }
     };
   }, [modelPath, width, height]);
 

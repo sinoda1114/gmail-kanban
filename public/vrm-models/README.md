@@ -57,8 +57,9 @@ public/vrm-models/
 ### ランタイムライブラリ
 
 - **@pixiv/three-vrm**: MIT License
-- **three-vrm-lip-sync**: MIT License
 - **Three.js**: MIT License
+
+リップシンクは `three-vrm-lip-sync` ではなく、再生 PCM レベル → VRM expression（Aa / Ih）で実装しています。
 
 ### 推奨モデル
 

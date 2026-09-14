@@ -70,8 +70,10 @@ VRM モデルを使用する前に、必ずライセンスを確認してくだ�
 
 **使用ライブラリのライセンス:**
 - `@pixiv/three-vrm`: MIT License
-- `three-vrm-lip-sync`: MIT License
 - `three.js`: MIT License
+
+リップシンクは別 TTS／別パッケージではなく、Gemini Live の再生音声レベルで
+`@pixiv/three-vrm` の expression（Aa / Ih）を直接駆動します。
 
 すべて商用利用可能です。
 
@@ -192,7 +194,6 @@ const smoothedLevel = Math.max(0, Math.min(1, audioLevel * 1.5));
 - [VRoid Hub](https://hub.vroid.com/) - VRM モデル配布プラットフォーム
 - [VRoid Studio](https://vroid.com/studio) - VRM モデル作成ツール
 - [@pixiv/three-vrm GitHub](https://github.com/pixiv/three-vrm)
-- [three-vrm-lip-sync GitHub](https://github.com/vrm-c/three-vrm-lip-sync)
 - [千駄ヶ谷しの ライセンス情報](https://vroid.pixiv.help/hc/en-us/articles/360013482714-Sendagaya-Shino)
 
 ## サポート
