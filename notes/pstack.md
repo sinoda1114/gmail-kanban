@@ -34,6 +34,6 @@ pstack のスキルは `~/.cursor/rules/pstack-models.mdc` を読む。リポの
 |---|---|
 | 実装の進め方（playbook / 原則 / モデル） | pstack（`/poteto-mode`） |
 | モデルのコスト上限 | `.cursor/rules/pstack-cost.mdc` |
-| worktree / 2 段ゲート / CI 緑で squash マージ / git 駆動デプロイ | `notes/dev-workflow-multiagent.md` |
+| worktree / サーモス・ゲート / CI 緑で squash マージ / git 駆動デプロイ | `notes/dev-workflow-multiagent.md` |
 | Issue / Project | `notes/task-management-issue-workflow.md` |
 | テストコマンドと回帰対象 | `notes/testing-discipline.md` |

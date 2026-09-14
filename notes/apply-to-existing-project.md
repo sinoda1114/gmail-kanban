@@ -4,7 +4,7 @@
 **全コピー厳禁**（既存の `CLAUDE.md` / `.github` / `notes` を潰すため）。
 **不足ファイルを足し、既存ファイルには追記**して当てる。
 
-> 前提: 挙動ルール（worktree / 2 段ゲート / デプロイ規律 / GitHub 正本 / Issue 管理 / 供給網）は
+> 前提: 挙動ルール（worktree / サーモス・ゲート / デプロイ規律 / GitHub 正本 / Issue 管理 / 供給網）は
 > `~/.claude` グローバルに入れてあれば **この端末の全 PJ に自動適用済み**。
 > よって既存 PJ の後付けは、主に「**リポ同梱が必要なファイル**」の追加と、GitHub 側の初期設定。
 
@@ -36,7 +36,7 @@ git worktree add ../<repo>-standardize -b chore/standardize origin/main
 
 ### 4. GitHub 側のセットアップ
 ```bash
-git remote set-head origin -a   # origin/HEAD（/security-review が必要）
+git remote set-head origin -a   # origin/HEAD（ベース差分の基準）
 # type:* ラベル（status ラベルは作らない）
 for t in bug feature content i18n legal billing data mobile ops; do \
   gh label create "type:$t" --color ededed 2>/dev/null || true; done
@@ -46,7 +46,7 @@ for t in bug feature content i18n legal billing data mobile ops; do \
 - 既存のタスク台帳（巨大 Markdown 等）があれば、先頭に「現役正本ではない」と明記して凍結し、現役タスクだけ Issue / Project へ段階移行。
 
 ### 5. 取り込み
-差分は **`/ai-review` → commit → `/security-review` → PR → マージ** で入れる（＝テンプレ自身のルールで取り込む）。
+差分は **実装 → サーモス（Thermos）→ commit → PR → マージ** で入れる（＝テンプレ自身のルールで取り込む）。`/ai-review` は使わない。
 
 ## チェックリスト
 - [ ] lockfile が `.gitignore` に入っていないか（入っていたら外す）

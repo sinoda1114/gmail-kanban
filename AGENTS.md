@@ -4,7 +4,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 
 ## 運用ルール（HOW）の正本
 
-このプロジェクトの開発フロー（worktree / PR / 2 段ゲート / デプロイ規律 / GitHub 正本 / Issue・Project タスク管理 / 供給網デフォルト）は、**本リポの `notes/`** を正本とする（リポと一緒に travel する）。
+このプロジェクトの開発フロー（worktree / PR / **サーモス・ゲート** / デプロイ規律 / GitHub 正本 / Issue・Project タスク管理 / 供給網デフォルト）は、**本リポの `notes/`** を正本とする（リポと一緒に travel する）。`/ai-review` は使わない。実装後レビューはサーモス（`.cursor/rules/thermos-gate.mdc`）。
 同じ挙動規律は `~/.claude` グローバルにも既定として入っているため、自分の端末の全 PJ に自動適用される。
 **ここには挙動の再説明を書かない**（重複・ドリフト防止）。このファイルは**このプロジェクト固有の値だけ**を持つ。
 
