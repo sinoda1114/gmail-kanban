@@ -103,6 +103,10 @@ export function PracticeLivePresence({
               audioLevel={talking ? playbackLevel : 0}
               width={avatarWidth}
               height={avatarHeight}
+              onLoadError={() => {
+                setUseVRM(false);
+                setModelAvailable(false);
+              }}
             />
           ) : (
             <svg viewBox="0 0 120 120" width="120" height="120">
