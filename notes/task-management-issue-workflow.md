@@ -134,7 +134,7 @@ PR 本文に関連 Issue を必ず記載する。
 flowchart TD
     A["1. タスク発生<br/>発言・スクショ・要望<br/>または作業中の回収事項"] --> B["2. Issue 作成<br/>T-N採番 / 列: Inbox"]
     B --> C["3. 整理(背景・対象・Done条件)<br/>列: Ready 着手可"]
-    C --> D["4. 実装<br/>worktree→2段ゲート / 列: Doing"]
+    C --> D["4. 実装<br/>worktree→サーモス・ゲート / 列: Doing"]
     D --> E["5. PR 作成<br/>本文に Refs/Closes #N / 列: PR"]
     E --> F["6. マージ→本番自動デプロイ<br/>実装エージェント: CI緑→squash merge→反映確認"]
     F -->|"Closes #N"| G["Done<br/>Issue 自動 close"]

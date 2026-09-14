@@ -8,7 +8,7 @@ MatchFav（wc-tournament-tracker）で確立した運用を、新規プロジェ
 ## このテンプレが標準化するもの（stack 非依存）
 
 - **マルチエージェント開発フロー** — 1 エージェント = 1 worktree = 1 ブランチ。本体 repo は統合＋デプロイ専用。
-- **2 段ゲート** — `/ai-review` → コミット → `/security-review` を push 前に通す。
+- **サーモス・ゲート** — 実装後に Thermos（bug/security + code-quality）を通す。`/ai-review` は使わない。
 - **PR ベース** — `main` 直 push 禁止。自分の PR は必須 CI 成功後に squash マージしてよい（`--admin` は使わない）。
 - **git 駆動デプロイ** — feature push = Preview 自動／main マージ = Production 自動（手動デプロイ原則禁止）。
 - **「GitHub が正本」** — PR 状態・タスク状態は記憶や伝聞でなく GitHub を正とする。
@@ -38,7 +38,7 @@ scripts/
   fill-placeholders.sh                 # {{PLACEHOLDER}} を一括置換する補助
 ```
 
-> 挙動ルール（worktree/2段ゲート/デプロイ規律/GitHub正本/Issue管理）は **`~/.claude` グローバル**にも既定として入れてあり、
+> 挙動ルール（worktree/サーモス・ゲート/デプロイ規律/GitHub正本/Issue管理）は **`~/.claude` グローバル**にも既定として入れてあり、
 > 自分の端末の全 PJ に自動適用される。リポ同梱の `notes/` は、その挙動正本を repo と一緒に travel させるためのもの。
 > **既存の運用中 PJ に当てるときは [`notes/apply-to-existing-project.md`](notes/apply-to-existing-project.md) を参照**（全コピー厳禁・追記で当てる）。
 
@@ -65,7 +65,7 @@ scripts/
 ### GitHub セットアップ（初回のみ）
 
 ```bash
-# 1) origin/HEAD を設定（/security-review が必要とする）
+# 1) origin/HEAD を設定（ベース差分の基準）
 git remote set-head origin -a
 
 # 2) type:* ラベルを作成（状態は Project カラムで管理。status ラベルは作らない）

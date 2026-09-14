@@ -31,10 +31,28 @@ git worktree remove ../gmail-kanban-<topic>   # マージ後に撤去
 
 - **誰も main に直接 commit / push しない**。例外なし。
 - 機能は feature ブランチ → **PR → マージ**。
-- マージ前に **2 段ゲート**（`/ai-review` → コミット → `/security-review`）を通す。
-- 2 段ゲートはスコープが違う: `/ai-review` = 未コミット差分、`/security-review` = ブランチ全体（`origin/HEAD` 差分）。
-  直列で回す。worktree 運用では skill を **worktree 側で実行**する（cwd の現在ブランチを見るため）。
+- マージ前のレビューゲートは **サーモス（Thermos）** を原則とする（下記 §2.1）。
+  - **`/ai-review` は廃止**（Cursor Cloud 等では実行できない／必須にしない）。
+  - **`/security-review` も必須から外す**（任意。サーモスの branch audit がセキュリティ観点を含む）。
 - コンフリクトは feature 側で `git merge origin/main`（or rebase）して解消してから PR を出す。
+
+## 2.1 サーモス・ゲート（実装後フック・必須）
+
+クラウドエージェント／ローカルを問わず、**アプリのソースを変えたら「完了」前にサーモスを走らせる**。
+
+1. `origin/main...HEAD` の diff と変更ファイルを集める
+2. 並列で Thermos の 2 系統を起動する:
+   - `thermo-nuclear-review-subagent`（バグ・破壊・セキュリティ・devex・フラグ漏れ）
+   - `thermo-nuclear-code-quality-review-subagent`（保守性・構造・肥大化）
+3. 親が結果を統合し、**High（と必要な Medium）を直してから** push / 完了宣言
+4. 検証コマンド（`pnpm typecheck` / `lint` / `test` 等）と必須 CI 緑は従来どおり
+
+機構の置き場所（セッションを超えて効く）:
+
+- 常時適用ルール: `.cursor/rules/thermos-gate.mdc`（`alwaysApply: true`）
+- 手順スキル: `.cursor/skills/thermos-gate/SKILL.md`
+
+docs / ルール文言のみの変更はサーモス省略可。
 
 ## 3. デプロイは「git 駆動・単一オーナー」（手動 CLI 禁止）
 
