@@ -8,21 +8,16 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { InterviewerAvatar } from "@/components/projects/InterviewerAvatar";
 
 /**
- * Dogfood page for the candidate-3 illustrated interviewer.
- * Lip-sync moves the SVG mouth itself (no red overlay marker).
+ * Dogfood: GPT Image interviewer + real mouth lip-sync (no red marker, no hand-drawn face).
  */
 function AvatarPreviewInner() {
-  const searchParams = useSearchParams();
-  const demo = searchParams.get("demo") !== "off";
-
   const audioLevelRef = useRef(0);
-  const [level, setLevel] = useState(0.45);
-  const [autoTalk, setAutoTalk] = useState(demo);
+  const [level, setLevel] = useState(0.4);
+  const [autoTalk, setAutoTalk] = useState(true);
   const speaking = level > 0.06;
 
   useEffect(() => {
@@ -36,9 +31,8 @@ function AvatarPreviewInner() {
       frame += 1;
       const pulse = (Math.sin(frame / 2.1) + 1) / 2;
       const burst = (Math.sin(frame / 6.5) + 1) / 2;
-      // Keep some silence gaps so open/close is obvious.
-      const gate = Math.sin(frame / 18) > -0.35 ? 1 : 0.05;
-      const next = (0.12 + pulse * 0.55 + burst * 0.28) * gate;
+      const gate = Math.sin(frame / 18) > -0.35 ? 1 : 0.04;
+      const next = (0.1 + pulse * 0.55 + burst * 0.3) * gate;
       setLevel(next);
       audioLevelRef.current = next;
     }, 70);
@@ -69,11 +63,10 @@ function AvatarPreviewInner() {
           color: "#868e96",
           margin: "0 0 20px",
           lineHeight: 1.5,
-          maxWidth: "42rem",
+          maxWidth: "44rem",
         }}
       >
-        候補3寄りの女性イラスト面接官です。赤いマーカーは使いません。
-        <strong>口そのもの</strong>が開閉します。「自動で口パク」をONにして確認してください。
+        見た目は GPT Image 生成。口パクは画像の口を開閉します（手描き顔・赤いマーカーなし）。
       </p>
 
       <nav
@@ -81,10 +74,10 @@ function AvatarPreviewInner() {
         style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}
       >
         <Link href="/avatar-preview" aria-current="page" style={tabStyle(true)}>
-          口パク付きイラスト
+          口パク確認
         </Link>
-        <a href="/avatar-preview/candidate-3-custom.png" style={tabStyle(false)}>
-          元コンセプト画像
+        <a href="/avatars/interviewer-female.png" style={tabStyle(false)}>
+          生成画像単体
         </a>
       </nav>
 
@@ -109,21 +102,12 @@ function AvatarPreviewInner() {
             maxWidth: 560,
           }}
         >
-          <div
-            style={{
-              width: "min(100%, 220px)",
-              flex: "1 1 160px",
-              transform: speaking ? "translateY(-2px)" : undefined,
-              transition: "transform 120ms ease",
-            }}
-          >
-            <InterviewerAvatar
-              audioLevelRef={audioLevelRef}
-              speaking={speaking}
-              width={220}
-              height={286}
-            />
-          </div>
+          <InterviewerAvatar
+            audioLevelRef={audioLevelRef}
+            speaking={speaking}
+            width={220}
+            height={286}
+          />
           <div style={{ flex: "1 1 180px", minWidth: 0 }}>
             <h2
               style={{
@@ -141,7 +125,7 @@ function AvatarPreviewInner() {
                 fontSize: "0.9rem",
               }}
             >
-              SVG の口（楕円）が音声レベルで開閉します
+              GPT Image の顔 ＋ 口そのものが開閉
             </p>
             <div style={{ fontSize: "0.9rem", lineHeight: 1.4 }}>
               <strong style={{ color: "#868e96" }}>相手役: </strong>
@@ -197,11 +181,6 @@ function AvatarPreviewInner() {
             }}
             style={{ width: "100%" }}
           />
-          <p
-            style={{ margin: "10px 0 0", fontSize: "0.8rem", color: "#868e96" }}
-          >
-            自動OFFにしてスライダーを動かすと、口の開きが追従します。
-          </p>
         </aside>
       </div>
     </main>
