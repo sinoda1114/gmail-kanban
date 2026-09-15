@@ -4,55 +4,50 @@ import {
   Suspense,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
 } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { InterviewerAvatar } from "@/components/projects/InterviewerAvatar";
 
-type CandidateId = "1" | "3";
-
-const CATALOG: Record<CandidateId, { src: string; label: string }> = {
-  "1": {
-    src: "/avatar-preview/candidate-1-shino.png",
-    label: "候補1: 千駄ヶ谷しの系（実在ポートレート）",
-  },
-  "3": {
-    src: "/avatar-preview/candidate-3-custom.png",
-    label: "候補3: 自作の目標イメージ（概念イラスト・未VRM）",
-  },
-};
-
+/**
+ * Dogfood page for the candidate-3 illustrated interviewer.
+ * Lip-sync moves the SVG mouth itself (no red overlay marker).
+ */
 function AvatarPreviewInner() {
   const searchParams = useSearchParams();
-  const raw = searchParams.get("c");
-  // Prefer candidate 3 as the current favorite; allow ?c=1 explicitly.
-  const candidate: CandidateId = raw === "1" ? "1" : "3";
-  const item = CATALOG[candidate];
+  const demo = searchParams.get("demo") !== "off";
 
-  const [level, setLevel] = useState(55);
-  const [autoTalk, setAutoTalk] = useState(true);
+  const audioLevelRef = useRef(0);
+  const [level, setLevel] = useState(0.45);
+  const [autoTalk, setAutoTalk] = useState(demo);
+  const speaking = level > 0.06;
+
+  useEffect(() => {
+    audioLevelRef.current = level;
+  }, [level]);
 
   useEffect(() => {
     if (!autoTalk) return;
     let frame = 0;
     const id = window.setInterval(() => {
       frame += 1;
-      // Rough speech envelope: open/close every ~180ms with varying amplitude.
-      const pulse = (Math.sin(frame / 2.2) + 1) / 2;
-      const burst = (Math.sin(frame / 7) + 1) / 2;
-      setLevel(Math.round(18 + pulse * 55 + burst * 25));
-    }, 90);
+      const pulse = (Math.sin(frame / 2.1) + 1) / 2;
+      const burst = (Math.sin(frame / 6.5) + 1) / 2;
+      // Keep some silence gaps so open/close is obvious.
+      const gate = Math.sin(frame / 18) > -0.35 ? 1 : 0.05;
+      const next = (0.12 + pulse * 0.55 + burst * 0.28) * gate;
+      setLevel(next);
+      audioLevelRef.current = next;
+    }, 70);
     return () => window.clearInterval(id);
   }, [autoTalk]);
 
-  const talking = level > 8;
-  const mouthHeightPx = 4 + (level / 100) * 22;
-  const mouthWidthPct = 14 + (level / 100) * 8;
-
   const stageTitle = useMemo(
-    () => (talking ? "相手役が話しています" : "待機中"),
-    [talking]
+    () => (speaking ? "相手役が話しています" : "待機中"),
+    [speaking]
   );
 
   return (
@@ -67,7 +62,7 @@ function AvatarPreviewInner() {
       }}
     >
       <h1 style={{ fontSize: "1.25rem", margin: "0 0 8px" }}>
-        アバター候補ドッグフード
+        面接官アバター ドッグフード
       </h1>
       <p
         style={{
@@ -77,28 +72,20 @@ function AvatarPreviewInner() {
           maxWidth: "42rem",
         }}
       >
-        候補3（自作イメージ）を優先表示。口元の赤い楕円が開閉するのが疑似口パクです。
-        「自動で口パク」をONにすると動きが見えます（本番 Live 音声ではありません）。
+        候補3寄りの女性イラスト面接官です。赤いマーカーは使いません。
+        <strong>口そのもの</strong>が開閉します。「自動で口パク」をONにして確認してください。
       </p>
 
       <nav
-        aria-label="候補切り替え"
+        aria-label="関連リンク"
         style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}
       >
-        <Link
-          href="/avatar-preview?c=1"
-          aria-current={candidate === "1" ? "page" : undefined}
-          style={tabStyle(candidate === "1")}
-        >
-          候補1 · しの系
+        <Link href="/avatar-preview" aria-current="page" style={tabStyle(true)}>
+          口パク付きイラスト
         </Link>
-        <Link
-          href="/avatar-preview?c=3"
-          aria-current={candidate === "3" ? "page" : undefined}
-          style={tabStyle(candidate === "3")}
-        >
-          候補3 · 自作イメージ
-        </Link>
+        <a href="/avatar-preview/candidate-3-custom.png" style={tabStyle(false)}>
+          元コンセプト画像
+        </a>
       </nav>
 
       <div
@@ -123,50 +110,18 @@ function AvatarPreviewInner() {
           }}
         >
           <div
-            aria-hidden
             style={{
               width: "min(100%, 220px)",
               flex: "1 1 160px",
-              borderRadius: 12,
-              overflow: "hidden",
-              background: "linear-gradient(180deg, #f3e8ff, #f8f9fa 55%)",
-              position: "relative",
-              transform: talking ? "translateY(-2px)" : undefined,
-              boxShadow: talking
-                ? "0 0 0 2px rgba(121, 80, 242, 0.35)"
-                : undefined,
+              transform: speaking ? "translateY(-2px)" : undefined,
               transition: "transform 120ms ease",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={item.src}
-              alt=""
-              style={{
-                display: "block",
-                width: "100%",
-                height: 280,
-                objectFit: "cover",
-                objectPosition: "center top",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: "50%",
-                bottom: "26%",
-                width: `${mouthWidthPct}%`,
-                height: mouthHeightPx,
-                transform: "translateX(-50%)",
-                background: "#c2255c",
-                borderRadius: "50%",
-                opacity: talking ? 0.95 : 0.25,
-                pointerEvents: "none",
-                boxShadow: talking
-                  ? "0 0 0 2px rgba(255,255,255,0.65)"
-                  : undefined,
-                transition: "height 60ms linear, width 60ms linear, opacity 80ms",
-              }}
+            <InterviewerAvatar
+              audioLevelRef={audioLevelRef}
+              speaking={speaking}
+              width={220}
+              height={286}
             />
           </div>
           <div style={{ flex: "1 1 180px", minWidth: 0 }}>
@@ -186,7 +141,7 @@ function AvatarPreviewInner() {
                 fontSize: "0.9rem",
               }}
             >
-              口元の赤いマーカーが開閉＝疑似口パク
+              SVG の口（楕円）が音声レベルで開閉します
             </p>
             <div style={{ fontSize: "0.9rem", lineHeight: 1.4 }}>
               <strong style={{ color: "#868e96" }}>相手役: </strong>
@@ -194,11 +149,6 @@ function AvatarPreviewInner() {
                 自己紹介をお願いします。これまでのご経験を中心に教えてください。
               </span>
             </div>
-            <p
-              style={{ marginTop: 12, fontSize: "0.85rem", color: "#868e96" }}
-            >
-              {item.label}
-            </p>
           </div>
         </section>
 
@@ -231,22 +181,26 @@ function AvatarPreviewInner() {
             htmlFor="level"
             style={{ display: "block", fontSize: "0.85rem", marginBottom: 6 }}
           >
-            手動: 話す強さ（{level}）
+            手動: 話す強さ（{Math.round(level * 100)}）
           </label>
           <input
             id="level"
             type="range"
             min={0}
             max={100}
-            value={level}
+            value={Math.round(level * 100)}
             disabled={autoTalk}
-            onChange={(e) => setLevel(Number(e.target.value))}
+            onChange={(e) => {
+              const next = Number(e.target.value) / 100;
+              setLevel(next);
+              audioLevelRef.current = next;
+            }}
             style={{ width: "100%" }}
           />
           <p
             style={{ margin: "10px 0 0", fontSize: "0.8rem", color: "#868e96" }}
           >
-            自動OFFにしてスライダーを動かすと、口の大きさが追従します。
+            自動OFFにしてスライダーを動かすと、口の開きが追従します。
           </p>
         </aside>
       </div>
