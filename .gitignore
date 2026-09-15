@@ -11,6 +11,8 @@ coverage/
 .env.*
 !.env.example
 !.env.local.example
+.codex/auth.json
+codex-auth.json
 
 # レビュー生成物（ローカル確認専用）
 .review-reports/

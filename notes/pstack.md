@@ -26,7 +26,7 @@ pstack のスキルは `~/.cursor/rules/pstack-models.mdc` を読む。リポの
 
 ## 検証
 
-ユーザー操作の証明は `.cursor/skills/verify-gmail-kanban/`。Vitest / Playwright のコマンドと Done 条件は `notes/testing-discipline.md` が正本。マップがアプリからずれたら `/maintain-verification-skill`。
+ユーザー操作の証明は `.cursor/skills/verify-gmail-kanban/`。Vitest / Playwright のコマンドと Done 条件は `notes/testing-discipline.md` が正本。マップがアプリからずれたら `/maintain-verification-skill`。Cloud での ChatGPT 枠画像生成は `notes/codex-cloud-imagegen.md`。
 
 ## 運用との境界
 

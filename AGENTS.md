@@ -55,6 +55,7 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - Cloud Agent ではシークレットを `/home/ubuntu/.config/gmail-kanban-secrets/` に置き、`source .../load.sh`（`~/.bashrc` からも自動読み込み）で注入する。
   - Clerk: `.env.clerk`（同期スクリプトが書く。`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY`）
   - Gemini: `.env.gemini`（`GOOGLE_GENERATIVE_AI_API_KEY`）。案件整理などの安い JSON は `gemini-3.1-flash-lite`。面談対策（検索グラウンディング）とテキスト通し練習の相手役は `gemini-3.8-flash`。ライブ面談は Gemini Live API（`gemini-3.1-flash-live-preview`）。
+  - Codex 画像生成: `codex-auth.json`（または env `CODEX_AUTH_JSON`）。`./scripts/bootstrap-codex-cli.sh` で CLI と `~/.codex/auth.json` を載せる。生成は `.cursor/skills/codex-imagegen/` と `./scripts/codex-imagegen.sh`。Images API は使わない。詳細は `notes/codex-cloud-imagegen.md`。
 - Turso クラウド鍵が無い場合は `TURSO_DATABASE_URL=file:/workspace/local.db` + `pnpm exec drizzle-kit push` でローカル DB を使える。
 - Vercel の Sensitive env は CLI/API から読み戻せない。Dashboard から値をコピーして上記 secrets パスへ置く（Clerk Dev キーは同期スクリプト経由）。
 - ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
