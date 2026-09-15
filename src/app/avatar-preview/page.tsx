@@ -1,35 +1,54 @@
 "use client";
 
-import { Suspense, useMemo, useState, type CSSProperties } from "react";
+import {
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 type CandidateId = "1" | "3";
 
-const CATALOG: Record<
-  CandidateId,
-  { src: string; label: string; useMouthOverlay: boolean }
-> = {
+const CATALOG: Record<CandidateId, { src: string; label: string }> = {
   "1": {
     src: "/avatar-preview/candidate-1-shino.png",
     label: "候補1: 千駄ヶ谷しの系（実在ポートレート）",
-    useMouthOverlay: true,
   },
   "3": {
     src: "/avatar-preview/candidate-3-custom.png",
     label: "候補3: 自作の目標イメージ（概念イラスト・未VRM）",
-    useMouthOverlay: false,
   },
 };
 
 function AvatarPreviewInner() {
   const searchParams = useSearchParams();
   const raw = searchParams.get("c");
-  const candidate: CandidateId = raw === "3" ? "3" : "1";
+  // Prefer candidate 3 as the current favorite; allow ?c=1 explicitly.
+  const candidate: CandidateId = raw === "1" ? "1" : "3";
   const item = CATALOG[candidate];
-  const [level, setLevel] = useState(45);
+
+  const [level, setLevel] = useState(55);
+  const [autoTalk, setAutoTalk] = useState(true);
+
+  useEffect(() => {
+    if (!autoTalk) return;
+    let frame = 0;
+    const id = window.setInterval(() => {
+      frame += 1;
+      // Rough speech envelope: open/close every ~180ms with varying amplitude.
+      const pulse = (Math.sin(frame / 2.2) + 1) / 2;
+      const burst = (Math.sin(frame / 7) + 1) / 2;
+      setLevel(Math.round(18 + pulse * 55 + burst * 25));
+    }, 90);
+    return () => window.clearInterval(id);
+  }, [autoTalk]);
+
   const talking = level > 8;
-  const mouthHeight = 2 + (level / 100) * 10;
+  const mouthHeightPx = 4 + (level / 100) * 22;
+  const mouthWidthPct = 14 + (level / 100) * 8;
 
   const stageTitle = useMemo(
     () => (talking ? "相手役が話しています" : "待機中"),
@@ -48,18 +67,18 @@ function AvatarPreviewInner() {
       }}
     >
       <h1 style={{ fontSize: "1.25rem", margin: "0 0 8px" }}>
-        アバター候補ドッグフード（ローカル専用）
+        アバター候補ドッグフード
       </h1>
       <p
         style={{
           color: "#868e96",
           margin: "0 0 20px",
           lineHeight: 1.5,
-          maxWidth: "40rem",
+          maxWidth: "42rem",
         }}
       >
-        Vercel デプロイなし。見た目の比較用です。候補1はしの系ポートレート、候補3は自作目標の概念イラスト。
-        口の開閉はスライダーで疑似口パクします（本番 Live 音声ではありません）。
+        候補3（自作イメージ）を優先表示。口元の赤い楕円が開閉するのが疑似口パクです。
+        「自動で口パク」をONにすると動きが見えます（本番 Live 音声ではありません）。
       </p>
 
       <nav
@@ -106,8 +125,8 @@ function AvatarPreviewInner() {
           <div
             aria-hidden
             style={{
-              width: "min(100%, 200px)",
-              flex: "1 1 140px",
+              width: "min(100%, 220px)",
+              flex: "1 1 160px",
               borderRadius: 12,
               overflow: "hidden",
               background: "linear-gradient(180deg, #f3e8ff, #f8f9fa 55%)",
@@ -117,8 +136,6 @@ function AvatarPreviewInner() {
                 ? "0 0 0 2px rgba(121, 80, 242, 0.35)"
                 : undefined,
               transition: "transform 120ms ease",
-              filter:
-                !item.useMouthOverlay && talking ? "brightness(1.03)" : undefined,
             }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -128,28 +145,29 @@ function AvatarPreviewInner() {
               style={{
                 display: "block",
                 width: "100%",
-                height: 260,
+                height: 280,
                 objectFit: "cover",
                 objectPosition: "center top",
               }}
             />
-            {item.useMouthOverlay ? (
-              <div
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  bottom: "28%",
-                  width: "18%",
-                  height: `${mouthHeight}%`,
-                  transform: "translateX(-50%)",
-                  background: "#c2255c",
-                  borderRadius: "50%",
-                  opacity: talking ? 0.9 : 0.35,
-                  pointerEvents: "none",
-                  mixBlendMode: "multiply",
-                }}
-              />
-            ) : null}
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                bottom: "26%",
+                width: `${mouthWidthPct}%`,
+                height: mouthHeightPx,
+                transform: "translateX(-50%)",
+                background: "#c2255c",
+                borderRadius: "50%",
+                opacity: talking ? 0.95 : 0.25,
+                pointerEvents: "none",
+                boxShadow: talking
+                  ? "0 0 0 2px rgba(255,255,255,0.65)"
+                  : undefined,
+                transition: "height 60ms linear, width 60ms linear, opacity 80ms",
+              }}
+            />
           </div>
           <div style={{ flex: "1 1 180px", minWidth: 0 }}>
             <h2
@@ -168,7 +186,7 @@ function AvatarPreviewInner() {
                 fontSize: "0.9rem",
               }}
             >
-              見た目確認用の疑似状態です
+              口元の赤いマーカーが開閉＝疑似口パク
             </p>
             <div style={{ fontSize: "0.9rem", lineHeight: 1.4 }}>
               <strong style={{ color: "#868e96" }}>相手役: </strong>
@@ -194,10 +212,26 @@ function AvatarPreviewInner() {
           }}
         >
           <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: "0.9rem",
+              marginBottom: 14,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={autoTalk}
+              onChange={(e) => setAutoTalk(e.target.checked)}
+            />
+            自動で口パク（おすすめ）
+          </label>
+          <label
             htmlFor="level"
             style={{ display: "block", fontSize: "0.85rem", marginBottom: 6 }}
           >
-            疑似口パク（話す強さ）
+            手動: 話す強さ（{level}）
           </label>
           <input
             id="level"
@@ -205,13 +239,14 @@ function AvatarPreviewInner() {
             min={0}
             max={100}
             value={level}
+            disabled={autoTalk}
             onChange={(e) => setLevel(Number(e.target.value))}
             style={{ width: "100%" }}
           />
           <p
             style={{ margin: "10px 0 0", fontSize: "0.8rem", color: "#868e96" }}
           >
-            0 = 黙っている / 大きめ = 話しているイメージ
+            自動OFFにしてスライダーを動かすと、口の大きさが追従します。
           </p>
         </aside>
       </div>
