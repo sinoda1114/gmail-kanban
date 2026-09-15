@@ -31,7 +31,7 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
         const originalIndex = messages.length - 1 - i;
         return (
           <div
-            key={`practice-${m.role}-${originalIndex}-${m.content.slice(0, 24)}`}
+            key={`practice-${m.role}-${originalIndex}`}
             role="article"
             aria-label={mine ? "あなた" : "相手役"}
             style={{

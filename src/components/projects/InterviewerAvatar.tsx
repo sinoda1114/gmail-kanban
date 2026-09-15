@@ -26,31 +26,30 @@ export function InterviewerAvatar({
   height = 260,
 }: InterviewerAvatarProps) {
   const mouthRef = useRef<SVGEllipseElement>(null);
-  const lipSyncActiveRef = useRef(lipSyncActive);
 
   useEffect(() => {
-    lipSyncActiveRef.current = lipSyncActive;
-  }, [lipSyncActive]);
+    const el = mouthRef.current;
+    if (!lipSyncActive) {
+      // Idle / preview: keep a closed mouth and do not run a RAF loop.
+      el?.setAttribute("ry", "2");
+      el?.setAttribute("cy", "148");
+      return;
+    }
 
-  useEffect(() => {
     let raf = 0;
     const tick = () => {
-      const el = mouthRef.current;
-      if (el) {
-        const raw = lipSyncActiveRef.current
-          ? Math.max(0, Math.min(1, (audioLevelRef?.current ?? 0) * 1.8))
-          : 0;
+      const mouth = mouthRef.current;
+      if (mouth) {
+        const raw = Math.max(0, Math.min(1, (audioLevelRef?.current ?? 0) * 1.8));
         // Closed smile ≈ ry=2; open speech up to ry=10.
-        const ry = 2 + raw * 8;
-        const cy = 148 + raw * 2;
-        el.setAttribute("ry", String(ry));
-        el.setAttribute("cy", String(cy));
+        mouth.setAttribute("ry", String(2 + raw * 8));
+        mouth.setAttribute("cy", String(148 + raw * 2));
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [audioLevelRef]);
+  }, [audioLevelRef, lipSyncActive]);
 
   return (
     <svg

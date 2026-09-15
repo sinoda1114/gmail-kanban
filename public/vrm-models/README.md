@@ -1,21 +1,32 @@
 # VRM Models
 
 ライブ面談の既定アバターは **イラストの面接官**（`InterviewerAvatar`）です。  
-VTuber 寄りの Seed-san は面接官として違和感が出るため、既定では使いません。
+ファイルを置いただけでは VRM には切り替わりません（意図的）。
 
-VRM を使いたい場合のみ、下の手順でローカル配置してください（大きな `.vrm` はリポジトリに同梱しません）。
+## 任意: VRM に差し替える手順
 
-## 推奨モデル: 千駄ヶ谷しの（CC0）
+1. [VRoid Hub - Sendagaya Shino](https://hub.vroid.com/characters/1073405538936718994/models/5708407034098335138) から CC0 モデルを Download  
+2. `public/vrm-models/sendagaya-shino.vrm` に配置  
+3. `PracticeLivePresence.tsx` で `InterviewerAvatar` の代わりに `VRMAvatar` を描画するよう変更する例:
 
-1. [VRoid Hub - Sendagaya Shino](https://hub.vroid.com/characters/1073405538936718994/models/5708407034098335138) から Download
-2. `public/vrm-models/sendagaya-shino.vrm` に配置
-3. `PracticeLivePresence` で `VRMAvatar` を有効化し、`DEFAULT_VRM_MODEL_PATH`（`"/vrm-models/sendagaya-shino.vrm"`）を渡す
+```tsx
+import { DEFAULT_VRM_MODEL_PATH, VRMAvatar } from "./VRMAvatar";
 
-**ライセンス**: CC0 — 商用可・改変可・クレジット不要
+<VRMAvatar
+  audioLevelRef={playbackLevelRef}
+  lipSyncActive={talking}
+  width={200}
+  height={260}
+  modelPath={DEFAULT_VRM_MODEL_PATH} // "/vrm-models/sendagaya-shino.vrm"
+  onLoadError={() => { /* fall back to InterviewerAvatar if desired */ }}
+/>
+```
+
+**ライセンス**: 千駄ヶ谷しの — CC0（商用可・改変可・クレジット不要）
 
 ## ランタイム
 
-- `@pixiv/three-vrm` / `three` — MIT（任意の VRM 表示用）
-- 既定のイラスト面接官は SVG＋再生レベルによる口パク（別 TTS なし）
+- 既定: SVG 面接官 + 再生レベル口パク（別 TTS なし）
+- 任意 VRM: `@pixiv/three-vrm` / `three`（MIT）
 
 詳細: [`VRM_SETUP_GUIDE.md`](../../VRM_SETUP_GUIDE.md)

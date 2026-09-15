@@ -43,12 +43,13 @@ export function PracticeLivePresence({
 
   return (
     <Paper withBorder p="md" radius="md">
-      <Group align="flex-start" gap="lg" wrap="nowrap">
+      <Group align="flex-start" gap="lg" wrap="wrap">
         <div
           aria-hidden
           style={{
-            width: avatarWidth,
-            flex: `0 0 ${avatarWidth}px`,
+            width: "min(100%, 200px)",
+            maxWidth: avatarWidth,
+            flex: "1 1 140px",
             transform: talking ? "translateY(-2px)" : undefined,
             transition: "transform 120ms ease",
           }}
@@ -61,7 +62,7 @@ export function PracticeLivePresence({
             height={avatarHeight}
           />
         </div>
-        <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
+        <Stack gap={6} style={{ flex: "1 1 180px", minWidth: 0 }}>
           <div aria-live="polite">
             <Text fw={700} size="lg" c={color}>
               {copy.title}
