@@ -8,11 +8,13 @@ interface PracticeChatThreadProps {
   messages: PracticeMessage[];
 }
 
+/** Newest messages first (top). Older history scrolls downward. */
 export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+  const newestFirst = [...messages].reverse();
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "nearest" });
+    topRef.current?.scrollIntoView({ block: "nearest" });
   }, [messages]);
 
   return (
@@ -22,11 +24,14 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
       aria-relevant="additions"
       style={{ maxHeight: 360, overflowY: "auto" }}
     >
-      {messages.map((m, i) => {
+      <div ref={topRef} />
+      {newestFirst.map((m, i) => {
         const mine = m.role === "candidate";
+        // Stable-ish key from reverse index position in the original timeline.
+        const originalIndex = messages.length - 1 - i;
         return (
           <div
-            key={`practice-${m.role}-${i}`}
+            key={`practice-${m.role}-${originalIndex}`}
             role="article"
             aria-label={mine ? "あなた" : "相手役"}
             style={{
@@ -60,7 +65,6 @@ export function PracticeChatThread({ messages }: PracticeChatThreadProps) {
           </div>
         );
       })}
-      <div ref={endRef} />
     </div>
   );
 }

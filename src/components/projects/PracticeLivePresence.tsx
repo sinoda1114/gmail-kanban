@@ -1,13 +1,13 @@
 "use client";
 
 import { Group, Paper, Stack, Text } from "@mantine/core";
-import { useState, type RefObject } from "react";
+import type { RefObject } from "react";
 import {
   liveMeterBars,
   liveStageCopy,
   type LiveStageId,
 } from "@/lib/practice-live";
-import { DEFAULT_VRM_MODEL_PATH, VRMAvatar } from "./VRMAvatar";
+import { InterviewerAvatar } from "./InterviewerAvatar";
 
 interface PracticeLivePresenceProps {
   stage: LiveStageId;
@@ -16,34 +16,6 @@ interface PracticeLivePresenceProps {
   userCaption?: string;
   /** Live playback level; Avatar reads this each frame (no React re-render). */
   playbackLevelRef?: RefObject<number>;
-  /** Mount WebGL VRM only during an active live session (not idle preview). */
-  enableVRM?: boolean;
-}
-
-function mouthFor(stage: LiveStageId) {
-  if (stage === "partner" || stage === "barge_in") {
-    return <ellipse cx="60" cy="86" rx="14" ry="9" fill="#3b3b3b" />;
-  }
-  if (stage === "user") {
-    return (
-      <path
-        d="M46 84 Q60 90 74 84"
-        fill="none"
-        stroke="#3b3b3b"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-    );
-  }
-  return (
-    <path
-      d="M46 82 Q60 92 74 82"
-      fill="none"
-      stroke="#3b3b3b"
-      strokeWidth="3"
-      strokeLinecap="round"
-    />
-  );
 }
 
 export function PracticeLivePresence({
@@ -52,7 +24,6 @@ export function PracticeLivePresence({
   partnerCaption,
   userCaption,
   playbackLevelRef,
-  enableVRM = false,
 }: PracticeLivePresenceProps) {
   const copy = liveStageCopy(stage);
   const talking = stage === "partner" || stage === "barge_in";
@@ -67,71 +38,30 @@ export function PracticeLivePresence({
           ? "orange"
           : "gray";
 
-  // Only mount VRM while enableVRM; fall back to SVG on load failure.
-  const [loadFailed, setLoadFailed] = useState(false);
-  const showVRM = enableVRM && !loadFailed;
   const avatarWidth = 200;
   const avatarHeight = 260;
 
   return (
     <Paper withBorder p="md" radius="md">
-      <Group align="flex-start" gap="lg" wrap="nowrap">
+      <Group align="flex-start" gap="lg" wrap="wrap">
         <div
           aria-hidden
           style={{
-            width: showVRM ? avatarWidth : 120,
-            flex: showVRM ? `0 0 ${avatarWidth}px` : "0 0 120px",
+            width: "min(100%, 200px)",
+            maxWidth: avatarWidth,
+            flex: "1 1 140px",
             transform: talking ? "translateY(-2px)" : undefined,
             transition: "transform 120ms ease",
           }}
         >
-          {showVRM ? (
-            <VRMAvatar
-              audioLevelRef={playbackLevelRef}
-              lipSyncActive={talking}
-              width={avatarWidth}
-              height={avatarHeight}
-              modelPath={DEFAULT_VRM_MODEL_PATH}
-              onLoadError={() => setLoadFailed(true)}
-            />
-          ) : (
-            <svg viewBox="0 0 120 120" width="120" height="120">
-              <circle
-                cx="60"
-                cy="60"
-                r="52"
-                fill={talking ? "#eee9ff" : inputting ? "#fff4e6" : "#e7f5ff"}
-                stroke={
-                  talking ? "#7950f2" : inputting ? "#f08c00" : "#15aabf"
-                }
-                strokeWidth="3"
-              />
-              <circle cx="44" cy="52" r="5" fill="#1f1f1f" />
-              <circle cx="76" cy="52" r="5" fill="#1f1f1f" />
-              {mouthFor(stage)}
-              {talking ? (
-                <>
-                  <path
-                    d="M100 44 Q112 60 100 76"
-                    fill="none"
-                    stroke="#7950f2"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M108 38 Q124 60 108 82"
-                    fill="none"
-                    stroke="#7950f2"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    opacity="0.7"
-                  />
-                </>
-              ) : null}
-            </svg>
-          )}
+          <InterviewerAvatar
+            audioLevelRef={playbackLevelRef}
+            speaking={talking}
+            width={avatarWidth}
+            height={avatarHeight}
+          />
         </div>
-        <Stack gap={6} style={{ flex: 1, minWidth: 0 }}>
+        <Stack gap={6} style={{ flex: "1 1 180px", minWidth: 0 }}>
           <div aria-live="polite">
             <Text fw={700} size="lg" c={color}>
               {copy.title}
