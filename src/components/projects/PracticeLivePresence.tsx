@@ -56,7 +56,6 @@ export function PracticeLivePresence({
         >
           <InterviewerAvatar
             audioLevelRef={playbackLevelRef}
-            lipSyncActive={talking}
             speaking={talking}
             width={avatarWidth}
             height={avatarHeight}

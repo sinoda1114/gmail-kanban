@@ -5,22 +5,18 @@ import { useEffect, useRef, type RefObject } from "react";
 interface InterviewerAvatarProps {
   /** Written by the live audio monitor; read each frame (no React re-render). */
   audioLevelRef?: RefObject<number>;
-  /** When false, mouth stays in a closed smile. */
-  lipSyncActive?: boolean;
-  /** Soft highlight when the partner is speaking. */
+  /** Partner speaking: drives lip-sync RAF and highlight. */
   speaking?: boolean;
   width?: number;
   height?: number;
 }
 
 /**
- * Lightweight illustrated interviewer (business attire).
- * Prefer this over VTuber-style VRM samples for interview practice UX.
- * Optional VRM (e.g. Sendagaya Shino) remains available via VRMAvatar.
+ * Illustrated interviewer (business attire) for live interview practice.
+ * Lip-sync uses playback level; RAF runs only while `speaking` is true.
  */
 export function InterviewerAvatar({
   audioLevelRef,
-  lipSyncActive = false,
   speaking = false,
   width = 200,
   height = 260,
@@ -29,8 +25,7 @@ export function InterviewerAvatar({
 
   useEffect(() => {
     const el = mouthRef.current;
-    if (!lipSyncActive) {
-      // Idle / preview: keep a closed mouth and do not run a RAF loop.
+    if (!speaking) {
       el?.setAttribute("ry", "2");
       el?.setAttribute("cy", "148");
       return;
@@ -41,7 +36,6 @@ export function InterviewerAvatar({
       const mouth = mouthRef.current;
       if (mouth) {
         const raw = Math.max(0, Math.min(1, (audioLevelRef?.current ?? 0) * 1.8));
-        // Closed smile ≈ ry=2; open speech up to ry=10.
         mouth.setAttribute("ry", String(2 + raw * 8));
         mouth.setAttribute("cy", String(148 + raw * 2));
       }
@@ -49,15 +43,14 @@ export function InterviewerAvatar({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [audioLevelRef, lipSyncActive]);
+  }, [audioLevelRef, speaking]);
 
   return (
     <svg
       viewBox="0 0 200 260"
       width={width}
       height={height}
-      role="img"
-      aria-label="相手役アバター"
+      aria-hidden
       style={{
         display: "block",
         borderRadius: 12,
