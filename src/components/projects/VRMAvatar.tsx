@@ -5,10 +5,11 @@ import type { Object3D, Scene, WebGLRenderer, PerspectiveCamera, Clock } from "t
 import type { VRM } from "@pixiv/three-vrm";
 
 export const DEFAULT_VRM_MODEL_PATH =
-  // Seed-san (VRM Public License 1.0 / VirtualCast). Pinned CDN so Preview/Production always resolve.
-  // To use Sendagaya Shino (CC0), place it at public/vrm-models/sendagaya-shino.vrm and change this to
-  // "/vrm-models/sendagaya-shino.vrm".
-  "https://cdn.jsdelivr.net/gh/vrm-c/vrm-specification@837f156dbce43ad69183ce1bdab549961ae1c1ee/samples/Seed-san/vrm/Seed-san.vrm";
+  // Optional VRM override. Live presence defaults to InterviewerAvatar (illustrated interviewer)
+  // because VTuber samples like Seed-san read as too casual / robotic for interview practice.
+  // To enable VRM: place Sendagaya Shino (CC0) at public/vrm-models/sendagaya-shino.vrm and wire
+  // PracticeLivePresence to VRMAvatar with this path.
+  "/vrm-models/sendagaya-shino.vrm";
 
 interface VRMAvatarProps {
   /** Written by the live audio monitor; read each frame (no React re-render). */

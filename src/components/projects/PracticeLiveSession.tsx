@@ -217,7 +217,6 @@ export function PracticeLiveSession({
         partnerCaption={partnerCaption}
         userCaption={userCaption}
         playbackLevelRef={playbackLevelRef}
-        enableVRM
       />
       <Group justify="flex-end">
         <Button

@@ -1,32 +1,33 @@
-# VRM アバター セットアップガイド
+# VRM / アバター セットアップガイド
 
-> 短い配置メモは [`public/vrm-models/README.md`](./public/vrm-models/README.md) も参照。モデルパスの正本は `DEFAULT_VRM_MODEL_PATH`（`src/components/projects/VRMAvatar.tsx`）。
+> 短い配置メモは [`public/vrm-models/README.md`](./public/vrm-models/README.md) も参照。
 
-このガイドでは、Gmail Kanban の面談練習ライブモードで VRM アバターを有効にする方法を説明します。
+ライブ面談の**既定アバターはイラストの面接官**（`InterviewerAvatar`）です。  
+スーツ姿の簡易イラスト＋再生レベル口パクで、VTuber 風モデルより面接官らしく見せます。
+
+任意で VRM（例: 千駄ヶ谷しの CC0）に差し替える場合の手順を以下に書きます。  
+モデルパスの正本は `DEFAULT_VRM_MODEL_PATH`（`src/components/projects/VRMAvatar.tsx`）。
 
 ## 前提条件
 
 - Node.js 20.9+ と pnpm がインストールされていること（Next.js 16 の engines 要件）
 - Gmail Kanban リポジトリがクローンされていること
 
-## セットアップ手順
+## セットアップ手順（任意: VRM に差し替え）
 
-### 1. VRM モデル（デフォルトは CDN）
+### 1. VRM モデルを置く
 
-アプリは最初から **Seed-san**（jsDelivr CDN・VRM Public License 1.0）を読みます。  
-モデルファイルをリポジトリに置かなくても Preview / Production で VRM が表示されます。
+既定はイラスト面接官のため、モデルなしで動作します。VRM にする場合:
 
-パスの正本: `DEFAULT_VRM_MODEL_PATH`（`src/components/projects/VRMAvatar.tsx`）
-
-#### オプション A: 千駄ヶ谷しのに差し替え（推奨・CC0）
-
-VRoid Hub 公式サンプル「千駄ヶ谷しの」:
+#### 推奨: 千駄ヶ谷しの（CC0）
 
 1. [VRoid Hub - Sendagaya Shino](https://hub.vroid.com/characters/1073405538936718994/models/5708407034098335138) から Download
 2. `public/vrm-models/sendagaya-shino.vrm` に配置
-3. `DEFAULT_VRM_MODEL_PATH` を `"/vrm-models/sendagaya-shino.vrm"` に変更
+3. `PracticeLivePresence` で `VRMAvatar` を有効化し、`DEFAULT_VRM_MODEL_PATH`（`"/vrm-models/sendagaya-shino.vrm"`）を渡す
 
 **ライセンス**: CC0（商用可・改変可・クレジット不要）
+
+> Seed-san など背面にメカアームのある VTuber サンプルは、面接官としては違和感が出やすいので推奨しません。
 
 #### オプション B: 他の VRM モデル
 
