@@ -6,6 +6,8 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks/(.*)",
   "/api/health",
+  // Local dogfood for interviewer avatar candidates (no auth)
+  "/avatar-preview(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
