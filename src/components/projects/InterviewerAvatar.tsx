@@ -138,16 +138,14 @@ export function InterviewerAvatar({
           fill="#efc2a3"
         />
 
-        {/* teeth */}
-        <rect
-          ref={teethRef}
-          x="93"
-          y="113"
-          width="14"
-          height="0"
-          rx="1.5"
-          fill="#fff6f4"
-          opacity="0"
+        {/* lips — open/close with audio */}
+        <ellipse
+          ref={mouthRef}
+          cx="100"
+          cy="113"
+          rx="9"
+          ry="2.2"
+          fill="#b85a6a"
         />
 
         {/* inner mouth */}
@@ -161,14 +159,16 @@ export function InterviewerAvatar({
           opacity="0"
         />
 
-        {/* lips — open/close with audio */}
-        <ellipse
-          ref={mouthRef}
-          cx="100"
-          cy="113"
-          rx="9"
-          ry="2.2"
-          fill="#b85a6a"
+        {/* teeth */}
+        <rect
+          ref={teethRef}
+          x="93"
+          y="113"
+          width="14"
+          height="0"
+          rx="1.5"
+          fill="#fff6f4"
+          opacity="0"
         />
 
         {speaking ? (

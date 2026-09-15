@@ -50,8 +50,6 @@ export function PracticeLivePresence({
             width: "min(100%, 200px)",
             maxWidth: avatarWidth,
             flex: "1 1 140px",
-            transform: talking ? "translateY(-2px)" : undefined,
-            transition: "transform 120ms ease",
           }}
         >
           <InterviewerAvatar
