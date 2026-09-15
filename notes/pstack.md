@@ -16,9 +16,11 @@ pstack のスキルは `~/.cursor/rules/pstack-models.mdc` を読む。リポの
 
 役割を変えるときは `/setup-pstack` を再実行し、リポ側の `.cursor/rules/pstack-models.mdc` も同じ内容に揃える。コスト上限は `.cursor/rules/pstack-cost.mdc`。
 
+既定の役割は全部 `cursor-grok-4.6-high`（Cursor Models 枠）。Claude / GPT は利用者がその会話で頼んだときだけ。
+
 ## コスト上限
 
-既定では `fast` / `xhigh` / `max` を含むスラッグを使わない。天井は `high`（例: `cursor-grok-4.6-high`, `claude-fable-5-1-thinking-high`）。
+既定では `fast` / `xhigh` / `max` を含むスラッグを使わない。天井は `high`（例: `cursor-grok-4.6-high`）。
 
 利用者がこの会話でそのティアを明示したときだけ使う。そのタスクが終わったら high 既定に戻す。設定ファイルを hot 側へ書き換えない（利用者が既定の変更を頼んだときだけ）。
 
