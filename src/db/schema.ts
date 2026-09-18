@@ -12,6 +12,7 @@ import type {
   PracticeSessionStatus,
 } from "@/types/interview-practice";
 import type { RehearsalFeedback } from "@/types/interview-prep";
+import type { ResumeAnalysis } from "@/types/resume-analysis";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -257,13 +258,7 @@ export const resumeUploads = sqliteTable("resume_uploads", {
   fileType: text("file_type").notNull(),
   fileSize: integer("file_size").notNull(),
   extractedText: text("extracted_text"),
-  analysisResult: text("analysis_result", { mode: "json" }).$type<{
-    summary: string;
-    strengths: string[];
-    skills: string[];
-    careerHistory: string[];
-    likelyQuestions: string[];
-  } | null>(),
+  analysisResult: text("analysis_result", { mode: "json" }).$type<ResumeAnalysis | null>(),
   model: text("model"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),

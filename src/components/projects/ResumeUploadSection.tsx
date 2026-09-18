@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconUpload, IconFileTypePdf } from "@tabler/icons-react";
-import { uploadAndAnalyzeResume } from "@/app/dashboard/projects/resume-upload-action";
+import { uploadAndAnalyzeResume, getResumeAnalysis } from "@/app/dashboard/projects/resume-upload-action";
 import type { ResumeAnalysis } from "@/types/resume-analysis";
 
 interface ResumeUploadSectionProps {
@@ -55,9 +55,6 @@ export function ResumeUploadSection({
         );
 
         if (result.success) {
-          const { getResumeAnalysis } = await import(
-            "@/app/dashboard/projects/resume-upload-action"
-          );
           const analysisResult = await getResumeAnalysis(result.uploadId);
 
           setUploading(false);

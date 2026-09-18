@@ -7,8 +7,22 @@ import { randomUUID } from "crypto";
 import { db } from "@/db/client";
 import { resumeUploads } from "@/db/schema";
 import { ResumeAnalysisSchema, type ResumeAnalysis } from "@/types/resume-analysis";
-import { buildResumeExtractionPrompt } from "@/lib/resume-extraction";
+import { extractTextFromPdf } from "@/lib/pdf-extractor";
 import { GEMINI_RESEARCH_MODEL_ID, GEMINI_JSON_PROVIDER_OPTIONS } from "@/lib/ai-model";
+
+const RESUME_EXTRACTION_PROMPT = `
+あなたは履歴書・職務経歴書の分析エキスパートです。
+アップロードされた履歴書（PDF or 画像）から、フリーランス案件の面接準備に役立つ情報を抽出してください。
+
+出力 JSON:
+- summary: 経歴の要約（面接準備で使える一文サマリー）
+- strengths: 強み・アピールポイント（最大8件）
+- skills: 技術スキル・経験領域のリスト（最大20件）
+- careerHistory: 職歴・プロジェクト履歴のハイライト（時系列、最大15件）
+- likelyQuestions: この経歴から聞かれそうな質問（最大10件）
+
+日本語で出力してください。経歴書に記載されている内容のみを根拠にし、推測は最小限にしてください。
+`.trim();
 
 type UploadResult =
   | { success: true; uploadId: string }
@@ -51,40 +65,27 @@ export async function uploadAndAnalyzeResume(
       return { success: false, error: "ファイルデータの読み込みに失敗しました" };
     }
 
-    const prompt = buildResumeExtractionPrompt();
-
-    let analysis: ResumeAnalysis;
+    let result;
     if (fileType === "application/pdf") {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const pdfParse = require("pdf-parse");
-        const buffer = Buffer.from(base64Data, "base64");
-        const pdfData = await pdfParse(buffer);
-        const extractedText = pdfData.text;
-
-        const result = await generateText({
-          model: google(GEMINI_RESEARCH_MODEL_ID),
-          prompt: `${prompt}\n\n【抽出されたテキスト】\n${extractedText}`,
-          output: Output.object({ schema: ResumeAnalysisSchema }),
-          providerOptions: GEMINI_JSON_PROVIDER_OPTIONS,
-        });
-
-        analysis = result.output as unknown as ResumeAnalysis;
-      } catch (pdfError) {
-        console.error("PDF parsing error:", pdfError);
-        return {
-          success: false,
-          error: "PDFの解析に失敗しました。画像形式で再度お試しください。",
-        };
+      const extractResult = await extractTextFromPdf(base64Data);
+      if (!extractResult.success) {
+        return { success: false, error: extractResult.error };
       }
+
+      result = await generateText({
+        model: google(GEMINI_RESEARCH_MODEL_ID),
+        prompt: `${RESUME_EXTRACTION_PROMPT}\n\n【抽出されたテキスト】\n${extractResult.text}`,
+        output: Output.object({ schema: ResumeAnalysisSchema }),
+        providerOptions: GEMINI_JSON_PROVIDER_OPTIONS,
+      });
     } else {
-      const result = await generateText({
+      result = await generateText({
         model: google(GEMINI_RESEARCH_MODEL_ID),
         messages: [
           {
             role: "user",
             content: [
-              { type: "text", text: prompt },
+              { type: "text", text: RESUME_EXTRACTION_PROMPT },
               {
                 type: "image",
                 image: base64Data,
@@ -95,9 +96,15 @@ export async function uploadAndAnalyzeResume(
         output: Output.object({ schema: ResumeAnalysisSchema }),
         providerOptions: GEMINI_JSON_PROVIDER_OPTIONS,
       });
-
-      analysis = result.output as unknown as ResumeAnalysis;
     }
+
+    const validated = ResumeAnalysisSchema.safeParse(result.output);
+    if (!validated.success) {
+      console.error("Validation error:", validated.error);
+      return { success: false, error: "分析結果の形式が不正です" };
+    }
+
+    const analysis = validated.data;
     const extractedText = [
       analysis.summary,
       ...analysis.careerHistory,
