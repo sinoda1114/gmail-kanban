@@ -60,3 +60,4 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
 - Mantine の複合コンポーネント静的メンバ（`List.Item` など）は Server Component では `undefined` になりページが 500 になる。RSC では `Stack` と `Text` にするか、`"use client"` の島へ出す。
 - pstack モデル割当をホームへコピーする: `./scripts/sync-pstack-models.sh`（スキルは `~/.cursor/rules/pstack-models.mdc` を読む）。
+- **見た目資産（面接官アバター等）**: キャラ／人物の見た目は GPT Image（イメージ生成）で作る。手描き SVG で顔を自作しない。SVG は口パク用の口パーツや簡易 UI 記号に限定する。生成画像は `public/` に置き、口パクは画像上の口を開閉する（赤いマーカー重ねは不可）。

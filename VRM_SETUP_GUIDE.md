@@ -2,14 +2,15 @@
 
 ## 現在の既定
 
-ライブ面談の相手役は **`InterviewerAvatar`**（イラストの面接官）です。
+ライブ面談の相手役は **`InterviewerAvatar`** です。
 
-- ビジネススーツの SVG
-- Gemini Live の再生レベルで口パク（別 TTS なし）
+- 見た目: GPT Image 生成の女性面接官（`public/avatars/interviewer-female.png`）
+- 口パク: 画像上の口そのものを再生レベルで開閉（手描き顔・赤いマーカーなし）
 - 大きな `.vrm` の同梱・CDN 依存なし
 
 実装: `src/components/projects/InterviewerAvatar.tsx`  
-配線: `src/components/projects/PracticeLivePresence.tsx`
+配線: `src/components/projects/PracticeLivePresence.tsx`  
+方針: `AGENTS.md`（見た目資産は GPT Image）
 
 ## なぜ VRM を既定にしないか
 
