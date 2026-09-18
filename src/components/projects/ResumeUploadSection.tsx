@@ -36,50 +36,76 @@ export function ResumeUploadSection({
 
     try {
       const reader = new FileReader();
+      
+      reader.onerror = () => {
+        notifications.show({
+          color: "red",
+          message: "ファイルの読み込みに失敗しました",
+        });
+        setUploading(false);
+      };
+
+      reader.onabort = () => {
+        notifications.show({
+          color: "red",
+          message: "ファイルの読み込みがキャンセルされました",
+        });
+        setUploading(false);
+      };
+
       reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string;
-        if (!dataUrl) {
-          notifications.show({
-            color: "red",
-            message: "ファイルの読み込みに失敗しました",
-          });
-          setUploading(false);
-          return;
-        }
-
-        const result = await uploadAndAnalyzeResume(
-          file.name,
-          file.type,
-          file.size,
-          dataUrl
-        );
-
-        if (result.success) {
-          const analysisResult = await getResumeAnalysis(result.uploadId);
-
-          setUploading(false);
-
-          if (analysisResult.success) {
-            setAnalysis(analysisResult.analysis);
-            onAnalysisComplete?.(analysisResult.analysis);
-            notifications.show({
-              color: "teal",
-              title: "分析完了",
-              message: "履歴書・キャリアシートの分析が完了しました",
-            });
-          } else {
+        try {
+          const dataUrl = e.target?.result as string;
+          if (!dataUrl) {
             notifications.show({
               color: "red",
-              title: "分析失敗",
-              message: analysisResult.error,
+              message: "ファイルの読み込みに失敗しました",
+            });
+            setUploading(false);
+            return;
+          }
+
+          const result = await uploadAndAnalyzeResume(
+            file.name,
+            file.type,
+            file.size,
+            dataUrl
+          );
+
+          if (result.success) {
+            const analysisResult = await getResumeAnalysis(result.uploadId);
+
+            setUploading(false);
+
+            if (analysisResult.success) {
+              setAnalysis(analysisResult.analysis);
+              onAnalysisComplete?.(analysisResult.analysis);
+              notifications.show({
+                color: "teal",
+                title: "分析完了",
+                message: "履歴書・キャリアシートの分析が完了しました",
+              });
+            } else {
+              notifications.show({
+                color: "red",
+                title: "分析失敗",
+                message: analysisResult.error,
+              });
+            }
+          } else {
+            setUploading(false);
+            notifications.show({
+              color: "red",
+              title: "アップロード失敗",
+              message: result.error,
             });
           }
-        } else {
+        } catch (error) {
+          console.error("Upload processing error:", error);
           setUploading(false);
           notifications.show({
             color: "red",
-            title: "アップロード失敗",
-            message: result.error,
+            message: "アップロード処理中にエラーが発生しました",
           });
         }
       };

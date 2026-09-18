@@ -4,8 +4,9 @@ import { auth } from "@clerk/nextjs/server";
 import { generateText, Output } from "ai";
 import { google } from "@ai-sdk/google";
 import { randomUUID } from "crypto";
+import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { resumeUploads } from "@/db/schema";
+import { resumeUploads, users } from "@/db/schema";
 import { ResumeAnalysisSchema, type ResumeAnalysis } from "@/types/resume-analysis";
 import { extractTextFromPdf } from "@/lib/pdf-extractor";
 import { GEMINI_RESEARCH_MODEL_ID, GEMINI_JSON_PROVIDER_OPTIONS } from "@/lib/ai-model";
@@ -34,9 +35,16 @@ export async function uploadAndAnalyzeResume(
   fileSize: number,
   fileDataUrl: string
 ): Promise<UploadResult> {
-  const session = await auth();
-  if (!session?.userId) {
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) {
     return { success: false, error: "認証が必要です" };
+  }
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.clerkUserId, clerkUserId),
+  });
+  if (!user) {
+    return { success: false, error: "ユーザーが見つかりません" };
   }
 
   if (fileSize > 10 * 1024 * 1024) {
@@ -114,7 +122,7 @@ export async function uploadAndAnalyzeResume(
 
     await db.insert(resumeUploads).values({
       id: uploadId,
-      userId: session.userId,
+      userId: user.id,
       fileName,
       fileType,
       fileSize,
@@ -138,15 +146,22 @@ type AnalysisResult =
   | { success: false; error: string };
 
 export async function getResumeAnalysis(uploadId: string): Promise<AnalysisResult> {
-  const session = await auth();
-  if (!session?.userId) {
+  const { userId: clerkUserId } = await auth();
+  if (!clerkUserId) {
     return { success: false, error: "認証が必要です" };
+  }
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.clerkUserId, clerkUserId),
+  });
+  if (!user) {
+    return { success: false, error: "ユーザーが見つかりません" };
   }
 
   try {
     const upload = await db.query.resumeUploads.findFirst({
       where: (t, { eq, and }) =>
-        and(eq(t.id, uploadId), eq(t.userId, session.userId)),
+        and(eq(t.id, uploadId), eq(t.userId, user.id)),
     });
 
     if (!upload) {

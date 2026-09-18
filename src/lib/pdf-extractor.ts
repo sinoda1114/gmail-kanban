@@ -6,12 +6,12 @@ export async function extractTextFromPdf(
   base64Data: string
 ): Promise<ExtractResult> {
   try {
-    // pdf-parseはCJS形式のため、Server Action内でrequireを使用
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require("pdf-parse");
+    const { PDFParse } = require("pdf-parse");
     const buffer = Buffer.from(base64Data, "base64");
-    const pdfData = await pdfParse(buffer);
-    return { success: true, text: pdfData.text };
+    const parser = new PDFParse({ data: buffer });
+    const text = await parser.getText();
+    return { success: true, text };
   } catch (error) {
     console.error("PDF extraction error:", error);
     return {
