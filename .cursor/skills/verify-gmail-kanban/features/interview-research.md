@@ -26,6 +26,6 @@ Preconditions:
 
 ## Gotchas
 
-- Model is `gemini-3.8-flash` with Google Search grounding. Cheap JSON jobs stay on `gemini-3.1-flash-lite`.
+- Model is `gemini-3.8-flash` with Google Search grounding. Cheap JSON jobs stay on `gemini-3.5-flash-lite`.
 - Facts not in the posting or search hits must be `speculation`.
 - Applying to prep calls the existing interview-prep generator; a failed apply keeps the previous prep.

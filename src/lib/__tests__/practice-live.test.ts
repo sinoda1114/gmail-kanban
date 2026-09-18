@@ -25,7 +25,7 @@ import { buildLiveFeedbackPrompt, buildLivePracticePrompt } from "../interview-p
 
 describe("isLivePracticeModel", () => {
   it("live モデルだけ真", () => {
-    expect(isLivePracticeModel("gemini-3.1-flash-live-preview")).toBe(true);
+    expect(isLivePracticeModel("gemini-3.8-live")).toBe(true);
     expect(isLivePracticeModel("gemini-3.8-flash")).toBe(false);
     expect(isLivePracticeModel(null)).toBe(false);
   });
@@ -33,11 +33,11 @@ describe("isLivePracticeModel", () => {
 
 describe("liveModelResource", () => {
   it("models/ を付ける", () => {
-    expect(liveModelResource("gemini-3.1-flash-live-preview")).toBe(
-      "models/gemini-3.1-flash-live-preview"
+    expect(liveModelResource("gemini-3.8-live")).toBe(
+      "models/gemini-3.8-live"
     );
-    expect(liveModelResource("models/gemini-3.1-flash-live-preview")).toBe(
-      "models/gemini-3.1-flash-live-preview"
+    expect(liveModelResource("models/gemini-3.8-live")).toBe(
+      "models/gemini-3.8-live"
     );
   });
 });
