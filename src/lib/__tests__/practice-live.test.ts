@@ -22,10 +22,11 @@ import {
   rmsLevel,
 } from "../practice-live";
 import { buildLiveFeedbackPrompt, buildLivePracticePrompt } from "../interview-practice";
+import { GEMINI_LIVE_MODEL_ID } from "../ai-model";
 
 describe("isLivePracticeModel", () => {
   it("live モデルだけ真", () => {
-    expect(isLivePracticeModel("gemini-3.8-live")).toBe(true);
+    expect(isLivePracticeModel(GEMINI_LIVE_MODEL_ID)).toBe(true);
     expect(isLivePracticeModel("gemini-3.8-flash")).toBe(false);
     expect(isLivePracticeModel(null)).toBe(false);
   });
@@ -33,12 +34,16 @@ describe("isLivePracticeModel", () => {
 
 describe("liveModelResource", () => {
   it("models/ を付ける", () => {
-    expect(liveModelResource("gemini-3.8-live")).toBe(
-      "models/gemini-3.8-live"
+    expect(liveModelResource(GEMINI_LIVE_MODEL_ID)).toBe(
+      `models/${GEMINI_LIVE_MODEL_ID}`
     );
-    expect(liveModelResource("models/gemini-3.8-live")).toBe(
-      "models/gemini-3.8-live"
+    expect(liveModelResource(`models/${GEMINI_LIVE_MODEL_ID}`)).toBe(
+      `models/${GEMINI_LIVE_MODEL_ID}`
     );
+  });
+  
+  it("デフォルト引数は定数を使う", () => {
+    expect(liveModelResource()).toBe(`models/${GEMINI_LIVE_MODEL_ID}`);
   });
 });
 
