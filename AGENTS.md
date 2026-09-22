@@ -60,3 +60,13 @@ Gmail Kanban（`gmail-kanban.vercel.app`）の AI 向けプロジェクト指示
 - ダッシュボードの Mantine `AppShell` は Server Component から直接使うと RSC で落ちる。`DashboardShell`（client）経由で使うこと。
 - Mantine の複合コンポーネント静的メンバ（`List.Item` など）は Server Component では `undefined` になりページが 500 になる。RSC では `Stack` と `Text` にするか、`"use client"` の島へ出す。
 - pstack モデル割当をホームへコピーする: `./scripts/sync-pstack-models.sh`（スキルは `~/.cursor/rules/pstack-models.mdc` を読む）。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

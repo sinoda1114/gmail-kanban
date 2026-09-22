@@ -1,9 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Container, Title, Group, Button, Text } from "@mantine/core";
+import { Container, Title, Group, Button } from "@mantine/core";
 import { IconPlus, IconBell } from "@tabler/icons-react";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import { EmptyState } from "@/components/mascot/EmptyState";
 import { db } from "@/db/client";
 import { projects, users, interviewPreparations } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -70,9 +71,7 @@ export default async function DashboardPage() {
           </Group>
         </Group>
         {projectList.length === 0 ? (
-          <Text c="dimmed" ta="center" py="xl">
-            案件がまだありません。「案件登録」から追加してください。
-          </Text>
+          <EmptyState />
         ) : (
           <KanbanBoard projects={kanbanProjects} />
         )}
