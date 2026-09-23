@@ -12,6 +12,7 @@ import type {
   PracticeSessionStatus,
 } from "@/types/interview-practice";
 import type { RehearsalFeedback } from "@/types/interview-prep";
+import type { ResumeAnalysis } from "@/types/resume-analysis";
 
 export const users = sqliteTable("users", {
   id: text("id").primaryKey(),
@@ -250,6 +251,19 @@ export const aiExtractionLogs = sqliteTable("ai_extraction_logs", {
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
+export const resumeUploads = sqliteTable("resume_uploads", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  extractedText: text("extracted_text"),
+  analysisResult: text("analysis_result", { mode: "json" }).$type<ResumeAnalysis | null>(),
+  model: text("model"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
 export const billingSubscriptions = sqliteTable("billing_subscriptions", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id),
@@ -277,3 +291,4 @@ export type CalendarEvent = typeof calendarEvents.$inferSelect;
 export type InterviewResearchPackRow = typeof interviewResearchPacks.$inferSelect;
 export type InterviewPracticeSession =
   typeof interviewPracticeSessions.$inferSelect;
+export type ResumeUpload = typeof resumeUploads.$inferSelect;

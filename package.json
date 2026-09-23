@@ -37,6 +37,7 @@
     "dayjs": "1.11.21",
     "drizzle-orm": "0.45.2",
     "next": "16.3.5",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.7",
     "stripe": "22.4.0",

@@ -12,6 +12,7 @@ import {
   Paper,
   Title,
   Modal,
+  Divider,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconSparkles } from "@tabler/icons-react";
@@ -21,6 +22,8 @@ import {
   saveCareerMemo,
   personalizeInterviewAnswers,
 } from "@/app/dashboard/projects/interview-personalize-action";
+import { ResumeUploadSection } from "./ResumeUploadSection";
+import type { ResumeAnalysis } from "@/types/resume-analysis";
 
 interface QuestionWithAnswer extends InterviewQuestion {
   answer: InterviewAnswer | null;
@@ -58,6 +61,27 @@ export function InterviewCareerMemoSection({
   const hasExistingAnswers = selectedIds.some(
     (id) => (userAnswers[id] ?? "").trim().length > 0
   );
+
+  function handleAnalysisComplete(analysis: ResumeAnalysis) {
+    const resumeText = [
+      `【経歴サマリー】\n${analysis.summary}`,
+      `\n【強み】\n${analysis.strengths.map((s) => `- ${s}`).join("\n")}`,
+      `\n【スキル】\n${analysis.skills.join(", ")}`,
+      `\n【職歴ハイライト】\n${analysis.careerHistory.map((h) => `- ${h}`).join("\n")}`,
+    ].join("\n");
+
+    setCareerMemo((prev) => {
+      if (prev.trim()) {
+        return `${prev}\n\n${resumeText}`;
+      }
+      return resumeText;
+    });
+
+    notifications.show({
+      color: "teal",
+      message: "履歴書の内容を経歴メモに追加しました",
+    });
+  }
 
   async function handleSaveMemo() {
     setSavingMemo(true);
@@ -133,6 +157,10 @@ export function InterviewCareerMemoSection({
 
   return (
     <>
+      <ResumeUploadSection onAnalysisComplete={handleAnalysisComplete} />
+
+      <Divider my="md" />
+
       <Paper withBorder p="md" radius="md">
         <Title order={5} mb="sm">
           経歴メモで回答をパーソナライズ
