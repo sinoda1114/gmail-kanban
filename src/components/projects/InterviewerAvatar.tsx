@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, type RefObject } from "react";
 
+const AVATAR_SRC = "/avatars/interviewer-female.png";
+
 interface InterviewerAvatarProps {
   /** Written by the live audio monitor; read each frame (no React re-render). */
   audioLevelRef?: RefObject<number>;
@@ -12,8 +14,8 @@ interface InterviewerAvatarProps {
 }
 
 /**
- * Illustrated interviewer (business attire) for live interview practice.
- * Lip-sync uses playback level; RAF runs only while `speaking` is true.
+ * GPT Image interviewer portrait + real mouth open/close.
+ * Face art is the generated PNG; SVG only draws the mouth (no hand-drawn face).
  */
 export function InterviewerAvatar({
   audioLevelRef,
@@ -22,142 +24,173 @@ export function InterviewerAvatar({
   height = 260,
 }: InterviewerAvatarProps) {
   const mouthRef = useRef<SVGEllipseElement>(null);
+  const innerRef = useRef<SVGEllipseElement>(null);
+  const teethRef = useRef<SVGRectElement>(null);
+  const coverRef = useRef<SVGEllipseElement>(null);
+
+  // Mouth anchor on the GPT portrait (viewBox 200x260, object-fit cover / top).
+  // Calibrated from lip-colored pixels in interviewer-female.png (~y=497/1152).
+  const mouthCy = 113;
 
   useEffect(() => {
-    const el = mouthRef.current;
+    const reset = () => {
+      mouthRef.current?.setAttribute("ry", "2.2");
+      mouthRef.current?.setAttribute("cy", String(mouthCy));
+      innerRef.current?.setAttribute("ry", "0");
+      innerRef.current?.setAttribute("opacity", "0");
+      teethRef.current?.setAttribute("height", "0");
+      teethRef.current?.setAttribute("opacity", "0");
+      coverRef.current?.setAttribute("ry", "6");
+      coverRef.current?.setAttribute("cy", String(mouthCy));
+    };
+
     if (!speaking) {
-      el?.setAttribute("ry", "2");
-      el?.setAttribute("cy", "148");
+      reset();
       return;
     }
 
     let raf = 0;
     const tick = () => {
-      const mouth = mouthRef.current;
-      if (mouth) {
-        const raw = Math.max(0, Math.min(1, (audioLevelRef?.current ?? 0) * 1.8));
-        mouth.setAttribute("ry", String(2 + raw * 8));
-        mouth.setAttribute("cy", String(148 + raw * 2));
+      const raw = Math.max(0, Math.min(1, (audioLevelRef?.current ?? 0) * 1.9));
+      const ry = 2.2 + raw * 7.5;
+      const cy = mouthCy + raw * 1.4;
+      mouthRef.current?.setAttribute("ry", String(ry));
+      mouthRef.current?.setAttribute("cy", String(cy));
+
+      const open = raw > 0.1;
+      if (innerRef.current) {
+        innerRef.current.setAttribute(
+          "ry",
+          open ? String(Math.max(0.7, ry * 0.5)) : "0"
+        );
+        innerRef.current.setAttribute("cy", String(cy + raw * 0.5));
+        innerRef.current.setAttribute("opacity", open ? "0.92" : "0");
       }
+      if (teethRef.current) {
+        const h = open ? 1 + raw * 3.6 : 0;
+        teethRef.current.setAttribute("height", String(h));
+        teethRef.current.setAttribute("y", String(cy - h * 0.8));
+        teethRef.current.setAttribute("opacity", open ? "0.88" : "0");
+      }
+      coverRef.current?.setAttribute("ry", String(6 + raw * 2.5));
+      coverRef.current?.setAttribute("cy", String(cy));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [audioLevelRef, speaking]);
+    return () => {
+      cancelAnimationFrame(raf);
+      reset();
+    };
+  }, [audioLevelRef, speaking, mouthCy]);
 
   return (
-    <svg
-      viewBox="0 0 200 260"
-      width={width}
-      height={height}
+    <div
       aria-hidden
       style={{
-        display: "block",
+        position: "relative",
+        width,
+        height,
         borderRadius: 12,
+        overflow: "hidden",
         background: speaking
-          ? "linear-gradient(180deg, #eef2ff 0%, #f8f9fa 55%)"
+          ? "linear-gradient(180deg, #f3e8ff 0%, #f8f9fa 55%)"
           : "linear-gradient(180deg, #f1f3f5 0%, #f8f9fa 55%)",
+        boxShadow: speaking ? "0 0 0 2px rgba(121, 80, 242, 0.28)" : undefined,
+        transform: speaking ? "translateY(-2px)" : undefined,
+        transition: "transform 120ms ease, box-shadow 120ms ease",
       }}
     >
-      {/* shoulders / suit jacket */}
-      <path
-        d="M28 250 C40 200 55 176 100 176 C145 176 160 200 172 250 Z"
-        fill="#1c3d5a"
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={AVATAR_SRC}
+        alt=""
+        width={width}
+        height={height}
+        draggable={false}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center top",
+          userSelect: "none",
+          pointerEvents: "none",
+        }}
       />
-      {/* shirt */}
-      <path
-        d="M78 178 L100 250 L122 178 Z"
-        fill="#f8f9fa"
-      />
-      {/* tie */}
-      <path
-        d="M100 178 L92 210 L100 248 L108 210 Z"
-        fill="#c92a2a"
-      />
-      <path d="M94 178 L100 188 L106 178 Z" fill="#a61e1e" />
+      <svg
+        viewBox="0 0 200 260"
+        width={width}
+        height={height}
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "block",
+          pointerEvents: "none",
+        }}
+      >
+        {/* Cover the still smile on the PNG so the animated lips read as the real mouth */}
+        <ellipse
+          ref={coverRef}
+          cx="100"
+          cy="113"
+          rx="14"
+          ry="5.5"
+          fill="#efc2a3"
+        />
 
-      {/* neck */}
-      <rect x="88" y="152" width="24" height="28" rx="6" fill="#f1d4b8" />
+        {/* teeth */}
+        <rect
+          ref={teethRef}
+          x="93"
+          y="113"
+          width="14"
+          height="0"
+          rx="1.5"
+          fill="#fff6f4"
+          opacity="0"
+        />
 
-      {/* head */}
-      <ellipse cx="100" cy="112" rx="46" ry="52" fill="#f3d7bc" />
+        {/* inner mouth */}
+        <ellipse
+          ref={innerRef}
+          cx="100"
+          cy="114"
+          rx="6"
+          ry="0"
+          fill="#6b2438"
+          opacity="0"
+        />
 
-      {/* short professional hair */}
-      <path
-        d="M54 112 C54 68 72 52 100 50 C128 52 146 68 146 112
-           C140 88 128 74 100 72 C72 74 60 88 54 112 Z"
-        fill="#212529"
-      />
-      <path
-        d="M54 108 C58 96 62 100 64 118 L54 120 Z"
-        fill="#212529"
-      />
-      <path
-        d="M146 108 C142 96 138 100 136 118 L146 120 Z"
-        fill="#212529"
-      />
+        {/* lips — open/close with audio */}
+        <ellipse
+          ref={mouthRef}
+          cx="100"
+          cy="113"
+          rx="9"
+          ry="2.2"
+          fill="#b85a6a"
+        />
 
-      {/* eyebrows */}
-      <path
-        d="M72 98 Q82 94 90 98"
-        fill="none"
-        stroke="#343a40"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M110 98 Q118 94 128 98"
-        fill="none"
-        stroke="#343a40"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-
-      {/* eyes */}
-      <ellipse cx="81" cy="112" rx="5.5" ry="6" fill="#212529" />
-      <ellipse cx="119" cy="112" rx="5.5" ry="6" fill="#212529" />
-      <circle cx="83" cy="110" r="1.6" fill="#fff" />
-      <circle cx="121" cy="110" r="1.6" fill="#fff" />
-
-      {/* nose */}
-      <path
-        d="M100 118 L96 132 Q100 134 104 132"
-        fill="none"
-        stroke="#d4a373"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-
-      {/* mouth — ry/cy driven by RAF lip-sync */}
-      <ellipse
-        ref={mouthRef}
-        cx="100"
-        cy="148"
-        rx="10"
-        ry="2"
-        fill="#5c3a2a"
-      />
-
-      {/* speaking cue */}
-      {speaking ? (
-        <>
-          <path
-            d="M158 100 Q172 112 158 128"
-            fill="none"
-            stroke="#4c6ef5"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-          <path
-            d="M168 92 Q188 112 168 136"
-            fill="none"
-            stroke="#4c6ef5"
-            strokeWidth="2"
-            strokeLinecap="round"
-            opacity="0.7"
-          />
-        </>
-      ) : null}
-    </svg>
+        {speaking ? (
+          <>
+            <path
+              d="M158 104 Q172 116 158 132"
+              fill="none"
+              stroke="#7950f2"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            <path
+              d="M168 96 Q186 116 168 140"
+              fill="none"
+              stroke="#7950f2"
+              strokeWidth="2"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
+          </>
+        ) : null}
+      </svg>
+    </div>
   );
 }
