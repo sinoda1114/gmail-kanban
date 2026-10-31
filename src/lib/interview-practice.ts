@@ -92,6 +92,34 @@ ${formatPracticeCaseBrief(input)}
   `.trim();
 }
 
+export function buildPracticeStreamPrompt(input: {
+  project: ProjectForPractice;
+  careerMemo?: string | null;
+  research?: InterviewResearchPack | null;
+  prepQuestions?: string[];
+  messages: PracticeMessage[];
+}): string {
+  const wrapUp = shouldWrapUpPractice(input.messages);
+
+  return `
+あなたはフリーランス案件の面談相手役です。日本語で、1回につき質問は1つだけ。
+候補者の回答を受けて深掘りし、自然な対話を続けます。
+
+${formatPracticeCaseBrief(input)}
+
+これまでの対話:
+${formatPracticeHistory(input.messages)}
+
+指示:
+- 対話が空なら最初の質問（自己紹介か、募集に即した経験確認）。
+- 候補者の直前回答が薄い・抽象的なら深掘りの質問。
+- 新しい論点に進むなら新しい質問。
+- ${wrapUp ? "すでに十分なターン数です。「本日はお時間いただきありがとうございました」のような締めの言葉を言って面談を終了してください。" : "まだ続けてよいです。質問を続けてください。"}
+
+次の発言をテキストで出力してください（JSON不要）:
+  `.trim();
+}
+
 export function buildLiveFeedbackPrompt(messages: PracticeMessage[]): string {
   return `
 次のフリーランス案件の模擬面談の文字起こしを読み、短いフィードバックを JSON で出してください。

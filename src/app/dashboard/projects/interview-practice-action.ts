@@ -33,6 +33,7 @@ import {
   MAX_PRACTICE_MESSAGE_CHARS,
   canSubmitPracticeReply,
   coercePracticeWrapUp,
+  shouldWrapUpPractice,
 } from "@/types/interview-practice";
 import { RehearsalFeedbackSchema, type RehearsalFeedback } from "@/types/interview-prep";
 import { parseStoredResearchPack } from "@/lib/interview-research";
@@ -357,6 +358,88 @@ function sanitizeLiveMessages(raw: unknown): PracticeMessage[] | null {
     role: message.role,
     content: clipPracticeTranscript(message.content, MAX_PRACTICE_MESSAGE_CHARS),
   }));
+}
+
+export async function savePracticeStreamedReply(
+  sessionId: string,
+  userAnswer: string,
+  aiResponse: string
+): Promise<{ success: boolean; error?: string; completed?: boolean }> {
+  const user = await getAuthedUser();
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const trimmedAnswer = userAnswer.trim();
+  const trimmedAi = aiResponse.trim();
+  if (!trimmedAnswer || !trimmedAi) {
+    return { success: false, error: "回答が空です" };
+  }
+
+  const session = await db.query.interviewPracticeSessions.findFirst({
+    where: eq(interviewPracticeSessions.id, sessionId),
+  });
+  if (!session) return { success: false, error: "セッションが見つかりません" };
+  if (session.userId !== user.id) return { success: false, error: "Unauthorized" };
+  if (!canSubmitPracticeReply(session.status)) {
+    return { success: false, error: PRACTICE_ENDED_MESSAGE };
+  }
+
+  const nextMessages: PracticeMessage[] = [
+    ...session.messages,
+    { role: "candidate", content: trimmedAnswer },
+    { role: "interviewer", content: trimmedAi },
+  ];
+
+  const shouldComplete = shouldWrapUpPractice(nextMessages);
+  const now = new Date().toISOString();
+
+  let feedback: RehearsalFeedback | null = null;
+  if (shouldComplete) {
+    try {
+      const { object } = await generateObject({
+        model: google(GEMINI_RESEARCH_MODEL_ID),
+        schema: RehearsalFeedbackSchema,
+        providerOptions: GEMINI_JSON_PROVIDER_OPTIONS,
+        prompt: buildLiveFeedbackPrompt(nextMessages),
+      });
+      feedback = object;
+    } catch (error) {
+      logAiFailure("interview_practice_streamed_feedback", error);
+      feedback = PRACTICE_FALLBACK_FEEDBACK;
+    }
+  }
+
+  const updated = await db
+    .update(interviewPracticeSessions)
+    .set({
+      messages: nextMessages,
+      status: shouldComplete ? "completed" : "active",
+      feedback,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(interviewPracticeSessions.id, sessionId),
+        eq(interviewPracticeSessions.status, "active"),
+        eq(interviewPracticeSessions.updatedAt, session.updatedAt)
+      )
+    )
+    .returning({ id: interviewPracticeSessions.id });
+
+  if (updated.length === 0) {
+    return { success: false, error: PRACTICE_STALE_MESSAGE };
+  }
+
+  await db.insert(aiExtractionLogs).values({
+    id: randomUUID(),
+    userId: user.id,
+    projectId: session.projectId,
+    taskType: "interview_practice",
+    model: GEMINI_RESEARCH_MODEL_ID,
+    createdAt: now,
+  });
+
+  revalidatePath(`/dashboard/projects/${session.projectId}`);
+  return { success: true, completed: shouldComplete };
 }
 
 export async function finishLiveInterviewPractice(
